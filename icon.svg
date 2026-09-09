@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="128" fill="#0f172a"/>
+  <!-- Outer Glow Ring -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#38bdf8" stroke-width="12" opacity="0.3"/>
+  <!-- Ball Upper Half -->
+  <path d="M 76 256 A 180 180 0 0 1 436 256 Z" fill="#ef4444"/>
+  <!-- Ball Lower Half -->
+  <path d="M 76 256 A 180 180 0 0 0 436 256 Z" fill="#f8fafc"/>
+  <!-- Center Dividing Band -->
+  <line x1="76" y1="256" x2="436" y2="256" stroke="#0f172a" stroke-width="24"/>
+  <!-- Center Outer Button -->
+  <circle cx="256" cy="256" r="64" fill="#0f172a"/>
+  <!-- Center Inner Button -->
+  <circle cx="256" cy="256" r="44" fill="#f8fafc" stroke="#38bdf8" stroke-width="8"/>
+  <!-- Inner Ring Highlight -->
+  <circle cx="256" cy="256" r="22" fill="#38bdf8"/>
+  <circle cx="248" cy="248" r="6" fill="#ffffff"/>
+</svg>
