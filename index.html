@@ -556,6 +556,43 @@
     0% { box-shadow: 0 0 4px #ec4899; }
     100% { box-shadow: 0 0 16px #38bdf8; }
   }
+
+  /* Mini Floating HUD Mode (for Samsung Pop-Up View & Micro Floating Windows) */
+  body.mini-hud-mode {
+    background: #090d16 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  body.mini-hud-mode .header-box,
+  body.mini-hud-mode #levelUpBanner,
+  body.mini-hud-mode .types-scroll-wrapper,
+  body.mini-hud-mode .region-pills-row,
+  body.mini-hud-mode .table-container,
+  body.mini-hud-mode #floatingTopBtn,
+  body.mini-hud-mode #verticalHudPill,
+  body.mini-hud-mode #hudPopover,
+  body.mini-hud-mode #scannerOverlay,
+  body.mini-hud-mode #guideModal {
+    display: none !important;
+  }
+  #miniHudContainer {
+    display: none;
+    width: 100%;
+    max-width: 330px;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  body.mini-hud-mode #miniHudContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 </style>
 </head>
 <body>
@@ -602,6 +639,79 @@
   <div id="hudPopoverContent" style="font-size:11px; line-height:1.6;"></div>
 </div>
 
+<!-- Persistent Hidden Video for Safe Canvas PiP (No Audio / Zero Crash) -->
+<video id="pipHiddenVideo" muted playsinline style="position:fixed;top:-9999px;left:-9999px;width:120px;height:300px;opacity:0;pointer-events:none;"></video>
+
+<!-- Mini Floating HUD Container (Dedicated for Samsung Pop-Up View) -->
+<div id="miniHudContainer">
+  <!-- Top Navigation & Control Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; border-radius:10px; padding:8px 12px; border:1px solid var(--border);">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span style="font-size:13px; font-weight:900; color:#38bdf8; letter-spacing:0.5px;">⚡ POGO HUD</span>
+      <span id="miniModeBadge" style="font-size:9px; font-weight:800; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 6px; border-radius:6px;">CATCH</span>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button onclick="toggleEvaluationMode()" style="background:#334155; color:#f8fafc; border:none; border-radius:6px; padding:4px 8px; font-size:10px; font-weight:700; cursor:pointer;" title="Switch Catch vs Storage mode">
+        ⇄ Mode
+      </button>
+      <button onclick="toggleMiniMode(false)" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:10px; font-weight:800; cursor:pointer;" title="Return to Full Pokédex">
+        ⛶ Full App
+      </button>
+    </div>
+  </div>
+
+  <!-- Big Tactile 1-Tap Trigger Button -->
+  <button id="miniTapScanBtn" onclick="performOneTapAssessment()" style="background:linear-gradient(135deg, #a855f7, #ec4899); color:#fff; border:none; border-radius:12px; padding:12px 10px; font-size:13px; font-weight:900; cursor:pointer; width:100%; box-shadow:0 4px 16px rgba(236,72,153,0.5); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; transition:transform 0.1s ease;">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span style="font-size:16px;">⚡</span>
+      <span id="miniTapBtnTitle">TAP TO SCAN SCREEN</span>
+    </div>
+    <span id="miniTapBtnSub" style="font-size:9.5px; font-weight:600; opacity:0.9;">Instant 3-Point Assessment</span>
+  </button>
+
+  <!-- 3 Assessment Slots (Berry / Catch / Action) -->
+  <div style="display:grid; grid-template-columns:1fr 1.2fr 1fr; gap:6px;">
+    <!-- Slot 1: Berry -->
+    <div style="background:#1e293b; border:1px solid #475569; border-radius:10px; padding:8px 4px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      <div id="miniBerryIcon" style="font-size:24px; line-height:1.2;">🍍</div>
+      <div id="miniBerryLabel" style="font-size:10px; font-weight:800; color:#fbbf24; margin-top:2px;">PINAP</div>
+      <div style="font-size:8px; color:var(--text-muted);">Slot 1: Berry</div>
+    </div>
+
+    <!-- Slot 2: Catch / Storage Assessment -->
+    <div style="background:#1e293b; border:1px solid #38bdf8; border-radius:10px; padding:8px 4px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      <div id="miniCatchIcon" style="font-size:24px; line-height:1.2;">🎯</div>
+      <div id="miniCatchLabel" style="font-size:10px; font-weight:800; color:#34d399; margin-top:2px;">STANDBY</div>
+      <div style="font-size:8px; color:var(--text-muted);">Slot 2: Catch</div>
+    </div>
+
+    <!-- Slot 3: Action -->
+    <div style="background:#1e293b; border:1px solid #475569; border-radius:10px; padding:8px 4px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      <div id="miniActionIcon" style="font-size:24px; line-height:1.2;">🍬</div>
+      <div id="miniActionLabel" style="font-size:10px; font-weight:800; color:#c084fc; margin-top:2px;">ACTION</div>
+      <div style="font-size:8px; color:var(--text-muted);">Slot 3: Action</div>
+    </div>
+  </div>
+
+  <!-- Quick Manual CP Input Box (for instant lookup without stream) -->
+  <div style="display:flex; gap:6px; align-items:center; background:#1e293b; border-radius:8px; padding:6px 8px; border:1px solid var(--border);">
+    <input type="number" id="miniCpInput" placeholder="Enter CP (e.g. 465)" style="background:#0f172a; border:1px solid #475569; border-radius:6px; color:#f8fafc; padding:6px 8px; font-size:12px; font-weight:700; flex:1; outline:none;" oninput="onMiniCpInput(this.value)" />
+    <button onclick="clearMiniCp()" style="background:#334155; color:#94a3b8; border:none; border-radius:6px; padding:6px 10px; font-size:11px; font-weight:700; cursor:pointer;">✕</button>
+  </div>
+
+  <!-- Screen Stream & Paste Buttons -->
+  <div style="display:flex; gap:6px;">
+    <button id="miniStreamBtn" onclick="toggleScreenStream()" style="flex:1; background:#334155; color:#c084fc; border:1px solid #a855f7; border-radius:8px; padding:7px 4px; font-size:10.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">
+      <span id="miniStreamDot">📡</span> <span id="miniStreamText">Start Stream</span>
+    </button>
+    <button onclick="document.getElementById('screenshotFileInput').click()" style="flex:1; background:#334155; color:#38bdf8; border:1px solid #38bdf8; border-radius:8px; padding:7px 4px; font-size:10.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">
+      📸 <span>Upload Pic</span>
+    </button>
+  </div>
+  
+  <div id="miniStatusMsg" style="font-size:9.5px; text-align:center; color:#94a3b8; min-height:14px;"></div>
+</div>
+
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
@@ -611,6 +721,9 @@
     <div style="display:flex; gap:6px; align-items:center;">
       <button id="oneTapScanHeaderBtn" onclick="performOneTapAssessment()" style="background:linear-gradient(135deg, #a855f7, #ec4899); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(236,72,153,0.4);">
         ⚡ 1-Tap Scan
+      </button>
+      <button onclick="toggleMiniMode(true)" style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(168,85,247,0.3);" title="Switch to Mini Floating HUD for Samsung Pop-Up View">
+        🗂️ Mini Mode
       </button>
       <button onclick="openScannerModal()" style="background:linear-gradient(135deg, #a855f7, #6366f1); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(168,85,247,0.3);">
         📱 HUD
@@ -949,26 +1062,26 @@
       </div>
     </div>
 
-    <!-- Native OS Overlay Guide -->
-    <div style="background:#0f172a; border:1px solid #10b981; border-radius:10px; padding:12px; margin-bottom:12px;">
-      <div style="font-size:13px; font-weight:800; color:#34d399; margin-bottom:4px;">📲 How to Float Over Pokémon GO on Mobile</div>
-      <div style="font-size:11px; color:var(--text-muted); line-height:1.6;">
-        <div style="margin-bottom:6px;">
-          <b style="color:#f8fafc;">⭐ Samsung Galaxy / Android "Pop-Up View" (Easiest & Most Fluid):</b><br/>
-          1. Open this Companion app on your phone.<br/>
-          2. Swipe to your <b>Recent Apps</b> screen.<br/>
-          3. Tap the <b>Companion App icon</b> at the top of its card.<br/>
-          4. Select <b>"Open in pop-up view"</b> (or "Split screen").<br/>
-          5. Now launch Pokémon GO! The Companion floats right on top of Pokémon GO. You can drag it to the dead space margin, resize it, or adjust transparency!
-        </div>
-        <div>
-          <b style="color:#f8fafc;">🍏 iPhone (iOS) Rapid Toggle:</b><br/>
-          iOS security blocks third-party overlays over 3D games. Simply swipe left/right along the <b>bottom home bar</b> to instantly toggle between Pokémon GO and this companion in 0.2 seconds!
-        </div>
+    <!-- Native OS Overlay Guide & Samsung Pop-Up View -->
+    <div style="background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(56,189,248,0.12)); border:1.5px solid #10b981; border-radius:12px; padding:13px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <div style="font-size:13.5px; font-weight:800; color:#34d399;">⭐ Samsung Pop-Up View (100% Reliable Floating Widget)</div>
+        <span style="font-size:9px; background:#059669; color:#fff; padding:2px 7px; border-radius:10px; font-weight:800;">RECOMMENDED</span>
+      </div>
+      <p style="font-size:11px; color:#cbd5e1; margin-bottom:10px; line-height:1.5;">
+        Samsung One UI allows this companion to float directly over Pokémon GO without browser PiP quirks. Tap below to switch to Mini HUD mode, then select <b>"Open in pop-up view"</b> from your Recent Apps screen!
+      </p>
+      <div style="display:flex; gap:8px;">
+        <button onclick="toggleMiniMode(true); closeScannerModal();" style="flex:1; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:8px; padding:9px 12px; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(16,185,129,0.35);">
+          📱 Switch to Mini Floating HUD
+        </button>
+        <button onclick="openSamsungGuideModal()" style="background:#1e293b; color:#38bdf8; border:1px solid #38bdf8; border-radius:8px; padding:9px 12px; font-size:12px; font-weight:800; cursor:pointer;">
+          📖 How To
+        </button>
       </div>
     </div>
 
-    <!-- Mode 1: Document Picture-in-Picture Floating Window -->
+    <!-- Mode 1: Document / Canvas Picture-in-Picture Floating Window -->
     <div style="background:#0f172a; border:1px solid #38bdf8; border-radius:10px; padding:12px; margin-bottom:12px;">
       <div style="font-size:13px; font-weight:800; color:#38bdf8; margin-bottom:4px;">📺 Launch Picture-in-Picture Floating HUD</div>
       <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
@@ -1006,6 +1119,44 @@
         <div id="ocrStatusMsg" style="font-size:11px; font-weight:700; color:#38bdf8; margin-top:4px;"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Samsung Pop-Up View Guide Modal -->
+<div id="samsungGuideModal" class="modal-overlay" onclick="closeSamsungGuideModal(event)" style="display:none; z-index:11000;">
+  <div class="modal-content" onclick="event.stopPropagation()" style="max-width:480px;">
+    <button class="modal-close" onclick="closeSamsungGuideModal()">✕</button>
+    <div style="text-align:center; margin-bottom:14px;">
+      <div style="font-size:36px; margin-bottom:6px;">⭐</div>
+      <h2 style="font-size:18px; font-weight:800; color:#38bdf8;">Samsung Galaxy Pop-Up View</h2>
+      <p style="font-size:12px; color:var(--text-muted);">The Ultimate Native Floating Companion for Pokémon GO</p>
+    </div>
+    
+    <div style="background:#0f172a; border:1px solid #10b981; border-radius:10px; padding:14px; margin-bottom:14px; font-size:12px; line-height:1.6; color:#e2e8f0;">
+      <div style="margin-bottom:8px;">
+        <b style="color:#34d399;">1. Tap "Switch to Mini HUD"</b><br/>
+        This condenses the companion into a micro-widget with big tactile buttons.
+      </div>
+      <div style="margin-bottom:8px;">
+        <b style="color:#34d399;">2. Open Recent Apps</b><br/>
+        Swipe up and hold, or tap the III button at the bottom of your Samsung phone.
+      </div>
+      <div style="margin-bottom:8px;">
+        <b style="color:#34d399;">3. Tap App Icon & Select "Open in pop-up view"</b><br/>
+        Tap the circular icon above this app's preview card, and choose <b>Open in pop-up view</b>.
+      </div>
+      <div>
+        <b style="color:#34d399;">4. Launch Pokémon GO!</b><br/>
+        The Mini HUD floats directly on top of Pokémon GO. You can drag it to any margin, resize it, adjust transparency, and tap ⚡ SCAN during any catch!
+      </div>
+    </div>
+
+    <button onclick="toggleMiniMode(true); closeSamsungGuideModal();" style="width:100%; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:10px; padding:12px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 16px rgba(16,185,129,0.4); margin-bottom:8px;">
+      📱 Switch to Mini Floating HUD Mode
+    </button>
+    <button onclick="closeSamsungGuideModal()" style="width:100%; background:#1e293b; color:#94a3b8; border:1px solid var(--border); border-radius:10px; padding:10px; font-size:12px; font-weight:700; cursor:pointer;">
+      Got It, Close
+    </button>
   </div>
 </div>
 
@@ -1452,6 +1603,7 @@ function updateVerticalHud(p, matchInfo) {
   if (popover && popover.style.display !== 'none') {
     updateHudPopover();
   }
+  syncMiniHudSlots();
 }
 
 function updateHudPopover() {
@@ -2065,25 +2217,103 @@ function setupMediaSession() {
   }
 }
 
-let silentAudioStream = null;
-function getSilentAudioStream() {
-  if (silentAudioStream) return silentAudioStream;
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return null;
-    const actx = new AudioCtx();
-    const osc = actx.createOscillator();
-    const gain = actx.createGain();
-    gain.gain.value = 0.0001; // Inaudible
-    osc.connect(gain);
-    const dest = actx.createMediaStreamDestination();
-    gain.connect(dest);
-    osc.start();
-    silentAudioStream = dest.stream;
-    return silentAudioStream;
-  } catch (e) {
-    console.warn('Silent audio stream note:', e);
-    return null;
+function openSamsungGuideModal() {
+  const m = document.getElementById('samsungGuideModal');
+  if (m) m.style.display = 'flex';
+}
+
+function closeSamsungGuideModal(e) {
+  if (e && e.target !== e.currentTarget && !e.target.classList.contains('modal-close')) return;
+  const m = document.getElementById('samsungGuideModal');
+  if (m) m.style.display = 'none';
+}
+
+function showSamsungPopUpFallback(err) {
+  openSamsungGuideModal();
+}
+
+function toggleMiniMode(forceState) {
+  const isMini = (forceState !== undefined) ? forceState : !document.body.classList.contains('mini-hud-mode');
+  if (isMini) {
+    document.body.classList.add('mini-hud-mode');
+    localStorage.setItem('pogo_mini_hud_mode', 'true');
+    syncMiniHudSlots();
+  } else {
+    document.body.classList.remove('mini-hud-mode');
+    localStorage.removeItem('pogo_mini_hud_mode');
+  }
+}
+
+function toggleEvaluationMode() {
+  const nextMode = evaluationMode === 'catch' ? 'storage' : (evaluationMode === 'storage' ? 'blank' : 'catch');
+  setEvaluationMode(nextMode);
+  syncMiniHudSlots();
+}
+
+function onMiniCpInput(val) {
+  const inp = document.getElementById('catchCpInput');
+  if (inp) {
+    inp.value = val;
+    handleCpInput();
+  }
+  syncMiniHudSlots();
+}
+
+function clearMiniCp() {
+  const miniInp = document.getElementById('miniCpInput');
+  if (miniInp) miniInp.value = '';
+  clearCpFilter();
+  syncMiniHudSlots();
+}
+
+function syncMiniHudSlots() {
+  const bIcon = document.getElementById('hudBerryIcon')?.innerText;
+  const bLabel = document.getElementById('hudBerryLabel')?.innerText;
+  const bColor = document.getElementById('hudBerryLabel')?.style.color;
+  const cIcon = document.getElementById('hudCatchIcon')?.innerText;
+  const cLabel = document.getElementById('hudCatchLabel')?.innerText;
+  const cColor = document.getElementById('hudCatchLabel')?.style.color;
+  const aIcon = document.getElementById('hudActionIcon')?.innerText;
+  const aLabel = document.getElementById('hudActionLabel')?.innerText;
+  const aColor = document.getElementById('hudActionLabel')?.style.color;
+
+  const mBIcon = document.getElementById('miniBerryIcon');
+  const mBLabel = document.getElementById('miniBerryLabel');
+  if (mBIcon && bIcon) mBIcon.innerText = bIcon;
+  if (mBLabel && bLabel) {
+    mBLabel.innerText = bLabel;
+    mBLabel.style.color = bColor || '#fbbf24';
+  }
+
+  const mCIcon = document.getElementById('miniCatchIcon');
+  const mCLabel = document.getElementById('miniCatchLabel');
+  if (mCIcon && cIcon) mCIcon.innerText = cIcon;
+  if (mCLabel && cLabel) {
+    mCLabel.innerText = cLabel;
+    mCLabel.style.color = cColor || '#34d399';
+  }
+
+  const mAIcon = document.getElementById('miniActionIcon');
+  const mALabel = document.getElementById('miniActionLabel');
+  if (mAIcon && aIcon) mAIcon.innerText = aIcon;
+  if (mALabel && aLabel) {
+    mALabel.innerText = aLabel;
+    mALabel.style.color = aColor || '#c084fc';
+  }
+
+  const badge = document.getElementById('miniModeBadge');
+  if (badge) {
+    badge.innerText = evaluationMode.toUpperCase();
+    if (evaluationMode === 'storage') {
+      badge.style.background = 'rgba(245,158,11,0.2)';
+      badge.style.color = '#fbbf24';
+    } else if (evaluationMode === 'blank') {
+      badge.style.background = 'rgba(100,116,139,0.2)';
+      badge.style.color = '#94a3b8';
+    } else {
+      badge.style.background = 'rgba(56,189,248,0.2)';
+      badge.style.color = '#38bdf8';
+    }
   }
 }
 
@@ -2091,7 +2321,7 @@ async function launchPipHud() {
   // 1. Try Document Picture-in-Picture first (Desktop Chrome / Edge / Experimental Android flags)
   if ('documentPictureInPicture' in window) {
     try {
-      const pipWin = await window.documentPictureInPicture.requestWindow({ width: 100, height: 300 });
+      const pipWin = await window.documentPictureInPicture.requestWindow({ width: 120, height: 320 });
       document.querySelectorAll('style, link[rel="stylesheet"]').forEach(s => {
         pipWin.document.head.appendChild(s.cloneNode(true));
       });
@@ -2119,8 +2349,7 @@ async function launchPipHud() {
     }
   }
 
-  // 2. Canvas Video Picture-in-Picture (Works natively on Android Chrome!)
-  // IMPORTANT: MUST request PiP synchronously without prior awaits to preserve the user gesture!
+  // 2. Canvas Video Picture-in-Picture (Mobile Chrome / Android - Zero Audio / Crash-Proof)
   try {
     if (!pipCanvas) {
       pipCanvas = document.createElement('canvas');
@@ -2131,42 +2360,46 @@ async function launchPipHud() {
     renderHudCanvas(ctx, 120, 300);
 
     if (!pipVideo) {
-      pipVideo = document.createElement('video');
-      pipVideo.muted = false; // With inaudible audio, Chrome keeps it alive in background!
-      pipVideo.volume = 0.01;
-      pipVideo.playsInline = true;
-      pipVideo.setAttribute('autoPictureInPicture', 'true');
-      pipVideo.style.position = 'fixed';
-      pipVideo.style.top = '-9999px';
-      pipVideo.style.left = '-9999px';
-      pipVideo.style.opacity = '0';
-      pipVideo.style.pointerEvents = 'none';
-      document.body.appendChild(pipVideo);
+      pipVideo = document.getElementById('pipHiddenVideo');
+      if (!pipVideo) {
+        pipVideo = document.createElement('video');
+        pipVideo.id = 'pipHiddenVideo';
+        pipVideo.style.position = 'fixed';
+        pipVideo.style.top = '-9999px';
+        pipVideo.style.left = '-9999px';
+        pipVideo.style.opacity = '0';
+        pipVideo.style.pointerEvents = 'none';
+        document.body.appendChild(pipVideo);
+      }
 
       pipVideo.addEventListener('leavepictureinpicture', () => {
         if (pipAnimId) cancelAnimationFrame(pipAnimId);
       });
 
-      // Tapping the floating PiP window on Android sends a pause event to the video!
+      // Debounce pause trigger so rapid taps don't re-trigger multiple scans
+      let lastPauseTrigger = 0;
       pipVideo.addEventListener('pause', async () => {
+        const now = Date.now();
+        if (now - lastPauseTrigger > 1000) {
+          lastPauseTrigger = now;
+          performOneTapAssessment();
+        }
         try { await pipVideo.play(); } catch(e) {}
-        performOneTapAssessment();
       });
     }
 
-    const stream = pipCanvas.captureStream(10);
-    const silentAudio = getSilentAudioStream();
-    if (silentAudio) {
-      silentAudio.getAudioTracks().forEach(t => stream.addTrack(t));
-    }
-    
-    pipVideo.srcObject = stream;
-    await pipVideo.play();
-    setupMediaSession();
-    if (navigator.mediaSession) {
-      navigator.mediaSession.playbackState = 'playing';
-    }
+    // MANDATORY settings for Android Chrome: Muted & PlaysInline
+    pipVideo.muted = true;
+    pipVideo.playsInline = true;
+    pipVideo.setAttribute('playsinline', '');
+    pipVideo.setAttribute('webkit-playsinline', '');
+    pipVideo.setAttribute('autoPictureInPicture', 'true');
 
+    // Video-only stream from canvas (no AudioContext, no audio tracks!)
+    const stream = pipCanvas.captureStream(15);
+    pipVideo.srcObject = stream;
+
+    // Start drawing loop so new frames are generated continuously
     if (pipAnimId) cancelAnimationFrame(pipAnimId);
     function loopDraw() {
       renderHudCanvas(ctx, 120, 300);
@@ -2174,29 +2407,35 @@ async function launchPipHud() {
     }
     loopDraw();
 
+    await pipVideo.play();
+
+    // Ensure the video element has decoded at least one frame before calling requestPictureInPicture
+    await new Promise(res => {
+      if (pipVideo.readyState >= 2) return res();
+      const onReady = () => {
+        pipVideo.removeEventListener('loadeddata', onReady);
+        res();
+      };
+      pipVideo.addEventListener('loadeddata', onReady);
+      setTimeout(res, 200);
+    });
+
+    setupMediaSession();
+    if (navigator.mediaSession) {
+      navigator.mediaSession.playbackState = 'playing';
+    }
+
     if (pipVideo.requestPictureInPicture) {
       await pipVideo.requestPictureInPicture();
       closeScannerModal();
       showScanToast('📺 Floating PiP HUD Active! Switch to Pokémon GO', '#38bdf8');
-      
-      // Auto-prompt screen stream AFTER PiP is safely opened
-      if (!screenStream || !screenStream.active) {
-        setTimeout(async () => {
-          if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-            try {
-              screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-              setupScreenStreamActive();
-            } catch (streamErr) {
-              console.warn('Screen stream prompt note:', streamErr);
-            }
-          }
-        }, 600);
-      }
       return;
+    } else {
+      throw new Error('Picture-in-Picture not supported on this browser');
     }
   } catch (vErr) {
     console.warn('Video PiP failed:', vErr);
-    alert('Picture-in-Picture could not stay active. On your Samsung phone, use Pop-Up View: Swipe to Recent Apps, tap the app icon at top of card, and tap "Open in pop-up view"!');
+    showSamsungPopUpFallback(vErr);
   }
 }
 
@@ -2697,7 +2936,11 @@ async function performOneTapAssessment() {
       frameCanvas.height = vH;
       const fctx = frameCanvas.getContext('2d');
       fctx.drawImage(ocrHiddenVideo, 0, 0, vW, vH);
-      return await assessCanvasImage(frameCanvas, false);
+      const mBtn = document.getElementById('miniTapBtnTitle');
+      if (mBtn) mBtn.innerText = '⚡ SCANNING...';
+      const res = await assessCanvasImage(frameCanvas, false);
+      if (mBtn) mBtn.innerText = 'TAP TO SCAN SCREEN';
+      return res;
     } catch (streamErr) {
       console.warn('Frame capture from video stream failed:', streamErr);
     }
@@ -2908,6 +3151,10 @@ function applyAppUpdate() {
 applyHudDock(currentDock);
 initTypePills();
 applyFilters();
+syncMiniHudSlots();
+if (localStorage.getItem('pogo_mini_hud_mode') === 'true') {
+  toggleMiniMode(true);
+}
 
 // PWA Service Worker & Install Logic (for Mobile)
 if ('serviceWorker' in navigator) {
