@@ -521,7 +521,7 @@
 <body>
 
 <!-- Vertical 3-Symbol HUD Pill (Left / Right Middle Dead Space) -->
-<div id="verticalHudPill" class="vertical-hud-pill hud-right" onclick="toggleHudDetails()" title="Field HUD: Tap for details, tap ⇄ to flip side">
+<div id="verticalHudPill" class="vertical-hud-pill hud-right" onclick="onPillClick(event)" title="Field HUD: Tap to restore full screen & view intel, tap ⇄ to flip side">
   <div class="hud-flip-btn" onclick="event.stopPropagation(); flipHudSide()" title="Flip Left/Right Docking">⇄</div>
   
   <div class="hud-slot" id="hudBerrySlot">
@@ -1187,10 +1187,42 @@ function updateHudPopover() {
       <div>📋 <b>Action:</b> ${p.act}</div>
       <div>⚔️ <b>PvP:</b> ${p.pvp_q} / ${p.pvp_c}</div>
     </div>
-    <button onclick="openDetails(${p.id}, '${p.name.replace(/'/g, "\\'") }'); closeHudPopover();" style="width:100%; background:linear-gradient(135deg, #38bdf8, #818cf8); color:#0f172a; border:none; border-radius:6px; padding:6px; font-weight:800; font-size:11px; cursor:pointer;">
-      📊 Open 50-Level CP Matrix (45 & 44s)
-    </button>
+    <div style="display:flex; gap:6px;">
+      <button onclick="openDetails(${p.id}, '${p.name.replace(/'/g, "\\'") }'); closeHudPopover();" style="flex:1; background:linear-gradient(135deg, #38bdf8, #818cf8); color:#0f172a; border:none; border-radius:6px; padding:6px; font-weight:800; font-size:11px; cursor:pointer;">
+        📊 50-Level Matrix (45 & 44s)
+      </button>
+      <button onclick="toggleFullScreen()" style="background:#334155; color:#f8fafc; border:none; border-radius:6px; padding:6px 10px; font-weight:800; font-size:11px; cursor:pointer;" title="Toggle Full Screen Mode">
+        ⛶ Fullscreen
+      </button>
+    </div>
   `;
+}
+
+function restoreFullScreen() {
+  const docEl = document.documentElement;
+  const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (requestFs) {
+      requestFs.call(docEl).catch(err => console.log('Fullscreen handled:', err));
+    }
+  }
+}
+
+function toggleFullScreen() {
+  const docEl = document.documentElement;
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if (isFs) {
+    const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (exitFs) exitFs.call(document).catch(() => {});
+  } else {
+    const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+    if (requestFs) requestFs.call(docEl).catch(() => {});
+  }
+}
+
+function onPillClick(e) {
+  restoreFullScreen();
+  toggleHudDetails();
 }
 
 function toggleHudDetails() {
@@ -1513,6 +1545,11 @@ async function launchPipHud() {
       pill.style.position = 'static';
       pill.style.transform = 'none';
       pill.style.margin = '16px auto';
+      pill.onclick = () => {
+        window.focus();
+        restoreFullScreen();
+        try { pipWin.close(); } catch(e) {}
+      };
       pipWin.document.body.style.background = '#0f172a';
       pipWin.document.body.style.display = 'flex';
       pipWin.document.body.style.justifyContent = 'center';
