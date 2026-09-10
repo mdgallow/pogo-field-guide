@@ -410,10 +410,11 @@
     
   
   <div class="checker-box">
-    <span style="font-size:12px; font-weight:800; color:var(--accent);">🎯 Catch Screen:</span>
-    <input type="number" id="catchCpInput" placeholder="Enter CP" inputmode="numeric" />
+    <span style="font-size:12px; font-weight:800; color:var(--accent); white-space:nowrap;">🎯 Catch Screen:</span>
+    <input type="number" id="catchCpInput" placeholder="Enter CP (e.g. 1035)" inputmode="numeric" oninput="checkCaughtCp()" onkeydown="if(event.key==='Enter') checkCaughtCp()" />
     <button onclick="checkCaughtCp()">Inspect</button>
-    <div id="checkerResult" style="font-size:12px; font-weight:700;"></div>
+    <button id="clearCpBtn" onclick="clearCpFilter()" style="display:none; background:#334155; color:#f87171; border:none; border-radius:8px; padding:7px 10px; font-weight:800; font-size:12px; cursor:pointer;" title="Clear CP Filter">✕ Clear</button>
+    <div id="checkerResult" style="font-size:12px; font-weight:700; width:100%;"></div>
   </div>
 </div>
 
@@ -632,6 +633,7 @@ const ALL_TYPES = [
   { name: 'Dark', color: '#334155' }, { name: 'Fairy', color: '#f472b6' }
 ];
 
+let cpFilterVal = null;
 let filters = {
   type: 'ALL',
   region: 'ALL',
@@ -658,6 +660,13 @@ function setFilter(key, val, elem) {
 }
 
 function resetAllFilters() {
+  cpFilterVal = null;
+  const cpInp = document.getElementById('catchCpInput');
+  if (cpInp) cpInp.value = '';
+  const clrBtn = document.getElementById('clearCpBtn');
+  if (clrBtn) clrBtn.style.display = 'none';
+  const chkRes = document.getElementById('checkerResult');
+  if (chkRes) chkRes.innerHTML = '';
   filters = { type: 'ALL', region: 'ALL', evoStage: 'ALL', tier: 'ALL', action: 'ALL', berry: 'ALL' };
   document.querySelectorAll('.chips-row, #typesFilterRow').forEach(row => {
     row.querySelectorAll('.chip, .type-pill').forEach((c, idx) => {
@@ -707,6 +716,10 @@ function applyFilters() {
   const sort = document.getElementById('sortSelect').value;
 
   currentFiltered = POKEMON_DATA.filter(p => {
+    if (cpFilterVal !== null) {
+      if (!p.cps || !p.cps.includes(cpFilterVal)) return false;
+    }
+
     if (filters.action !== 'ALL' && p.act !== filters.action) return false;
     if (filters.berry !== 'ALL' && p.berry !== filters.berry) return false;
     if (filters.region !== 'ALL' && p.region !== filters.region) return false;
@@ -732,6 +745,11 @@ function applyFilters() {
   });
 
   currentFiltered.sort((a, b) => {
+    if (cpFilterVal !== null) {
+      const lvlA = a.cps ? a.cps.indexOf(cpFilterVal) : 999;
+      const lvlB = b.cps ? b.cps.indexOf(cpFilterVal) : 999;
+      if (lvlA !== lvlB) return lvlA - lvlB;
+    }
     if (sort === 'dex_asc') return a.id - b.id;
     if (sort === 'dex_desc') return b.id - a.id;
     if (sort === 'pvp_asc') return a.pvp_n - b.pvp_n;
@@ -749,32 +767,79 @@ function renderBatch() {
   const grid = document.getElementById('gridContainer');
   const toRender = currentFiltered.slice(0, currentRenderLimit);
   
-  grid.innerHTML = toRender.map(p => `
-    <div class="card" onclick="openDetails(${p.id}, '${p.name.replace(/'/g, "\\'") }')">
-      <div class="card-top">
-        <img class="card-img" src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png'" />
-        <div class="card-meta">
-          <div class="dex-tag">#${p.id} • ${p.region}</div>
-          <div class="poke-name">${p.name}</div>
-          <div style="display:flex; gap:4px; margin-top:2px;">
-            ${p.types.map(t => `<span style="font-size:10px; font-weight:700; padding:1px 6px; border-radius:6px; background:rgba(255,255,255,0.1);">${t}</span>`).join('')}
+  if (currentFiltered.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; background: rgba(30, 41, 59, 0.5); border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: 16px; margin: 12px 0;">
+        <div style="font-size: 40px; margin-bottom: 10px;">🔍</div>
+        <h3 style="font-size: 16px; font-weight: 800; color: #f87171; margin-bottom: 6px;">
+          ${cpFilterVal !== null ? `No Hundo Match for CP ${cpFilterVal}` : 'No Pokémon Match Current Filters'}
+        </h3>
+        <p style="font-size: 12px; color: var(--text-muted); max-width: 440px; margin: 0 auto 16px auto; line-height: 1.6;">
+          ${cpFilterVal !== null 
+            ? `None of the 1,401 Pokémon have a 100% IV (15/15/15) CP of <b>${cpFilterVal}</b> at any level from 1 to 50. This wild encounter is not a 100% IV hundo.` 
+            : 'Try clearing your search term or resetting the filter matrix.'}
+        </p>
+        <button onclick="${cpFilterVal !== null ? 'clearCpFilter()' : 'resetAllFilters()'}" style="background: linear-gradient(135deg, #38bdf8, #818cf8); color: #0f172a; border: none; border-radius: 8px; padding: 8px 18px; font-weight: 800; font-size: 12px; cursor: pointer;">
+          ${cpFilterVal !== null ? '✕ Clear CP Filter' : '↺ Reset All Filters'}
+        </button>
+      </div>
+    `;
+  } else {
+    grid.innerHTML = toRender.map(p => {
+      let matchBadge = '';
+      if (cpFilterVal !== null && p.cps) {
+        const matchIdx = p.cps.indexOf(cpFilterVal);
+        if (matchIdx !== -1) {
+          const matchLvl = matchIdx + 1;
+          const isLvl50 = (matchLvl === 50);
+          const isHigh = (matchLvl >= 40);
+          const bg = isLvl50 ? 'linear-gradient(135deg, #a855f7, #ec4899)' : (isHigh ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : '#10b981');
+          const border = isLvl50 ? '#f472b6' : (isHigh ? '#a78bfa' : '#34d399');
+          const title = isLvl50 ? '🟣 MASTERBALL: Level 50 Hundo!' : (isHigh ? `⭐ Rare Level ${matchLvl} Hundo` : `🎯 Level ${matchLvl} Hundo`);
+          matchBadge = `
+            <div style="background:${bg}; border:1px solid ${border}; color:#fff; font-size:11px; font-weight:800; padding:4px 8px; border-radius:6px; margin: 6px 0 4px 0; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.3); ${isLvl50 ? 'animation:pulse 1s infinite;' : ''}">
+              ${title} (${cpFilterVal} CP)
+            </div>
+          `;
+        }
+      }
+
+      return `
+        <div class="card" onclick="openDetails(${p.id}, '${p.name.replace(/'/g, "\\'") }')" style="${matchBadge ? 'border-color: rgba(56, 189, 248, 0.7); box-shadow: 0 0 14px rgba(56, 189, 248, 0.2);' : ''}">
+          <div class="card-top">
+            <img class="card-img" src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png'" />
+            <div class="card-meta">
+              <div class="dex-tag">#${p.id} • ${p.region}</div>
+              <div class="poke-name">${p.name}</div>
+              <div style="display:flex; gap:4px; margin-top:2px;">
+                ${p.types.map(t => `<span style="font-size:10px; font-weight:700; padding:1px 6px; border-radius:6px; background:rgba(255,255,255,0.1);">${t}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+          ${matchBadge}
+          <div class="badges-row">
+            <div class="badge-action ${getActionClass(p.act)}">${p.act}</div>
+            ${getBerryBadge(p.berry)}
+          </div>
+          <div class="card-footer">
+            <span>Evolves: <b>${p.evo}</b></span>
+            <span>Max CP (L50): <b style="color:#34d399;">${p.max_cp || '-'} CP</b></span>
           </div>
         </div>
-      </div>
-      <div class="badges-row">
-        <div class="badge-action ${getActionClass(p.act)}">${p.act}</div>
-        ${getBerryBadge(p.berry)}
-      </div>
-      <div class="card-footer">
-        <span>Evolves: <b>${p.evo}</b></span>
-        <span>Max CP (L50): <b style="color:#34d399;">${p.max_cp || '-'} CP</b></span>
-      </div>
-    </div>
-  `).join('');
+      `;
+    }).join('');
+  }
 
   const summary = document.getElementById('resultsSummary');
   if (summary) {
-    summary.innerHTML = `Showing <b>${toRender.length}</b> of <b>${currentFiltered.length}</b> Pokémon`;
+    if (cpFilterVal !== null) {
+      summary.innerHTML = `
+        <span>Showing <b>${toRender.length}</b> of <b>${currentFiltered.length}</b> Pokémon matching <b>CP ${cpFilterVal}</b></span>
+        <button onclick="clearCpFilter()" style="margin-left:8px; background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.4); border-radius:6px; padding:2px 8px; font-size:11px; cursor:pointer; font-weight:700;">✕ Clear CP Filter</button>
+      `;
+    } else {
+      summary.innerHTML = `Showing <b>${toRender.length}</b> of <b>${currentFiltered.length}</b> Pokémon`;
+    }
   }
 
   const loadMoreBox = document.getElementById('loadMoreContainer');
@@ -844,9 +909,9 @@ function openDetails(dexId, name) {
     </h3>
     <div class="cp-grid">
       ${p.cps.map((cp, idx) => `
-        <div class="cp-cell ${idx === 49 ? 'cp-l50' : ''}">
-          <div class="lvl">L${idx + 1}${idx === 49 ? ' 👑' : ''}</div>
-          <div class="val">${cp}</div>
+        <div class="cp-cell ${idx === 49 ? 'cp-l50' : ''}" style="${cpFilterVal !== null && cp === cpFilterVal ? 'border:2px solid #38bdf8 !important; background:rgba(56,189,248,0.28) !important; transform:scale(1.06);' : ''}">
+          <div class="lvl">${cpFilterVal !== null && cp === cpFilterVal ? '🎯 ' : ''}L${idx + 1}${idx === 49 ? ' 👑' : ''}</div>
+          <div class="val" style="${cpFilterVal !== null && cp === cpFilterVal ? 'color:#38bdf8; font-weight:900;' : ''}">${cp}</div>
         </div>
       `).join('')}
     </div>
@@ -867,33 +932,70 @@ function closeGuideModal(e) {
 }
 
 function checkCaughtCp() {
-  const cpVal = parseInt(document.getElementById('catchCpInput').value);
+  const inputElem = document.getElementById('catchCpInput');
+  const clearBtn = document.getElementById('clearCpBtn');
   const resultDiv = document.getElementById('checkerResult');
-  if (!cpVal || cpVal < 10) {
-    resultDiv.innerHTML = '<span style="color:#f87171;">Enter CP</span>';
+  const rawVal = inputElem ? inputElem.value.trim() : '';
+  
+  if (!rawVal) {
+    cpFilterVal = null;
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (resultDiv) resultDiv.innerHTML = '';
+    applyFilters();
     return;
   }
+  
+  const cpVal = parseInt(rawVal, 10);
+  if (isNaN(cpVal) || cpVal < 10) {
+    cpFilterVal = null;
+    if (clearBtn) clearBtn.style.display = 'inline-block';
+    if (resultDiv) resultDiv.innerHTML = '<span style="color:#f87171;">Enter valid CP (≥ 10)</span>';
+    applyFilters();
+    return;
+  }
+  
+  cpFilterVal = cpVal;
+  if (clearBtn) clearBtn.style.display = 'inline-block';
+  
   let matching = [];
   for (const p of POKEMON_DATA) {
-    const idx = p.cps.indexOf(cpVal);
-    if (idx !== -1) matching.push({ name: p.name, lvl: idx + 1, is_leg: p.is_leg, act: p.act });
+    if (p.cps && p.cps.length > 0) {
+      const idx = p.cps.indexOf(cpVal);
+      if (idx !== -1) matching.push({ name: p.name, lvl: idx + 1, is_leg: p.is_leg, act: p.act });
+    }
   }
+  
   if (matching.length === 0) {
-    resultDiv.innerHTML = `<span style="color:#f87171;">❌ No hundo match!</span>`;
+    resultDiv.innerHTML = `<span style="color:#f87171;">❌ No 100% IV match for ${cpVal} CP (0 species match)</span>`;
   } else {
     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     const hasLvl50 = matching.some(m => m.lvl === 50);
     const hasHighLvl = matching.some(m => m.lvl >= 40);
+    const count = matching.length;
     const sample = matching.slice(0, 2).map(m => `${m.name} (L${m.lvl})`).join(', ');
     const extra = matching.length > 2 ? ' +' + (matching.length - 2) : '';
+    
     if (hasLvl50) {
-      resultDiv.innerHTML = `<span style="color:#e879f9; font-weight:800; animation:pulse 1s infinite;">🟣 MASTERBALL PRIORITY! L50 100% IV: ${sample}${extra}!</span>`;
+      resultDiv.innerHTML = `<span style="color:#e879f9; font-weight:800; animation:pulse 1s infinite;">🟣 MASTERBALL PRIORITY! Level 50 100% IV: ${sample}${extra} (${count} species filtered below)</span>`;
     } else if (hasHighLvl) {
-      resultDiv.innerHTML = `<span style="color:#c084fc; font-weight:800;">⭐ RARE L40+ 100% IV: ${sample}${extra}!</span>`;
+      resultDiv.innerHTML = `<span style="color:#c084fc; font-weight:800;">⭐ RARE L40+ 100% IV: ${sample}${extra} (${count} species filtered below)</span>`;
     } else {
-      resultDiv.innerHTML = `<span style="color:#34d399; font-weight:800;">🎯 100% IV Match: ${sample}${extra}</span>`;
+      resultDiv.innerHTML = `<span style="color:#34d399; font-weight:800;">🎯 100% IV Match: ${sample}${extra} (${count} species filtered below)</span>`;
     }
   }
+  
+  applyFilters();
+}
+
+function clearCpFilter() {
+  const inputElem = document.getElementById('catchCpInput');
+  const clearBtn = document.getElementById('clearCpBtn');
+  const resultDiv = document.getElementById('checkerResult');
+  if (inputElem) inputElem.value = '';
+  if (clearBtn) clearBtn.style.display = 'none';
+  if (resultDiv) resultDiv.innerHTML = '';
+  cpFilterVal = null;
+  applyFilters();
 }
 
 // Update & Origin Sync Engine
