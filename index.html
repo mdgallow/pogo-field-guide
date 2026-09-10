@@ -531,15 +531,30 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(245, 158, 11, 0.35) !important;
     opacity: 1;
   }
-  .hud-scan-btn:active {
-    transform: scale(0.85);
+  .hud-scan-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 38px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(236, 72, 153, 0.5);
+    cursor: pointer;
+    margin-bottom: 4px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .hud-scan-btn.scanning {
-    animation: hudSpin 0.7s linear infinite !important;
+  .hud-scan-slot:active {
+    transform: scale(0.9);
   }
-  @keyframes hudSpin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  .hud-scan-slot.scanning {
+    animation: hudPulse 0.6s infinite alternate !important;
+  }
+  @keyframes hudPulse {
+    0% { box-shadow: 0 0 4px #ec4899; }
+    100% { box-shadow: 0 0 16px #38bdf8; }
   }
 </style>
 </head>
@@ -547,9 +562,15 @@
 
 <!-- Vertical 3-Symbol HUD Pill (Left / Right Middle Dead Space) -->
 <div id="verticalHudPill" class="vertical-hud-pill hud-right" onclick="onPillClick(event)" title="Field HUD: Tap to restore full screen & view intel, tap ⇄ to flip side, tap ⚡ to scan">
-  <div style="display:flex; justify-content:space-between; align-items:center; width:100%; padding:0 2px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; width:100%; padding:0 3px 3px 3px; border-bottom:1px solid rgba(255,255,255,0.12); margin-bottom:4px;">
     <div class="hud-flip-btn" onclick="event.stopPropagation(); flipHudSide()" title="Flip Left/Right Docking">⇄</div>
-    <div class="hud-scan-btn" id="hudScanBtn" onclick="event.stopPropagation(); performOneTapAssessment()" title="⚡ 1-Tap Instant Screen Scan & Assess" style="background:linear-gradient(135deg, #a855f7, #ec4899); color:#fff; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; cursor:pointer; box-shadow:0 0 8px rgba(236,72,153,0.6);">⚡</div>
+    <div style="font-size:8.5px; font-weight:800; color:var(--text-muted);">HUD</div>
+  </div>
+
+  <!-- Big Prominent 1-Tap Scan Trigger Slot -->
+  <div class="hud-scan-slot" id="hudScanSlot" onclick="event.stopPropagation(); performOneTapAssessment()" title="⚡ TAP TO EVALUATE SCREEN NOW">
+    <div style="font-size:15px; line-height:1;" id="hudScanIcon">⚡</div>
+    <div style="font-size:8px; font-weight:900; letter-spacing:0.5px; margin-top:2px;" id="hudScanLabel">SCAN</div>
   </div>
   
   <div class="hud-slot" id="hudBerrySlot">
@@ -588,8 +609,11 @@
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
+      <button id="oneTapScanHeaderBtn" onclick="performOneTapAssessment()" style="background:linear-gradient(135deg, #a855f7, #ec4899); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(236,72,153,0.4);">
+        ⚡ 1-Tap Scan
+      </button>
       <button onclick="openScannerModal()" style="background:linear-gradient(135deg, #a855f7, #6366f1); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(168,85,247,0.3);">
-        📱 HUD & Scanner
+        📱 HUD
       </button>
       <button onclick="openGuideModal()" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(59,130,246,0.3);">
         📖 Guide
@@ -876,6 +900,28 @@
         <p style="font-size:11px; color:var(--text-muted);">Real-Time 3-Point Decision Overlay (45 Hundo & 44 Priority)</p>
       </div>
       <span style="font-size:11px; background:rgba(168,85,247,0.2); color:#c084fc; padding:2px 7px; border-radius:6px; font-weight:800;">Passive HUD</span>
+    </div>
+
+    <!-- Real-Time Triggers & Auto-Scan Controls -->
+    <div style="background:linear-gradient(135deg, rgba(168,85,247,0.15), rgba(236,72,153,0.15)); border:2px solid #ec4899; border-radius:12px; padding:14px; margin-bottom:14px; box-shadow:0 4px 20px rgba(236,72,153,0.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="font-size:14px; font-weight:900; color:#f472b6;">⚡ Real-Time Evaluation Triggers</div>
+        <span id="autoScanBadge" style="font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; background:#334155; color:#94a3b8;">AUTO-SCAN: OFF</span>
+      </div>
+      <p style="font-size:11.5px; color:#cbd5e1; margin-bottom:12px; line-height:1.5;">
+        Get instant 3-point tactical advice (Catch berry/IV vs Storage delete/keep) with <b>Zero Chore</b> effort:
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        <button id="modalOneTapScanBtn" onclick="performOneTapAssessment()" style="flex:1; min-width:180px; background:linear-gradient(135deg, #a855f7, #ec4899); color:#fff; border:none; border-radius:10px; padding:11px 16px; font-size:13px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(236,72,153,0.4);">
+          <span style="font-size:16px;">⚡</span> SCAN SCREEN NOW
+        </button>
+        <button id="toggleAutoScanBtn" onclick="toggleAutoScan()" style="flex:1; min-width:160px; background:#1e293b; color:#38bdf8; border:1.5px solid #38bdf8; border-radius:10px; padding:11px 16px; font-size:13px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span id="autoScanIcon">🟢</span> <span id="autoScanBtnText">Enable Auto-Scan</span>
+        </button>
+      </div>
+      <div id="triggerStatusMsg" style="font-size:11px; color:#38bdf8; font-weight:700; line-height:1.4;">
+        💡 Tip: When Screen Stream is active, <b>Auto-Scan</b> monitors your screen every 1.8s, assesses encounters automatically, and vibrates your phone!
+      </div>
     </div>
 
     <!-- Section: The 3 Symbols in Vertical Dead-Space Pill -->
@@ -1864,6 +1910,11 @@ function closeScannerModal(e) {
 let pipCanvas = null;
 let pipVideo = null;
 let pipAnimId = null;
+let isAutoScanActive = false;
+let autoScanTimer = null;
+let isCurrentlyScanning = false;
+let lastEvaluatedKey = null;
+let ocrHiddenVideo = null;
 
 function renderHudCanvas(ctx, w, h) {
   ctx.clearRect(0, 0, w, h);
@@ -1878,42 +1929,64 @@ function renderHudCanvas(ctx, w, h) {
   }
   
   ctx.strokeStyle = borderCol;
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 3.5;
   ctx.beginPath();
   if (ctx.roundRect) {
-    ctx.roundRect(4, 4, w - 8, h - 8, 22);
+    ctx.roundRect(4, 4, w - 8, h - 8, 20);
   } else {
     ctx.rect(4, 4, w - 8, h - 8);
   }
   ctx.fill();
   ctx.stroke();
 
-  // Mode badge at top of PiP pill
-  ctx.font = 'bold 9px sans-serif';
+  // Top Trigger / Action Banner in PiP Canvas
+  const bannerBg = isCurrentlyScanning ? '#ec4899' : (isAutoScanActive ? '#059669' : '#a855f7');
+  ctx.fillStyle = bannerBg;
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(8, 8, w - 16, 22, 6);
+    ctx.fill();
+  } else {
+    ctx.fillRect(8, 8, w - 16, 22);
+  }
+  
+  ctx.font = 'bold 8.5px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff';
+  
+  if (isCurrentlyScanning) {
+    ctx.fillText('⚡ SCANNING...', w / 2, 19);
+  } else if (isAutoScanActive) {
+    ctx.fillText('🟢 AUTO-SCAN ON', w / 2, 19);
+  } else {
+    ctx.fillText('▶ TAP PLAY TO SCAN', w / 2, 19);
+  }
+
+  // Mode badge below trigger bar
+  ctx.font = 'bold 8.5px sans-serif';
   ctx.fillStyle = borderCol;
-  const modeTag = evaluationMode === 'blank' ? 'STANDBY' : (evaluationMode === 'storage' ? 'STORAGE' : 'CATCH');
-  ctx.fillText(modeTag, w / 2, 16);
+  const modeTag = evaluationMode === 'blank' ? '• STANDBY •' : (evaluationMode === 'storage' ? '• STORAGE •' : '• CATCH •');
+  ctx.fillText(modeTag, w / 2, 40);
 
   // Slot 1: Berry (Catch) / Decision (Storage) / Idle (Blank)
   const bIcon = document.getElementById('hudBerryIcon')?.innerText || (evaluationMode === 'blank' ? '⚪' : (evaluationMode === 'storage' ? '🗑️' : '🍍'));
   const bLabel = document.getElementById('hudBerryLabel')?.innerText || (evaluationMode === 'blank' ? 'IDLE' : (evaluationMode === 'storage' ? 'DELETE' : 'BERRY'));
   const bCol = evaluationMode === 'blank' ? '#64748b' : (evaluationMode === 'storage' ? '#f87171' : '#fbbf24');
   
-  ctx.font = '30px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
+  ctx.font = '26px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(bIcon, w / 2, 50);
-  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText(bIcon, w / 2, 72);
+  ctx.font = 'bold 10px sans-serif';
   ctx.fillStyle = bCol;
-  ctx.fillText(bLabel, w / 2, 78);
+  ctx.fillText(bLabel, w / 2, 97);
 
   // Separator 1
   ctx.strokeStyle = '#334155';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(16, 94);
-  ctx.lineTo(w - 16, 94);
+  ctx.moveTo(14, 112);
+  ctx.lineTo(w - 14, 112);
   ctx.stroke();
 
   // Slot 2: Catch Priority (Catch) / IV Status (Storage) / Standby (Blank)
@@ -1921,17 +1994,17 @@ function renderHudCanvas(ctx, w, h) {
   const cLabel = document.getElementById('hudCatchLabel')?.innerText || (evaluationMode === 'blank' ? 'STANDBY' : (evaluationMode === 'storage' ? 'ASSESS' : 'CATCH'));
   const cCol = evaluationMode === 'blank' ? '#64748b' : (evaluationMode === 'storage' ? '#38bdf8' : '#34d399');
   
-  ctx.font = '30px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
+  ctx.font = '26px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(cIcon, w / 2, 130);
-  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText(cIcon, w / 2, 142);
+  ctx.font = 'bold 10px sans-serif';
   ctx.fillStyle = cCol;
-  ctx.fillText(cLabel, w / 2, 158);
+  ctx.fillText(cLabel, w / 2, 167);
 
   // Separator 2
   ctx.beginPath();
-  ctx.moveTo(16, 174);
-  ctx.lineTo(w - 16, 174);
+  ctx.moveTo(14, 182);
+  ctx.lineTo(w - 14, 182);
   ctx.stroke();
 
   // Slot 3: Future Action (Catch) / Benefit Reward (Storage) / Ready (Blank)
@@ -1939,19 +2012,47 @@ function renderHudCanvas(ctx, w, h) {
   const aLabel = document.getElementById('hudActionLabel')?.innerText || (evaluationMode === 'blank' ? 'READY' : (evaluationMode === 'storage' ? '+1 CANDY' : 'ACTION'));
   const aCol = evaluationMode === 'blank' ? '#64748b' : (evaluationMode === 'storage' ? '#c084fc' : '#c084fc');
   
-  ctx.font = '30px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
+  ctx.font = '26px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(aIcon, w / 2, 210);
-  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText(aIcon, w / 2, 212);
+  ctx.font = 'bold 10px sans-serif';
   ctx.fillStyle = aCol;
-  ctx.fillText(aLabel, w / 2, 238);
+  ctx.fillText(aLabel, w / 2, 237);
+
+  // Micro footer
+  ctx.font = '7.5px sans-serif';
+  ctx.fillStyle = '#475569';
+  ctx.fillText('PoGo Companion', w / 2, 258);
+}
+
+function setupMediaSession() {
+  if (!('mediaSession' in navigator)) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: isAutoScanActive ? '🟢 Auto-Scan Active' : '⚡ 1-Tap Screen Assessment',
+      artist: 'Tap Play (▶) to Scan Screen!',
+      album: 'PoGo Companion'
+    });
+    
+    const handleTrigger = () => {
+      performOneTapAssessment();
+    };
+    navigator.mediaSession.setActionHandler('play', handleTrigger);
+    navigator.mediaSession.setActionHandler('pause', handleTrigger);
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      toggleAutoScan();
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', handleTrigger);
+  } catch(e) {
+    console.warn('mediaSession setup note:', e);
+  }
 }
 
 async function launchPipHud() {
   // 1. Try Document Picture-in-Picture (Desktop Chrome / Edge / Experimental Android flags)
   if ('documentPictureInPicture' in window) {
     try {
-      const pipWin = await window.documentPictureInPicture.requestWindow({ width: 100, height: 280 });
+      const pipWin = await window.documentPictureInPicture.requestWindow({ width: 100, height: 290 });
       document.querySelectorAll('style, link[rel="stylesheet"]').forEach(s => {
         pipWin.document.head.appendChild(s.cloneNode(true));
       });
@@ -2008,6 +2109,7 @@ async function launchPipHud() {
     const stream = pipCanvas.captureStream(10);
     pipVideo.srcObject = stream;
     await pipVideo.play();
+    setupMediaSession();
 
     if (pipAnimId) cancelAnimationFrame(pipAnimId);
     function loopDraw() {
@@ -2029,6 +2131,162 @@ async function launchPipHud() {
   alert('To overlay over Pokémon GO on Android: Open your Recent Apps screen, tap the Companion icon at the top, and tap "Open in pop-up view" (Samsung) or "Split Screen"! On iPhone: swipe the bottom home bar to switch instantly.');
 }
 
+function toggleAutoScan() {
+  isAutoScanActive = !isAutoScanActive;
+  updateAutoScanUI();
+  setupMediaSession();
+  
+  if (isAutoScanActive) {
+    if (!screenStream || !screenStream.active) {
+      startAutoScanWithStreamPrompt();
+    } else {
+      startAutoScanLoop();
+      showScanToast('🟢 Auto-Scan Active: Checking screen every 1.8s', '#10b981');
+    }
+  } else {
+    stopAutoScanLoop();
+    showScanToast('⚪ Auto-Scan Stopped (1-Tap Manual Mode)', '#94a3b8');
+  }
+}
+
+async function startAutoScanWithStreamPrompt() {
+  try {
+    await toggleScreenStream();
+    if (screenStream && screenStream.active) {
+      startAutoScanLoop();
+      showScanToast('🟢 Screen Stream & Auto-Scan Active!', '#10b981');
+    } else {
+      isAutoScanActive = false;
+      updateAutoScanUI();
+    }
+  } catch (e) {
+    isAutoScanActive = false;
+    updateAutoScanUI();
+  }
+}
+
+function updateAutoScanUI() {
+  const badge = document.getElementById('autoScanBadge');
+  const btn = document.getElementById('toggleAutoScanBtn');
+  const icon = document.getElementById('autoScanIcon');
+  const btnTxt = document.getElementById('autoScanBtnText');
+  const hudScanLabel = document.getElementById('hudScanLabel');
+  const hudScanSlot = document.getElementById('hudScanSlot');
+
+  if (isAutoScanActive) {
+    if (badge) {
+      badge.innerText = 'AUTO-SCAN: ACTIVE';
+      badge.style.background = 'rgba(16,185,129,0.25)';
+      badge.style.color = '#34d399';
+      badge.style.border = '1px solid #10b981';
+    }
+    if (btn) {
+      btn.style.background = 'rgba(16,185,129,0.2)';
+      btn.style.borderColor = '#10b981';
+      btn.style.color = '#34d399';
+    }
+    if (icon) icon.innerText = '⏹️';
+    if (btnTxt) btnTxt.innerText = 'Stop Auto-Scan';
+    if (hudScanLabel) hudScanLabel.innerText = 'AUTO';
+    if (hudScanSlot) {
+      hudScanSlot.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+      hudScanSlot.title = '🟢 AUTO-SCAN ACTIVE (Tap to Scan Now)';
+    }
+  } else {
+    if (badge) {
+      badge.innerText = 'AUTO-SCAN: OFF';
+      badge.style.background = '#334155';
+      badge.style.color = '#94a3b8';
+      badge.style.border = 'none';
+    }
+    if (btn) {
+      btn.style.background = '#1e293b';
+      btn.style.borderColor = '#38bdf8';
+      btn.style.color = '#38bdf8';
+    }
+    if (icon) icon.innerText = '🟢';
+    if (btnTxt) btnTxt.innerText = 'Enable Auto-Scan';
+    if (hudScanLabel) hudScanLabel.innerText = 'SCAN';
+    if (hudScanSlot) {
+      hudScanSlot.style.background = 'linear-gradient(135deg, #a855f7, #ec4899)';
+      hudScanSlot.title = '⚡ 1-Tap Instant Screen Scan & Assess';
+    }
+  }
+}
+
+function startAutoScanLoop() {
+  if (autoScanTimer) clearInterval(autoScanTimer);
+  autoScanTimer = setInterval(async () => {
+    if (!isAutoScanActive) return;
+    if (!screenStream || !screenStream.active) {
+      stopAutoScanLoop();
+      isAutoScanActive = false;
+      updateAutoScanUI();
+      return;
+    }
+    if (isCurrentlyScanning) return;
+    await performSilentAutoCheck();
+  }, 1800);
+}
+
+function stopAutoScanLoop() {
+  if (autoScanTimer) {
+    clearInterval(autoScanTimer);
+    autoScanTimer = null;
+  }
+}
+
+async function performSilentAutoCheck() {
+  if (!screenStream || !screenStream.active) return;
+  try {
+    if (!ocrHiddenVideo) {
+      ocrHiddenVideo = document.createElement('video');
+      ocrHiddenVideo.playsInline = true;
+      ocrHiddenVideo.muted = true;
+      ocrHiddenVideo.style.position = 'fixed';
+      ocrHiddenVideo.style.top = '-9999px';
+      document.body.appendChild(ocrHiddenVideo);
+    }
+    if (ocrHiddenVideo.srcObject !== screenStream) {
+      ocrHiddenVideo.srcObject = screenStream;
+      await ocrHiddenVideo.play();
+    }
+    if (!ocrHiddenVideo.videoWidth || !ocrHiddenVideo.videoHeight) return;
+
+    const vW = ocrHiddenVideo.videoWidth;
+    const vH = ocrHiddenVideo.videoHeight;
+    
+    // Quick fingerprint: sample pixels to see if frame changed
+    const checkCanvas = document.createElement('canvas');
+    checkCanvas.width = 40;
+    checkCanvas.height = 40;
+    const cctx = checkCanvas.getContext('2d');
+    cctx.drawImage(ocrHiddenVideo, 0, 0, 40, 40);
+    const pData = cctx.getImageData(0, 0, 40, 40).data;
+    
+    let frameHash = 0;
+    for (let i = 0; i < pData.length; i += 16) {
+      frameHash = ((frameHash << 5) - frameHash) + pData[i] + pData[i+1] + pData[i+2];
+      frameHash |= 0;
+    }
+    
+    if (frameHash === lastEvaluatedKey) {
+      return; // Frame unchanged, skip OCR
+    }
+    
+    const frameCanvas = document.createElement('canvas');
+    frameCanvas.width = vW;
+    frameCanvas.height = vH;
+    const fctx = frameCanvas.getContext('2d');
+    fctx.drawImage(ocrHiddenVideo, 0, 0, vW, vH);
+
+    lastEvaluatedKey = frameHash;
+    await assessCanvasImage(frameCanvas, true);
+  } catch (err) {
+    console.warn('Silent auto-check note:', err);
+  }
+}
+
 let screenStream = null;
 async function toggleScreenStream() {
   const btn = document.getElementById('startStreamBtn');
@@ -2036,6 +2294,9 @@ async function toggleScreenStream() {
   if (screenStream) {
     screenStream.getTracks().forEach(t => t.stop());
     screenStream = null;
+    stopAutoScanLoop();
+    isAutoScanActive = false;
+    updateAutoScanUI();
     if (btn) btn.innerText = '📡 Start Screen Stream';
     if (status) status.innerText = 'Stream stopped';
     return;
@@ -2047,9 +2308,16 @@ async function toggleScreenStream() {
     }
     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
     if (btn) btn.innerText = '⏹️ Stop Screen Stream';
-    if (status) status.innerText = '🟢 Stream Active - Monitoring Encounter Dead Space';
+    if (status) status.innerText = '🟢 Stream Active - Monitoring Encounters';
+    setupMediaSession();
+    if (isAutoScanActive) {
+      startAutoScanLoop();
+    }
     screenStream.getVideoTracks()[0].addEventListener('ended', () => {
       screenStream = null;
+      stopAutoScanLoop();
+      isAutoScanActive = false;
+      updateAutoScanUI();
       if (btn) btn.innerText = '📡 Start Screen Stream';
       if (status) status.innerText = 'Stream ended';
     });
@@ -2080,7 +2348,6 @@ window.addEventListener('paste', e => {
 let ocrWorker = null;
 let ocrWorkerReady = false;
 let ocrWorkerInitializing = false;
-let ocrHiddenVideo = null;
 
 async function ensureOcrWorker() {
   if (ocrWorkerReady && ocrWorker) return ocrWorker;
@@ -2186,13 +2453,19 @@ function showScanToast(msg, borderColor = '#38bdf8') {
   }, 4000);
 }
 
-async function assessCanvasImage(canvas) {
-  const scanBtn = document.getElementById('hudScanBtn');
+async function assessCanvasImage(canvas, isSilent = false) {
+  isCurrentlyScanning = true;
+  const scanBtn = document.getElementById('hudScanSlot') || document.getElementById('hudScanBtn');
   const hdrBtn = document.getElementById('oneTapScanHeaderBtn');
+  const modalBtn = document.getElementById('modalOneTapScanBtn');
   const msg = document.getElementById('ocrStatusMsg');
+  const triggerStatusMsg = document.getElementById('triggerStatusMsg');
+  
   if (scanBtn) scanBtn.classList.add('scanning');
   if (hdrBtn) hdrBtn.innerHTML = '⚡ Scanning...';
+  if (modalBtn) modalBtn.innerHTML = '⚡ Reading Screen...';
   if (msg) msg.innerText = '⚡ Reading screen CP & Pokémon...';
+  if (triggerStatusMsg) triggerStatusMsg.innerText = '⚡ Reading screen CP & Pokémon...';
 
   try {
     const W = canvas.width;
@@ -2207,7 +2480,7 @@ async function assessCanvasImage(canvas) {
     
     const worker = await ensureOcrWorker();
     if (!worker) {
-      alert('OCR Engine is still initializing. Please try again in 2 seconds!');
+      if (!isSilent) alert('OCR Engine is still initializing. Please try again in 2 seconds!');
       return;
     }
     
@@ -2284,19 +2557,24 @@ async function assessCanvasImage(canvas) {
     }
     
     if (msg) msg.innerHTML = `✅ <b>${summaryText}</b>`;
+    if (triggerStatusMsg) triggerStatusMsg.innerHTML = `✅ <b>${summaryText}</b>`;
     showScanToast(summaryText, toastColor);
     
-    closeScannerModal();
+    if (!isSilent) closeScannerModal();
   } catch (err) {
     console.error('Scan assessment error:', err);
-    alert('Scan error: ' + err.message);
+    if (!isSilent) alert('Scan error: ' + err.message);
   } finally {
+    isCurrentlyScanning = false;
     if (scanBtn) scanBtn.classList.remove('scanning');
     if (hdrBtn) hdrBtn.innerHTML = '⚡ 1-Tap Scan';
+    if (modalBtn) modalBtn.innerHTML = '<span style="font-size:16px;">⚡</span> SCAN SCREEN NOW';
   }
 }
 
 async function performOneTapAssessment() {
+  setupMediaSession();
+  
   // 1. Try Screen Stream (Zero-tap if stream active)
   if (screenStream && screenStream.active) {
     try {
@@ -2320,7 +2598,7 @@ async function performOneTapAssessment() {
       frameCanvas.height = vH;
       const fctx = frameCanvas.getContext('2d');
       fctx.drawImage(ocrHiddenVideo, 0, 0, vW, vH);
-      return await assessCanvasImage(frameCanvas);
+      return await assessCanvasImage(frameCanvas, false);
     } catch (streamErr) {
       console.warn('Frame capture from video stream failed:', streamErr);
     }
