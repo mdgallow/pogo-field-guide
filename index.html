@@ -2616,8 +2616,22 @@ let screenStream = null;
 function setupScreenStreamActive() {
   const btn = document.getElementById('startStreamBtn');
   const status = document.getElementById('streamStatus');
+  const miniBtn = document.getElementById('miniTapScanBtn');
+  const miniIcon = document.getElementById('miniTapIcon');
+  const hudSlot = document.getElementById('hudScanSlot');
+  
   if (btn) btn.innerText = '⏹️ Stop Screen Stream';
   if (status) status.innerText = '🟢 Stream Active - Monitoring Encounters';
+  if (miniBtn) {
+    miniBtn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+    miniBtn.title = '🟢 Screen Capture Active (Tap to Scan)';
+  }
+  if (miniIcon) miniIcon.innerText = '🟢';
+  if (hudSlot) {
+    hudSlot.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+    hudSlot.title = '🟢 Screen Capture Active (Tap to Scan)';
+  }
+  
   setupMediaSession();
   
   if (screenStream) {
@@ -2628,6 +2642,15 @@ function setupScreenStreamActive() {
       updateAutoScanUI();
       if (btn) btn.innerText = '📡 Start Screen Stream';
       if (status) status.innerText = 'Stream ended';
+      if (miniBtn) {
+        miniBtn.style.background = 'linear-gradient(135deg, #a855f7, #ec4899)';
+        miniBtn.title = '⚡ 1-Tap Screen Scan & Assess';
+      }
+      if (miniIcon) miniIcon.innerText = '⚡';
+      if (hudSlot) {
+        hudSlot.style.background = 'linear-gradient(135deg, #a855f7, #ec4899)';
+        hudSlot.title = '⚡ 1-Tap Screen Scan & Assess';
+      }
     });
   }
 }
@@ -2947,8 +2970,11 @@ async function performOneTapAssessment() {
   setupMediaSession();
   setScanButtonScanning(true);
 
-  // 1. If screen stream is already active (Live stream from browser capture), grab immediate frame!
-  if (screenStream && screenStream.active) {
+  // 1. If screen/camera stream is active, capture live frame from the screen itself!
+  const curStream = (typeof screenStream !== 'undefined' && screenStream) || window.screenStream;
+  if (curStream && curStream.active) {
+    screenStream = curStream;
+    window.screenStream = curStream;
     try {
       if (!ocrHiddenVideo) {
         ocrHiddenVideo = document.createElement('video');
@@ -2958,9 +2984,15 @@ async function performOneTapAssessment() {
         ocrHiddenVideo.style.top = '-9999px';
         document.body.appendChild(ocrHiddenVideo);
       }
-      if (ocrHiddenVideo.srcObject !== screenStream) {
-        ocrHiddenVideo.srcObject = screenStream;
+      if (ocrHiddenVideo.srcObject !== curStream) {
+        ocrHiddenVideo.srcObject = curStream;
         await ocrHiddenVideo.play();
+      }
+      if (ocrHiddenVideo.readyState < 2) {
+        await new Promise(r => {
+          ocrHiddenVideo.onloadeddata = r;
+          setTimeout(r, 250);
+        });
       }
       const vW = ocrHiddenVideo.videoWidth || 1080;
       const vH = ocrHiddenVideo.videoHeight || 2340;
@@ -2977,7 +3009,7 @@ async function performOneTapAssessment() {
     }
   }
 
-  // 2. Read from Clipboard (Samsung One UI automatically copies taken screenshots to clipboard!)
+  // 2. Check Clipboard (Samsung One UI automatically copies taken screenshots to clipboard!)
   if (navigator.clipboard && navigator.clipboard.read) {
     try {
       const items = await navigator.clipboard.read();
@@ -2997,8 +3029,49 @@ async function performOneTapAssessment() {
     }
   }
 
-  // 3. No active stream and no clipboard screenshot found:
-  // NEVER OPEN GALLERY! Gracefully guide the user and reset to Standby.
+  // 3. Autonomous Screen Capture Request:
+  // If no stream is active yet, prompt the user to enable Screen / Camera capture ONCE.
+  // Once allowed, the stream stays alive in the background, allowing the button to take
+  // the screenshot itself on every press, evaluate the data, and update the pill visuals!
+  if (navigator.mediaDevices && (navigator.mediaDevices.getDisplayMedia || navigator.mediaDevices.getUserMedia)) {
+    try {
+      showScanToast('📡 Select "Entire Screen" to enable 1-Tap Screen Capture...', '#a855f7');
+      if (navigator.mediaDevices.getDisplayMedia) {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      } else {
+        screenStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      }
+      setupScreenStreamActive();
+      
+      // Grab immediate frame right after stream starts!
+      if (!ocrHiddenVideo) {
+        ocrHiddenVideo = document.createElement('video');
+        ocrHiddenVideo.playsInline = true;
+        ocrHiddenVideo.muted = true;
+        ocrHiddenVideo.style.position = 'fixed';
+        ocrHiddenVideo.style.top = '-9999px';
+        document.body.appendChild(ocrHiddenVideo);
+      }
+      ocrHiddenVideo.srcObject = screenStream;
+      await ocrHiddenVideo.play();
+      
+      const vW = ocrHiddenVideo.videoWidth || 1080;
+      const vH = ocrHiddenVideo.videoHeight || 2340;
+      const frameCanvas = document.createElement('canvas');
+      frameCanvas.width = vW;
+      frameCanvas.height = vH;
+      const fctx = frameCanvas.getContext('2d');
+      fctx.drawImage(ocrHiddenVideo, 0, 0, vW, vH);
+      const res = await assessCanvasImage(frameCanvas, false);
+      setScanButtonScanning(false);
+      return res;
+    } catch (streamErr) {
+      console.warn('Stream request note:', streamErr);
+    }
+  }
+
+  // 4. Fallback if stream was cancelled and clipboard was empty:
+  // NEVER OPEN GALLERY! Gracefully prompt user and reset to Standby.
   setScanButtonScanning(false);
   showScanToast('📸 Snap a screenshot (Palm Swipe / Vol Down), then tap SCAN!', '#38bdf8');
   setEvaluationMode('blank');
