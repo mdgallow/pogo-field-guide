@@ -560,38 +560,30 @@
   /* Mini Floating HUD Mode (for Samsung Pop-Up View & Micro Floating Windows) */
   body.mini-hud-mode {
     background: #090d16 !important;
-    padding: 0 !important;
+    padding: 8px !important;
     margin: 0 !important;
-    overflow: hidden !important;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    overflow-y: auto !important;
   }
-  body.mini-hud-mode .header-box,
-  body.mini-hud-mode #levelUpBanner,
-  body.mini-hud-mode .types-scroll-wrapper,
-  body.mini-hud-mode .region-pills-row,
-  body.mini-hud-mode .table-container,
-  body.mini-hud-mode #floatingTopBtn,
-  body.mini-hud-mode #verticalHudPill,
-  body.mini-hud-mode #hudPopover,
-  body.mini-hud-mode #scannerOverlay,
-  body.mini-hud-mode #guideModal {
+  /* Hide EVERY direct child in body except #miniHudContainer and script tags */
+  body.mini-hud-mode > *:not(#miniHudContainer) {
     display: none !important;
   }
   #miniHudContainer {
     display: none;
     width: 100%;
-    max-width: 330px;
+    max-width: 340px;
     padding: 10px;
     box-sizing: border-box;
   }
   body.mini-hud-mode #miniHudContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
   }
 </style>
 </head>
@@ -759,14 +751,16 @@
       </button>
     </div>
 
-    <div style="display:flex; gap:8px; align-items:center; width:100%; flex-wrap:wrap;">
+    <div style="display:flex; gap:6px; align-items:center; width:100%; margin-bottom:6px;">
       <span id="inspectorModeLabel" style="font-size:12px; font-weight:800; color:var(--accent); white-space:nowrap;">🎯 Catch Screen:</span>
-      <input type="number" id="catchCpInput" placeholder="Enter encounter CP (e.g. 1035)" inputmode="numeric" oninput="checkCaughtCp()" onkeydown="if(event.key==='Enter') checkCaughtCp()" style="flex:1; min-width:130px;" />
-      <button onclick="checkCaughtCp()">Inspect</button>
-      <button onclick="performOneTapAssessment()" id="oneTapScanHeaderBtn" style="background:linear-gradient(135deg, #a855f7, #ec4899); color:#fff; border:none; border-radius:8px; padding:6px 11px; font-weight:800; font-size:11.5px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 8px rgba(168,85,247,0.3);">
+      <input type="number" id="catchCpInput" placeholder="Enter encounter CP (e.g. 1035)" inputmode="numeric" oninput="checkCaughtCp()" onkeydown="if(event.key==='Enter') checkCaughtCp()" style="flex:1; min-width:120px;" />
+      <button id="clearCpBtn" onclick="clearCpFilter()" style="display:none; background:#334155; color:#f87171; border:none; border-radius:8px; padding:7px 10px; font-weight:800; font-size:12px; cursor:pointer;" title="Clear CP Filter">✕</button>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; width:100%;">
+      <button onclick="checkCaughtCp()" style="flex:1; padding:8px 12px; font-size:12px; font-weight:800;">Inspect CP</button>
+      <button onclick="performOneTapAssessment()" id="oneTapScanCheckerBtn" style="flex:1.2; background:linear-gradient(135deg, #a855f7, #ec4899); color:#fff; border:none; border-radius:8px; padding:8px 12px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 8px rgba(168,85,247,0.3);">
         ⚡ 1-Tap Scan
       </button>
-      <button id="clearCpBtn" onclick="clearCpFilter()" style="display:none; background:#334155; color:#f87171; border:none; border-radius:8px; padding:7px 10px; font-weight:800; font-size:12px; cursor:pointer;" title="Clear CP Filter">✕ Clear</button>
     </div>
     <div id="checkerResult" style="font-size:12px; font-weight:700; width:100%; margin-top:4px;"></div>
   </div>
@@ -2060,7 +2054,9 @@ function closeScannerModal(e) {
 }
 
 let pipCanvas = null;
+let pipCtx = null;
 let pipVideo = null;
+let pipStream = null;
 let pipAnimId = null;
 let isAutoScanActive = false;
 let autoScanTimer = null;
@@ -2254,7 +2250,7 @@ function onMiniCpInput(val) {
   const inp = document.getElementById('catchCpInput');
   if (inp) {
     inp.value = val;
-    handleCpInput();
+    checkCaughtCp();
   }
   syncMiniHudSlots();
 }
@@ -2317,7 +2313,75 @@ function syncMiniHudSlots() {
   }
 }
 
+// Pre-initialize PiP stream and video element on page load so readyState is 4 (HAVE_ENOUGH_DATA)
+// This guarantees that requestPictureInPicture() can be invoked synchronously without gesture expiration!
+function initPipStream() {
+  try {
+    if (!pipCanvas) {
+      pipCanvas = document.createElement('canvas');
+      pipCanvas.width = 120;
+      pipCanvas.height = 300;
+      pipCtx = pipCanvas.getContext('2d');
+    }
+    renderHudCanvas(pipCtx, 120, 300);
+
+    pipVideo = document.getElementById('pipHiddenVideo');
+    if (!pipVideo) {
+      pipVideo = document.createElement('video');
+      pipVideo.id = 'pipHiddenVideo';
+      document.body.appendChild(pipVideo);
+    }
+    pipVideo.muted = true;
+    pipVideo.playsInline = true;
+    pipVideo.setAttribute('playsinline', '');
+    pipVideo.setAttribute('webkit-playsinline', '');
+    pipVideo.setAttribute('autoPictureInPicture', 'true');
+    pipVideo.style.position = 'fixed';
+    pipVideo.style.top = '-9999px';
+    pipVideo.style.left = '-9999px';
+    pipVideo.style.width = '120px';
+    pipVideo.style.height = '300px';
+    pipVideo.style.opacity = '0';
+    pipVideo.style.pointerEvents = 'none';
+
+    if (!pipStream) {
+      pipStream = pipCanvas.captureStream(15);
+      pipVideo.srcObject = pipStream;
+      pipVideo.play().catch(e => console.log('pipVideo preload play note:', e));
+    }
+
+    pipVideo.addEventListener('leavepictureinpicture', () => {
+      if (pipAnimId) cancelAnimationFrame(pipAnimId);
+    });
+
+    let lastPauseTrigger = 0;
+    pipVideo.addEventListener('pause', async () => {
+      const now = Date.now();
+      if (now - lastPauseTrigger > 1000) {
+        lastPauseTrigger = now;
+        performOneTapAssessment();
+      }
+      try { await pipVideo.play(); } catch(e) {}
+    });
+
+    // Continuous rendering loop for canvas
+    if (pipAnimId) cancelAnimationFrame(pipAnimId);
+    function loopDraw() {
+      renderHudCanvas(pipCtx, 120, 300);
+      pipAnimId = requestAnimationFrame(loopDraw);
+    }
+    loopDraw();
+  } catch(e) {
+    console.warn('initPipStream note:', e);
+  }
+}
+
 async function launchPipHud() {
+  // If not preloaded yet, initialize now
+  if (!pipVideo || !pipVideo.srcObject) {
+    initPipStream();
+  }
+
   // 1. Try Document Picture-in-Picture first (Desktop Chrome / Edge / Experimental Android flags)
   if ('documentPictureInPicture' in window) {
     try {
@@ -2349,83 +2413,15 @@ async function launchPipHud() {
     }
   }
 
-  // 2. Canvas Video Picture-in-Picture (Mobile Chrome / Android - Zero Audio / Crash-Proof)
+  // 2. Video Picture-in-Picture (SYNCHRONOUS CALL DURING DIRECT USER GESTURE)
   try {
-    if (!pipCanvas) {
-      pipCanvas = document.createElement('canvas');
-      pipCanvas.width = 120;
-      pipCanvas.height = 300;
-    }
-    const ctx = pipCanvas.getContext('2d');
-    renderHudCanvas(ctx, 120, 300);
-
-    if (!pipVideo) {
-      pipVideo = document.getElementById('pipHiddenVideo');
-      if (!pipVideo) {
-        pipVideo = document.createElement('video');
-        pipVideo.id = 'pipHiddenVideo';
-        pipVideo.style.position = 'fixed';
-        pipVideo.style.top = '-9999px';
-        pipVideo.style.left = '-9999px';
-        pipVideo.style.opacity = '0';
-        pipVideo.style.pointerEvents = 'none';
-        document.body.appendChild(pipVideo);
-      }
-
-      pipVideo.addEventListener('leavepictureinpicture', () => {
-        if (pipAnimId) cancelAnimationFrame(pipAnimId);
-      });
-
-      // Debounce pause trigger so rapid taps don't re-trigger multiple scans
-      let lastPauseTrigger = 0;
-      pipVideo.addEventListener('pause', async () => {
-        const now = Date.now();
-        if (now - lastPauseTrigger > 1000) {
-          lastPauseTrigger = now;
-          performOneTapAssessment();
-        }
-        try { await pipVideo.play(); } catch(e) {}
-      });
-    }
-
-    // MANDATORY settings for Android Chrome: Muted & PlaysInline
-    pipVideo.muted = true;
-    pipVideo.playsInline = true;
-    pipVideo.setAttribute('playsinline', '');
-    pipVideo.setAttribute('webkit-playsinline', '');
-    pipVideo.setAttribute('autoPictureInPicture', 'true');
-
-    // Video-only stream from canvas (no AudioContext, no audio tracks!)
-    const stream = pipCanvas.captureStream(15);
-    pipVideo.srcObject = stream;
-
-    // Start drawing loop so new frames are generated continuously
-    if (pipAnimId) cancelAnimationFrame(pipAnimId);
-    function loopDraw() {
-      renderHudCanvas(ctx, 120, 300);
-      pipAnimId = requestAnimationFrame(loopDraw);
-    }
-    loopDraw();
-
-    await pipVideo.play();
-
-    // Ensure the video element has decoded at least one frame before calling requestPictureInPicture
-    await new Promise(res => {
-      if (pipVideo.readyState >= 2) return res();
-      const onReady = () => {
-        pipVideo.removeEventListener('loadeddata', onReady);
-        res();
-      };
-      pipVideo.addEventListener('loadeddata', onReady);
-      setTimeout(res, 200);
-    });
-
     setupMediaSession();
     if (navigator.mediaSession) {
       navigator.mediaSession.playbackState = 'playing';
     }
 
-    if (pipVideo.requestPictureInPicture) {
+    if (pipVideo && pipVideo.requestPictureInPicture) {
+      // Preloaded stream is already readyState 4, so requestPictureInPicture succeeds instantly!
       await pipVideo.requestPictureInPicture();
       closeScannerModal();
       showScanToast('📺 Floating PiP HUD Active! Switch to Pokémon GO', '#38bdf8');
@@ -3152,6 +3148,7 @@ applyHudDock(currentDock);
 initTypePills();
 applyFilters();
 syncMiniHudSlots();
+initPipStream();
 if (localStorage.getItem('pogo_mini_hud_mode') === 'true') {
   toggleMiniMode(true);
 }
