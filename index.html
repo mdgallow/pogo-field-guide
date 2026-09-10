@@ -826,6 +826,25 @@
       </div>
     </div>
 
+    <!-- Native OS Overlay Guide -->
+    <div style="background:#0f172a; border:1px solid #10b981; border-radius:10px; padding:12px; margin-bottom:12px;">
+      <div style="font-size:13px; font-weight:800; color:#34d399; margin-bottom:4px;">📲 How to Float Over Pokémon GO on Mobile</div>
+      <div style="font-size:11px; color:var(--text-muted); line-height:1.6;">
+        <div style="margin-bottom:6px;">
+          <b style="color:#f8fafc;">⭐ Samsung Galaxy / Android "Pop-Up View" (Easiest & Most Fluid):</b><br/>
+          1. Open this Companion app on your phone.<br/>
+          2. Swipe to your <b>Recent Apps</b> screen.<br/>
+          3. Tap the <b>Companion App icon</b> at the top of its card.<br/>
+          4. Select <b>"Open in pop-up view"</b> (or "Split screen").<br/>
+          5. Now launch Pokémon GO! The Companion floats right on top of Pokémon GO. You can drag it to the dead space margin, resize it, or adjust transparency!
+        </div>
+        <div>
+          <b style="color:#f8fafc;">🍏 iPhone (iOS) Rapid Toggle:</b><br/>
+          iOS security blocks third-party overlays over 3D games. Simply swipe left/right along the <b>bottom home bar</b> to instantly toggle between Pokémon GO and this companion in 0.2 seconds!
+        </div>
+      </div>
+    </div>
+
     <!-- Mode 1: Document Picture-in-Picture Floating Window -->
     <div style="background:#0f172a; border:1px solid #38bdf8; border-radius:10px; padding:12px; margin-bottom:12px;">
       <div style="font-size:13px; font-weight:800; color:#38bdf8; margin-bottom:4px;">📺 Launch Picture-in-Picture Floating HUD</div>
@@ -1534,7 +1553,68 @@ function closeScannerModal(e) {
   document.getElementById('scannerOverlay').style.display = 'none';
 }
 
+let pipCanvas = null;
+let pipVideo = null;
+let pipAnimId = null;
+
+function renderHudCanvas(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#0f172a';
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(4, 4, w - 8, h - 8, 22);
+  } else {
+    ctx.rect(4, 4, w - 8, h - 8);
+  }
+  ctx.fill();
+  ctx.stroke();
+
+  const bIcon = document.getElementById('hudBerryIcon')?.innerText || '🍍';
+  const bLabel = document.getElementById('hudBerryLabel')?.innerText || 'BERRY';
+  ctx.font = '32px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(bIcon, w / 2, 48);
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText(bLabel, w / 2, 78);
+
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(16, 94);
+  ctx.lineTo(w - 16, 94);
+  ctx.stroke();
+
+  const cIcon = document.getElementById('hudCatchIcon')?.innerText || '🎯';
+  const cLabel = document.getElementById('hudCatchLabel')?.innerText || 'CATCH';
+  ctx.font = '32px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(cIcon, w / 2, 130);
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillStyle = '#34d399';
+  ctx.fillText(cLabel, w / 2, 160);
+
+  ctx.beginPath();
+  ctx.moveTo(16, 176);
+  ctx.lineTo(w - 16, 176);
+  ctx.stroke();
+
+  const aIcon = document.getElementById('hudActionIcon')?.innerText || '🍬';
+  const aLabel = document.getElementById('hudActionLabel')?.innerText || 'ACTION';
+  ctx.font = '32px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(aIcon, w / 2, 212);
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillStyle = '#c084fc';
+  ctx.fillText(aLabel, w / 2, 242);
+}
+
 async function launchPipHud() {
+  // 1. Try Document Picture-in-Picture (Desktop Chrome / Edge / Experimental Android flags)
   if ('documentPictureInPicture' in window) {
     try {
       const pipWin = await window.documentPictureInPicture.requestWindow({ width: 100, height: 280 });
@@ -1558,12 +1638,61 @@ async function launchPipHud() {
       pipWin.document.body.style.margin = '0';
       pipWin.document.body.appendChild(pill);
       pipWin.document.title = 'PoGo HUD';
+      closeScannerModal();
+      return;
     } catch (err) {
-      alert('Picture-in-Picture window could not be opened: ' + err.message);
+      console.warn('Document PiP failed, trying Video PiP:', err);
     }
-  } else {
-    alert('Document Picture-in-Picture is supported in modern Chrome/Edge on Desktop and Android Chrome flags. On mobile, keep this companion app running side-by-side or in split-screen mode!');
   }
+
+  // 2. Fallback: Canvas Video Picture-in-Picture (Works natively on Android Chrome!)
+  try {
+    if (!pipCanvas) {
+      pipCanvas = document.createElement('canvas');
+      pipCanvas.width = 120;
+      pipCanvas.height = 270;
+    }
+    const ctx = pipCanvas.getContext('2d');
+    renderHudCanvas(ctx, 120, 270);
+
+    if (!pipVideo) {
+      pipVideo = document.createElement('video');
+      pipVideo.muted = true;
+      pipVideo.playsInline = true;
+      pipVideo.style.position = 'fixed';
+      pipVideo.style.top = '-9999px';
+      pipVideo.style.left = '-9999px';
+      pipVideo.style.opacity = '0';
+      pipVideo.style.pointerEvents = 'none';
+      document.body.appendChild(pipVideo);
+
+      pipVideo.addEventListener('leavepictureinpicture', () => {
+        if (pipAnimId) cancelAnimationFrame(pipAnimId);
+      });
+    }
+
+    const stream = pipCanvas.captureStream(10);
+    pipVideo.srcObject = stream;
+    await pipVideo.play();
+
+    if (pipAnimId) cancelAnimationFrame(pipAnimId);
+    function loopDraw() {
+      renderHudCanvas(ctx, 120, 270);
+      pipAnimId = requestAnimationFrame(loopDraw);
+    }
+    loopDraw();
+
+    if (pipVideo.requestPictureInPicture) {
+      await pipVideo.requestPictureInPicture();
+      closeScannerModal();
+      return;
+    }
+  } catch (vErr) {
+    console.warn('Video PiP failed:', vErr);
+  }
+
+  // 3. Fallback alert with instructions
+  alert('To overlay over Pokémon GO on Android: Open your Recent Apps screen, tap the Companion icon at the top, and tap "Open in pop-up view" (Samsung) or "Split Screen"! On iPhone: swipe the bottom home bar to switch instantly.');
 }
 
 let screenStream = null;
