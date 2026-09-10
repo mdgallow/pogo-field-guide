@@ -1389,6 +1389,26 @@ function setEvaluationMode(mode) {
     }
   }
 
+  const miniBadge = document.getElementById('miniModeBadge');
+  if (miniBadge) {
+    if (mode === 'catch') {
+      miniBadge.innerText = 'CATCH';
+      miniBadge.style.color = '#38bdf8';
+      miniBadge.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+      miniBadge.style.background = 'rgba(56, 189, 248, 0.15)';
+    } else if (mode === 'storage') {
+      miniBadge.innerText = 'STORAGE';
+      miniBadge.style.color = '#fbbf24';
+      miniBadge.style.borderColor = 'rgba(251, 191, 36, 0.4)';
+      miniBadge.style.background = 'rgba(251, 191, 36, 0.15)';
+    } else {
+      miniBadge.innerText = 'STANDBY';
+      miniBadge.style.color = '#94a3b8';
+      miniBadge.style.borderColor = 'rgba(148, 163, 184, 0.4)';
+      miniBadge.style.background = 'rgba(148, 163, 184, 0.15)';
+    }
+  }
+
   const topP = currentFiltered.length > 0 ? currentFiltered[0] : activeHudPokemon;
   const match = topP ? evaluateCpMatch(topP, cpFilterVal) : null;
   updateVerticalHud(topP, match);
@@ -1415,12 +1435,13 @@ function updateVerticalHud(p, matchInfo) {
   // 1. BLANK / STANDBY STATE (Nothing to assess)
   if (evaluationMode === 'blank' || (!p && evaluationMode !== 'storage' && evaluationMode !== 'catch')) {
     if (bIcon) bIcon.innerText = '⚪';
-    if (bLabel) { bLabel.innerText = 'IDLE'; bLabel.style.color = 'var(--text-muted)'; }
+    if (bLabel) { bLabel.innerText = 'IDLE'; bLabel.style.color = '#94a3b8'; }
     if (cIcon) cIcon.innerText = '⚪';
-    if (cLabel) { cLabel.innerText = 'STANDBY'; cLabel.style.color = 'var(--text-muted)'; }
+    if (cLabel) { cLabel.innerText = 'STANDBY'; cLabel.style.color = '#94a3b8'; }
     if (aIcon) aIcon.innerText = '⚪';
-    if (aLabel) { aLabel.innerText = 'READY'; aLabel.style.color = 'var(--text-muted)'; }
-    if (document.getElementById('hudPopover').style.display !== 'none') {
+    if (aLabel) { aLabel.innerText = 'READY'; aLabel.style.color = '#94a3b8'; }
+    syncMiniHudSlots();
+    if (document.getElementById('hudPopover') && document.getElementById('hudPopover').style.display !== 'none') {
       updateHudPopover();
     }
     return;
@@ -1513,7 +1534,8 @@ function updateVerticalHud(p, matchInfo) {
       }
     }
 
-    if (document.getElementById('hudPopover').style.display !== 'none') {
+    syncMiniHudSlots();
+    if (document.getElementById('hudPopover') && document.getElementById('hudPopover').style.display !== 'none') {
       updateHudPopover();
     }
     return;
@@ -2790,13 +2812,16 @@ async function assessCanvasImage(canvas, isSilent = false) {
   try {
     const W = canvas.width;
     const H = canvas.height;
-    
-    // 1. Pixel Check: Storage Screen (white bottom card) vs Catch Window
-    const sampleY = Math.floor(H * 0.65);
-    const sampleX = Math.floor(W * 0.5);
     const ctx = canvas.getContext('2d');
-    const pData = ctx.getImageData(sampleX, sampleY, 1, 1).data;
-    const isStorageScreen = (pData[0] > 230 && pData[1] > 230 && pData[2] > 230);
+    
+    // 1. Pixel Check: Storage Screen (white bottom card)
+    const sampleY1 = Math.floor(H * 0.62);
+    const sampleY2 = Math.floor(H * 0.72);
+    const sampleX = Math.floor(W * 0.5);
+    const pData1 = ctx.getImageData(sampleX, sampleY1, 1, 1).data;
+    const pData2 = ctx.getImageData(sampleX, sampleY2, 1, 1).data;
+    const isWhiteStorageCard = (pData1[0] > 220 && pData1[1] > 220 && pData1[2] > 220) &&
+                               (pData2[0] > 220 && pData2[1] > 220 && pData2[2] > 220);
     
     const worker = await ensureOcrWorker();
     if (!worker) {
@@ -2806,81 +2831,106 @@ async function assessCanvasImage(canvas, isSilent = false) {
     
     let detectedCp = null;
     let detectedSpeciesName = null;
-    const detectedMode = isStorageScreen ? 'storage' : 'catch';
-    
-    if (isStorageScreen) {
-      // Storage Screen Calibrated Ratios:
-      // CP Area: y: 4%-11%, x: 28%-72%
-      const cpCrop = createBinarizedCanvas(canvas, W * 0.28, H * 0.04, W * 0.44, H * 0.07, true, 185);
+    let matchedPokemon = null;
+
+    if (isWhiteStorageCard) {
+      // BRANCH 2: Storage Screen Candidate
+      // CP Arc: y: 3.5%-12%, x: 25%-75%
+      const cpCrop = createBinarizedCanvas(canvas, W * 0.25, H * 0.035, W * 0.50, H * 0.085, true, 185);
       const cpRes = await worker.recognize(cpCrop);
       const cpMatch = (cpRes.data.text || '').match(/(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})/i);
       if (cpMatch) detectedCp = parseInt(cpMatch[1], 10);
       
-      // Name Area: y: 39%-46%, x: 20%-80%
-      const nameCrop = createBinarizedCanvas(canvas, W * 0.20, H * 0.39, W * 0.60, H * 0.07, false, 150);
+      // Name Area: y: 38%-48%, x: 18%-82%
+      const nameCrop = createBinarizedCanvas(canvas, W * 0.18, H * 0.38, W * 0.64, H * 0.10, false, 150);
       const nameRes = await worker.recognize(nameCrop);
       const rawName = (nameRes.data.text || '').replace(/[^a-zA-Z\s]/g, '').trim();
-      if (rawName) detectedSpeciesName = rawName;
-    } else {
-      // Catch Screen Calibrated Ratios:
-      // Capsule Area: y: 25%-38%, x: 8%-85%
-      const capsuleCrop = createBinarizedCanvas(canvas, W * 0.08, H * 0.25, W * 0.77, H * 0.12, true, 175);
-      const capRes = await worker.recognize(capsuleCrop);
-      const rawText = capRes.data.text || '';
+      if (rawName) {
+        detectedSpeciesName = rawName;
+        matchedPokemon = findBestPokemonMatch(rawName);
+      }
       
-      const cpMatch = rawText.match(/(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})/i);
-      if (cpMatch) detectedCp = parseInt(cpMatch[1], 10);
-      
-      const cleanName = rawText.replace(/(?:CP|CO|CR|GR|OP)?\s*\d{2,5}/ig, '').replace(/[^a-zA-Z\s]/g, '').trim();
-      if (cleanName) detectedSpeciesName = cleanName;
+      if (matchedPokemon || detectedCp) {
+        // Confirmed BRANCH 2: STORAGE
+        setEvaluationMode('storage');
+        const cpInp = document.getElementById('catchCpInput');
+        if (detectedCp && cpInp) {
+          cpInp.value = detectedCp;
+          checkCaughtCp();
+        }
+        if (matchedPokemon) {
+          activeHudPokemon = matchedPokemon;
+          const match = detectedCp ? evaluateCpMatch(matchedPokemon, detectedCp) : null;
+          updateVerticalHud(matchedPokemon, match);
+        }
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        const pName = matchedPokemon ? matchedPokemon.name : (detectedSpeciesName || 'Box Pokémon');
+        const cpText = detectedCp ? `${detectedCp} CP` : 'CP';
+        const isDel = matchedPokemon ? matchedPokemon.act.includes('Transfer') : true;
+        const sumText = isDel
+          ? `📦 Storage: ${pName} (${cpText}) ➔ 🗑️ DELETE (Transfer for +1 Candy)`
+          : `📦 Storage: ${pName} (${cpText}) ➔ ⭐ KEEP / TRADE!`;
+        if (msg) msg.innerHTML = `✅ <b>${sumText}</b>`;
+        if (triggerStatusMsg) triggerStatusMsg.innerHTML = `✅ <b>${sumText}</b>`;
+        showScanToast(sumText, '#fbbf24');
+        if (!isSilent) closeScannerModal();
+        return { mode: 'storage', pokemon: matchedPokemon, cp: detectedCp };
+      }
     }
+
+    // If not storage card or storage card OCR found no pokemon/CP, test BRANCH 1: CATCH WINDOW
+    // Encounter Capsule: y: 22%-42%, x: 8%-92% (covers all phone screen heights and status bars)
+    const capsuleCrop = createBinarizedCanvas(canvas, W * 0.08, H * 0.22, W * 0.84, H * 0.20, true, 170);
+    const capRes = await worker.recognize(capsuleCrop);
+    const rawText = capRes.data.text || '';
     
-    // 2. Apply Evaluation Mode
-    setEvaluationMode(detectedMode);
+    const cpMatch = rawText.match(/(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})/i);
+    if (cpMatch) detectedCp = parseInt(cpMatch[1], 10);
     
-    // 3. Match against Pokémon database
-    const matchedPokemon = findBestPokemonMatch(detectedSpeciesName);
-    
-    // 4. Update CP Filter & Input Box
-    const cpInp = document.getElementById('catchCpInput');
-    if (detectedCp) {
-      if (cpInp) cpInp.value = detectedCp;
-      checkCaughtCp();
+    const cleanName = rawText.replace(/(?:CP|CO|CR|GR|OP)?\s*\d{2,5}/ig, '').replace(/[^a-zA-Z\s]/g, '').trim();
+    if (cleanName) {
+      detectedSpeciesName = cleanName;
+      matchedPokemon = findBestPokemonMatch(cleanName);
     }
-    
-    if (matchedPokemon) {
-      activeHudPokemon = matchedPokemon;
-      const match = detectedCp ? evaluateCpMatch(matchedPokemon, detectedCp) : null;
-      updateVerticalHud(matchedPokemon, match);
+
+    if (matchedPokemon || (detectedCp && detectedCp > 10)) {
+      // Confirmed BRANCH 1: CATCH WINDOW
+      setEvaluationMode('catch');
+      const cpInp = document.getElementById('catchCpInput');
+      if (detectedCp && cpInp) {
+        cpInp.value = detectedCp;
+        checkCaughtCp();
+      }
+      if (matchedPokemon) {
+        activeHudPokemon = matchedPokemon;
+        const match = detectedCp ? evaluateCpMatch(matchedPokemon, detectedCp) : null;
+        updateVerticalHud(matchedPokemon, match);
+      }
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      const pName = matchedPokemon ? matchedPokemon.name : (detectedSpeciesName || 'Wild Spawn');
+      const cpText = detectedCp ? `${detectedCp} CP` : 'CP';
+      const berryRec = (matchedPokemon && matchedPokemon.berry && matchedPokemon.berry !== 'None') ? matchedPokemon.berry : 'Pinap Berry';
+      const sumText = `⚡ Catch: ${pName} (${cpText}) ➔ Berry: ${berryRec}`;
+      if (msg) msg.innerHTML = `✅ <b>${sumText}</b>`;
+      if (triggerStatusMsg) triggerStatusMsg.innerHTML = `✅ <b>${sumText}</b>`;
+      showScanToast(sumText, '#38bdf8');
+      if (!isSilent) closeScannerModal();
+      return { mode: 'catch', pokemon: matchedPokemon, cp: detectedCp };
     }
-    
-    // 5. Haptic Feedback
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-    
-    // 6. User Feedback Banner & Toast
-    const pokeName = matchedPokemon ? matchedPokemon.name : (detectedSpeciesName || 'Wild Spawn');
-    const cpText = detectedCp ? `${detectedCp} CP` : 'CP';
-    
-    let summaryText = '';
-    let toastColor = '#38bdf8';
-    
-    if (detectedMode === 'storage') {
-      toastColor = '#f59e0b';
-      const isDel = matchedPokemon ? matchedPokemon.act.includes('Transfer') : true;
-      summaryText = isDel
-        ? `⚡ Scanned: ${pokeName} (${cpText}) ➔ 🗑️ DELETE (Transfer for +1 Candy)`
-        : `⚡ Scanned: ${pokeName} (${cpText}) ➔ ⭐ KEEP / TRADE! (${matchedPokemon ? matchedPokemon.act : 'High Utility'})`;
-    } else {
-      toastColor = '#38bdf8';
-      const berryRec = matchedPokemon ? matchedPokemon.berry : 'Pinap Berry';
-      summaryText = `⚡ Scanned: ${pokeName} (${cpText}) ➔ Catch Window (Berry: ${berryRec})`;
-    }
-    
-    if (msg) msg.innerHTML = `✅ <b>${summaryText}</b>`;
-    if (triggerStatusMsg) triggerStatusMsg.innerHTML = `✅ <b>${summaryText}</b>`;
-    showScanToast(summaryText, toastColor);
-    
+
+    // Neither Branch 1 nor Branch 2 matched!
+    // BRANCH 3: BLANK / STANDBY (Map, Gym, Raid, Battle, Shop, Home, or unrecognized screen)
+    setEvaluationMode('blank');
+    activeHudPokemon = null;
+    activeHudMatch = null;
+    updateVerticalHud(null, null);
+    const blankMsg = '⚪ Screen not recognized — Standby mode';
+    if (msg) msg.innerHTML = `⚪ ${blankMsg}`;
+    if (triggerStatusMsg) triggerStatusMsg.innerHTML = `⚪ ${blankMsg}`;
+    showScanToast(blankMsg, '#64748b');
     if (!isSilent) closeScannerModal();
+    return { mode: 'blank', pokemon: null, cp: null };
+
   } catch (err) {
     console.error('Scan assessment error:', err);
     if (!isSilent) alert('Scan error: ' + err.message);
@@ -2895,11 +2945,11 @@ async function assessCanvasImage(canvas, isSilent = false) {
 async function performOneTapAssessment() {
   if (navigator.vibrate) navigator.vibrate([40]);
   setupMediaSession();
-  
-  // 1. If screen stream is already active (e.g. desktop window capture), capture immediate frame!
+  setScanButtonScanning(true);
+
+  // 1. If screen stream is already active (Live stream from browser capture), grab immediate frame!
   if (screenStream && screenStream.active) {
     try {
-      setScanButtonScanning(true);
       if (!ocrHiddenVideo) {
         ocrHiddenVideo = document.createElement('video');
         ocrHiddenVideo.playsInline = true;
@@ -2923,16 +2973,36 @@ async function performOneTapAssessment() {
       setScanButtonScanning(false);
       return res;
     } catch (streamErr) {
-      console.warn('Stream grab note:', streamErr);
+      console.warn('Stream grab error:', streamErr);
     }
   }
 
-  // 2. Direct Instant Photo Sheet Picker (1-Tap to latest screenshot)
-  // Calling click() synchronously within the direct user gesture ensures Android opens photo sheet instantly!
-  const fileInp = document.getElementById('screenshotFileInput');
-  if (fileInp) {
-    fileInp.click();
+  // 2. Read from Clipboard (Samsung One UI automatically copies taken screenshots to clipboard!)
+  if (navigator.clipboard && navigator.clipboard.read) {
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        for (const type of item.types) {
+          if (type.startsWith('image/')) {
+            const blob = await item.getType(type);
+            if (blob) {
+              showScanToast('⚡ Evaluating Screenshot...', '#38bdf8');
+              return processImageFile(blob);
+            }
+          }
+        }
+      }
+    } catch (clipErr) {
+      console.log('Clipboard read note:', clipErr);
+    }
   }
+
+  // 3. No active stream and no clipboard screenshot found:
+  // NEVER OPEN GALLERY! Gracefully guide the user and reset to Standby.
+  setScanButtonScanning(false);
+  showScanToast('📸 Snap a screenshot (Palm Swipe / Vol Down), then tap SCAN!', '#38bdf8');
+  setEvaluationMode('blank');
+  updateVerticalHud(null, null);
 }
 
 function setScanButtonScanning(isScanning) {
@@ -2969,7 +3039,6 @@ function handleScreenshotUpload(e) {
     setScanButtonScanning(false);
     return;
   }
-  // Clear input value so selecting the same or next screenshot triggers onchange
   e.target.value = '';
   processImageFile(file);
 }
