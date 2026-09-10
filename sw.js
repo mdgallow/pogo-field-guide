@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pogo-companion-v7';
+const CACHE_NAME = 'pogo-companion-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -6,7 +6,8 @@ const ASSETS_TO_CACHE = [
   './icon.svg',
   './icon-192.png',
   './icon-512.png',
-  './apple-touch-icon.png'
+  './apple-touch-icon.png',
+  'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'
 ];
 
 self.addEventListener('install', (e) => {
@@ -35,8 +36,15 @@ self.addEventListener('fetch', (e) => {
         return cachedResponse;
       }
       return fetch(e.request).then((response) => {
-        // Cache external image sprites on the fly
-        if (response && response.status === 200 && (e.request.url.includes('raw.githubusercontent.com') || e.request.url.includes('.png'))) {
+        // Cache external image sprites and OCR dependencies on the fly
+        if (response && response.status === 200 && (
+          e.request.url.includes('raw.githubusercontent.com') ||
+          e.request.url.includes('cdn.jsdelivr.net') ||
+          e.request.url.includes('tesseract') ||
+          e.request.url.includes('.png') ||
+          e.request.url.includes('.wasm') ||
+          e.request.url.includes('.traineddata')
+        )) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
         }
