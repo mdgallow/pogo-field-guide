@@ -2065,20 +2065,30 @@ function setupMediaSession() {
   }
 }
 
-async function launchPipHud() {
-  // 1. Auto-request screen stream on PiP launch so the overlay is ready to scan immediately!
-  if (!screenStream || !screenStream.active) {
-    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-      try {
-        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        setupScreenStreamActive();
-      } catch (streamErr) {
-        console.warn('Screen stream prompt note:', streamErr);
-      }
-    }
+let silentAudioStream = null;
+function getSilentAudioStream() {
+  if (silentAudioStream) return silentAudioStream;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+    const actx = new AudioCtx();
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    gain.gain.value = 0.0001; // Inaudible
+    osc.connect(gain);
+    const dest = actx.createMediaStreamDestination();
+    gain.connect(dest);
+    osc.start();
+    silentAudioStream = dest.stream;
+    return silentAudioStream;
+  } catch (e) {
+    console.warn('Silent audio stream note:', e);
+    return null;
   }
+}
 
-  // 2. Try Document Picture-in-Picture (Desktop Chrome / Edge / Experimental Android flags)
+async function launchPipHud() {
+  // 1. Try Document Picture-in-Picture first (Desktop Chrome / Edge / Experimental Android flags)
   if ('documentPictureInPicture' in window) {
     try {
       const pipWin = await window.documentPictureInPicture.requestWindow({ width: 100, height: 300 });
@@ -2109,7 +2119,8 @@ async function launchPipHud() {
     }
   }
 
-  // 3. Fallback: Canvas Video Picture-in-Picture (Works natively on Android Chrome!)
+  // 2. Canvas Video Picture-in-Picture (Works natively on Android Chrome!)
+  // IMPORTANT: MUST request PiP synchronously without prior awaits to preserve the user gesture!
   try {
     if (!pipCanvas) {
       pipCanvas = document.createElement('canvas');
@@ -2121,8 +2132,10 @@ async function launchPipHud() {
 
     if (!pipVideo) {
       pipVideo = document.createElement('video');
-      pipVideo.muted = true;
+      pipVideo.muted = false; // With inaudible audio, Chrome keeps it alive in background!
+      pipVideo.volume = 0.01;
       pipVideo.playsInline = true;
+      pipVideo.setAttribute('autoPictureInPicture', 'true');
       pipVideo.style.position = 'fixed';
       pipVideo.style.top = '-9999px';
       pipVideo.style.left = '-9999px';
@@ -2134,7 +2147,6 @@ async function launchPipHud() {
         if (pipAnimId) cancelAnimationFrame(pipAnimId);
       });
 
-      // CRITICAL FOR ANDROID TOUCH TAPS:
       // Tapping the floating PiP window on Android sends a pause event to the video!
       pipVideo.addEventListener('pause', async () => {
         try { await pipVideo.play(); } catch(e) {}
@@ -2143,9 +2155,17 @@ async function launchPipHud() {
     }
 
     const stream = pipCanvas.captureStream(10);
+    const silentAudio = getSilentAudioStream();
+    if (silentAudio) {
+      silentAudio.getAudioTracks().forEach(t => stream.addTrack(t));
+    }
+    
     pipVideo.srcObject = stream;
     await pipVideo.play();
     setupMediaSession();
+    if (navigator.mediaSession) {
+      navigator.mediaSession.playbackState = 'playing';
+    }
 
     if (pipAnimId) cancelAnimationFrame(pipAnimId);
     function loopDraw() {
@@ -2157,14 +2177,27 @@ async function launchPipHud() {
     if (pipVideo.requestPictureInPicture) {
       await pipVideo.requestPictureInPicture();
       closeScannerModal();
+      showScanToast('📺 Floating PiP HUD Active! Switch to Pokémon GO', '#38bdf8');
+      
+      // Auto-prompt screen stream AFTER PiP is safely opened
+      if (!screenStream || !screenStream.active) {
+        setTimeout(async () => {
+          if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            try {
+              screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+              setupScreenStreamActive();
+            } catch (streamErr) {
+              console.warn('Screen stream prompt note:', streamErr);
+            }
+          }
+        }, 600);
+      }
       return;
     }
   } catch (vErr) {
     console.warn('Video PiP failed:', vErr);
+    alert('Picture-in-Picture could not stay active. On your Samsung phone, use Pop-Up View: Swipe to Recent Apps, tap the app icon at top of card, and tap "Open in pop-up view"!');
   }
-
-  // 4. Fallback alert with instructions
-  alert('To overlay over Pokémon GO on Android: Open your Recent Apps screen, tap the Companion icon at the top, and tap "Open in pop-up view" (Samsung) or "Split Screen"! On iPhone: swipe the bottom home bar to switch instantly.');
 }
 
 function toggleAutoScan() {
@@ -2372,6 +2405,14 @@ async function toggleScreenStream() {
     if (status) status.innerText = 'Stream cancelled / permission denied';
   }
 }
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    if (pipVideo && pipVideo.paused) {
+      pipVideo.play().catch(() => {});
+    }
+  }
+});
 
 function handleScreenshotUpload(e) {
   const file = e.target.files && e.target.files[0];
