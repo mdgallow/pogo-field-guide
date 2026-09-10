@@ -36,38 +36,38 @@
     background-color: var(--bg-dark);
     color: var(--text-main);
     min-height: 100vh;
-    padding: 10px 12px 90px 12px;
+    padding: 8px 12px 90px 12px;
   }
 
   .header-box {
     max-width: 1400px;
-    margin: 0 auto 16px auto;
+    margin: 0 auto 10px auto;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.4);
   }
   .app-title h1 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 800;
     background: linear-gradient(90deg, #38bdf8, #818cf8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  .app-title p { color: var(--text-muted); font-size: 13px; }
+  .app-title p { color: var(--text-muted); font-size: 12px; }
 
   /* Catch Screen Checker */
   .checker-box {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
     border: 1px solid #38bdf8;
     border-radius: 12px;
-    padding: 10px 16px;
+    padding: 8px 14px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
     width: 100%;
   }
@@ -75,9 +75,9 @@
     background: #0f172a;
     border: 1px solid var(--border);
     color: #fff;
-    padding: 8px 12px;
+    padding: 7px 10px;
     border-radius: 8px;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     width: 100%;
     flex: 1;
@@ -87,32 +87,43 @@
     background: #38bdf8;
     color: #0f172a;
     font-weight: 800;
-    padding: 8px 14px;
+    padding: 7px 12px;
     border-radius: 8px;
     border: none;
     cursor: pointer;
   }
 
-  /* Filter Accordions & Rows */
+  /* Sticky Top Filter Container */
+  .sticky-filter-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 6px 0 8px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+  }
   .filters-container {
     max-width: 1400px;
-    margin: 0 auto 16px auto;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
   }
   .search-row {
     display: flex;
-    gap: 10px;
+    gap: 8px;
   }
   .search-input {
     flex: 1;
     background: var(--card-bg);
     border: 1px solid var(--border);
     color: #fff;
-    padding: 10px 14px;
+    padding: 8px 12px;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 13px;
     outline: none;
   }
   .sort-select {
@@ -120,9 +131,9 @@
     border: 1px solid var(--border);
     color: var(--accent);
     font-weight: 700;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 10px;
-    font-size: 13px;
+    font-size: 12px;
     outline: none;
   }
   
@@ -130,9 +141,9 @@
     background: var(--card-bg);
     border: 1px solid var(--border);
     color: var(--text-main);
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 13px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     display: flex;
@@ -140,13 +151,15 @@
     align-items: center;
   }
   .filter-panel {
-    background: rgba(30, 41, 59, 0.7);
+    background: rgba(30, 41, 59, 0.95);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    max-height: 65vh;
+    overflow-y: auto;
   }
   .filter-group-title {
     font-size: 11px;
@@ -159,16 +172,16 @@
   .chips-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 5px;
   }
   .chip {
     background: #0f172a;
     border: 1px solid var(--border);
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    padding: 5px 10px;
-    border-radius: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
     cursor: pointer;
     user-select: none;
     transition: all 0.15s;
@@ -185,7 +198,7 @@
     color: var(--text-main);
     font-size: 11px;
     font-weight: 700;
-    padding: 4px 8px;
+    padding: 3px 7px;
     border-radius: 6px;
     cursor: pointer;
     user-select: none;
@@ -210,18 +223,18 @@
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 14px;
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 7px;
     cursor: pointer;
     transition: transform 0.15s, border-color 0.15s;
   }
   .card:hover { transform: translateY(-2px); border-color: var(--accent); }
 
-  .card-top { display: flex; align-items: center; gap: 12px; }
+  .card-top { display: flex; align-items: center; gap: 10px; }
   .card-img {
-    width: 58px; height: 58px;
+    width: 56px; height: 56px;
     object-fit: contain;
     background: rgba(15, 23, 42, 0.6);
     border-radius: 10px;
@@ -240,7 +253,7 @@
     flex: 1;
     font-size: 11px;
     font-weight: 800;
-    padding: 4px 8px;
+    padding: 3px 6px;
     border-radius: 6px;
     text-align: center;
     white-space: nowrap;
@@ -256,7 +269,7 @@
   .badge-berry {
     font-size: 11px;
     font-weight: 700;
-    padding: 4px 8px;
+    padding: 3px 7px;
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -275,14 +288,14 @@
     font-size: 11px;
     color: var(--text-muted);
     border-top: 1px solid rgba(51, 65, 85, 0.5);
-    padding-top: 6px;
+    padding-top: 5px;
   }
 
   /* Modal Details */
   .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.82);
     display: none;
     align-items: center;
     justify-content: center;
@@ -295,18 +308,18 @@
     border-radius: 16px;
     max-width: 560px;
     width: 100%;
-    max-height: 85vh;
+    max-height: 88vh;
     overflow-y: auto;
     padding: 20px;
     position: relative;
   }
   .modal-close {
     position: absolute;
-    top: 14px; right: 14px;
+    top: 12px; right: 12px;
     background: #0f172a;
     border: 1px solid var(--border);
     color: #fff;
-    width: 32px; height: 32px;
+    width: 30px; height: 30px;
     border-radius: 50%;
     cursor: pointer;
     font-weight: bold;
@@ -332,6 +345,37 @@
   }
   .cp-cell.cp-l50 .val { color: #fbbf24 !important; }
 
+  /* User Guide Typography */
+  .guide-section {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+  }
+  .guide-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #38bdf8;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .guide-p {
+    font-size: 12px;
+    color: var(--text-main);
+    line-height: 1.6;
+    margin-bottom: 6px;
+  }
+  .guide-card {
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
   @keyframes pulse {
     0% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.85; transform: scale(1.02); }
@@ -347,11 +391,16 @@
       <h1>PoGo Mobile Companion</h1>
       <p>1,401 Pokémon • All 50 Levels • 0-2★ Actions • Field Berry Guide</p>
     </div>
-    
-    <button id="installAppBtn" style="display:none; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:10px; padding:8px 14px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.35); align-items:center; gap:6px;">
-      📲 Install App
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button onclick="openGuideModal()" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(59,130,246,0.3);">
+        📖 Guide
+      </button>
+      
+    <button id="installAppBtn" style="display:none; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:10px; padding:7px 12px; font-weight:800; font-size:12px; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.35); align-items:center; gap:5px;">
+      📲 Install
     </button>
     
+    </div>
   </div>
   
   
@@ -368,117 +417,203 @@
   </div>
 </div>
 
-<div class="filters-container">
-  <div class="search-row">
-    <input type="text" id="searchInput" class="search-input" placeholder="Search by name, #, type, region, berry... (e.g. Beldum, Kanto, Steel)" oninput="applyFilters()" />
-    <select id="sortSelect" class="sort-select" onchange="applyFilters()">
-      <option value="dex_asc">Pokédex # (1 → 1025)</option>
-      <option value="dex_desc">Pokédex # (1025 → 1)</option>
-      <option value="pvp_asc">PvP Rank (Best First)</option>
-      <option value="pve_asc">PvE Rank (Best First)</option>
-      <option value="cp_desc">Level 50 Max CP (Highest First)</option>
-      <option value="name_asc">Alphabetical (A → Z)</option>
-    </select>
-  </div>
-
-  <div class="filter-toggle-btn" onclick="toggleFilterPanel()">
-    <span>🔍 Filter Matrix (<span id="activeFilterCount" style="color:var(--accent); font-weight:800;">0</span> active)</span>
-    <span id="toggleArrow">▼</span>
-  </div>
-
-  <div id="filterPanel" class="filter-panel" style="display:none;">
-    <div>
-      <div class="filter-group-title">Elemental Types (18)</div>
-      <div id="typesFilterRow" class="chips-row"></div>
+<!-- Sticky Top Navigation & Filter Bar -->
+<div class="sticky-filter-bar">
+  <div class="filters-container">
+    <div class="search-row">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by name, #, type, region, berry... (e.g. Beldum, Kanto, Steel)" oninput="applyFilters()" />
+      <select id="sortSelect" class="sort-select" onchange="applyFilters()">
+        <option value="dex_asc">Pokédex # (1 → 1025)</option>
+        <option value="dex_desc">Pokédex # (1025 → 1)</option>
+        <option value="pvp_asc">PvP Rank (Best First)</option>
+        <option value="pve_asc">PvE Rank (Best First)</option>
+        <option value="cp_desc">Level 50 Max CP (Highest First)</option>
+        <option value="name_asc">Alphabetical (A → Z)</option>
+      </select>
     </div>
-    
-    <div>
-      <div class="filter-group-title">Generation & Region</div>
-      <div class="chips-row">
-        <div class="chip active" onclick="setFilter('region', 'ALL', this)">All Regions</div>
-        <div class="chip" onclick="setFilter('region', 'Kanto', this)">Kanto (Gen 1)</div>
-        <div class="chip" onclick="setFilter('region', 'Johto', this)">Johto (Gen 2)</div>
-        <div class="chip" onclick="setFilter('region', 'Hoenn', this)">Hoenn (Gen 3)</div>
-        <div class="chip" onclick="setFilter('region', 'Sinnoh', this)">Sinnoh (Gen 4)</div>
-        <div class="chip" onclick="setFilter('region', 'Unova', this)">Unova (Gen 5)</div>
-        <div class="chip" onclick="setFilter('region', 'Kalos', this)">Kalos (Gen 6)</div>
-        <div class="chip" onclick="setFilter('region', 'Alola', this)">Alola (Gen 7)</div>
-        <div class="chip" onclick="setFilter('region', 'Galar', this)">Galar (Gen 8)</div>
-        <div class="chip" onclick="setFilter('region', 'Hisui', this)">Hisui</div>
-        <div class="chip" onclick="setFilter('region', 'Paldea', this)">Paldea (Gen 9)</div>
+
+    <div class="filter-toggle-btn" onclick="toggleFilterPanel()">
+      <span>🔍 Filter Matrix (<span id="activeFilterCount" style="color:var(--accent); font-weight:800;">0</span> active)</span>
+      <span id="toggleArrow">▼</span>
+    </div>
+
+    <div id="filterPanel" class="filter-panel" style="display:none;">
+      <div>
+        <div class="filter-group-title">Elemental Types (18)</div>
+        <div id="typesFilterRow" class="chips-row"></div>
       </div>
-    </div>
-
-    <div>
-      <div class="filter-group-title">Evolution Stage</div>
-      <div class="chips-row">
-        <div class="chip active" onclick="setFilter('evoStage', 'ALL', this)">All Stages</div>
-        <div class="chip" onclick="setFilter('evoStage', 'can_evo', this)">🌱 Can Evolve (Pre-evo)</div>
-        <div class="chip" onclick="setFilter('evoStage', 'final', this)">👑 Evolution Limit (Final Form)</div>
-        <div class="chip" onclick="setFilter('evoStage', 'mega', this)">💥 Has Mega Evolution</div>
+      
+      <div>
+        <div class="filter-group-title">Generation & Region</div>
+        <div class="chips-row">
+          <div class="chip active" onclick="setFilter('region', 'ALL', this)">All Regions</div>
+          <div class="chip" onclick="setFilter('region', 'Kanto', this)">Kanto (Gen 1)</div>
+          <div class="chip" onclick="setFilter('region', 'Johto', this)">Johto (Gen 2)</div>
+          <div class="chip" onclick="setFilter('region', 'Hoenn', this)">Hoenn (Gen 3)</div>
+          <div class="chip" onclick="setFilter('region', 'Sinnoh', this)">Sinnoh (Gen 4)</div>
+          <div class="chip" onclick="setFilter('region', 'Unova', this)">Unova (Gen 5)</div>
+          <div class="chip" onclick="setFilter('region', 'Kalos', this)">Kalos (Gen 6)</div>
+          <div class="chip" onclick="setFilter('region', 'Alola', this)">Alola (Gen 7)</div>
+          <div class="chip" onclick="setFilter('region', 'Galar', this)">Galar (Gen 8)</div>
+          <div class="chip" onclick="setFilter('region', 'Hisui', this)">Hisui</div>
+          <div class="chip" onclick="setFilter('region', 'Paldea', this)">Paldea (Gen 9)</div>
+        </div>
       </div>
-    </div>
 
-    <div>
-      <div class="filter-group-title">Competitive Meta & Tiers</div>
-      <div class="chips-row">
-        <div class="chip active" onclick="setFilter('tier', 'ALL', this)">All Tiers</div>
-        <div class="chip" onclick="setFilter('tier', 'pvp_100', this)">🏆 Top 100 PvP</div>
-        <div class="chip" onclick="setFilter('tier', 'pve_100', this)">⚔️ Top 100 PvE</div>
-        <div class="chip" onclick="setFilter('tier', 'legendary', this)">👑 Legendary / Mythical</div>
+      <div>
+        <div class="filter-group-title">Evolution Stage</div>
+        <div class="chips-row">
+          <div class="chip active" onclick="setFilter('evoStage', 'ALL', this)">All Stages</div>
+          <div class="chip" onclick="setFilter('evoStage', 'can_evo', this)">🌱 Can Evolve (Pre-evo)</div>
+          <div class="chip" onclick="setFilter('evoStage', 'final', this)">👑 Evolution Limit (Final Form)</div>
+          <div class="chip" onclick="setFilter('evoStage', 'mega', this)">💥 Has Mega Evolution</div>
+        </div>
       </div>
-    </div>
 
-    <div>
-      <div class="filter-group-title">0-2★ Action Recommendation</div>
-      <div class="chips-row">
-        <div class="chip active" onclick="setFilter('action', 'ALL', this)">All Actions</div>
-        <div class="chip" onclick="setFilter('action', 'Trade (Lucky / PvE Meta)', this)">⭐ Lucky / PvE Meta</div>
-        <div class="chip" onclick="setFilter('action', 'Trade (XL Priority)', this)">🍬 XL Priority</div>
-        <div class="chip" onclick="setFilter('action', 'Trade (Free Evolution)', this)">🔄 Free Evolution</div>
-        <div class="chip" onclick="setFilter('action', 'Trade (PvP Re-roll)', this)">⚔️ PvP Re-roll</div>
-        <div class="chip" onclick="setFilter('action', 'Transfer (Low Utility)', this)">🗑️ Transfer</div>
+      <div>
+        <div class="filter-group-title">Competitive Meta & Tiers</div>
+        <div class="chips-row">
+          <div class="chip active" onclick="setFilter('tier', 'ALL', this)">All Tiers</div>
+          <div class="chip" onclick="setFilter('tier', 'pvp_100', this)">🏆 Top 100 PvP</div>
+          <div class="chip" onclick="setFilter('tier', 'pve_100', this)">⚔️ Top 100 PvE</div>
+          <div class="chip" onclick="setFilter('tier', 'legendary', this)">👑 Legendary / Mythical</div>
+        </div>
       </div>
-    </div>
 
-    <div>
-      <div class="filter-group-title">Recommended Berry</div>
-      <div class="chips-row">
-        <div class="chip active" onclick="setFilter('berry', 'ALL', this)">All Berries</div>
-        <div class="chip" onclick="setFilter('berry', 'Pinap Berry', this)">🍍 Pinap Berry</div>
-        <div class="chip" onclick="setFilter('berry', 'Silver Pinap Berry', this)">🥈 Silver Pinap</div>
-        <div class="chip" onclick="setFilter('berry', 'Golden Razz Berry', this)">🥇 Golden Razz</div>
-        <div class="chip" onclick="setFilter('berry', 'None', this)">🚫 No Berry</div>
+      <div>
+        <div class="filter-group-title">0-2★ Action Recommendation</div>
+        <div class="chips-row">
+          <div class="chip active" onclick="setFilter('action', 'ALL', this)">All Actions</div>
+          <div class="chip" onclick="setFilter('action', 'Trade (Lucky / PvE Meta)', this)">⭐ Lucky / PvE Meta</div>
+          <div class="chip" onclick="setFilter('action', 'Trade (XL Priority)', this)">🍬 XL Priority</div>
+          <div class="chip" onclick="setFilter('action', 'Trade (Free Evolution)', this)">🔄 Free Evolution</div>
+          <div class="chip" onclick="setFilter('action', 'Trade (PvP Re-roll)', this)">⚔️ PvP Re-roll</div>
+          <div class="chip" onclick="setFilter('action', 'Transfer (Low Utility)', this)">🗑️ Transfer</div>
+        </div>
       </div>
-    </div>
 
-    <div style="margin-top:6px;">
-      <button onclick="resetAllFilters()" style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:6px 12px; font-weight:700; font-size:12px; cursor:pointer;">↺ Reset All Filters</button>
+      <div>
+        <div class="filter-group-title">Recommended Berry</div>
+        <div class="chips-row">
+          <div class="chip active" onclick="setFilter('berry', 'ALL', this)">All Berries</div>
+          <div class="chip" onclick="setFilter('berry', 'Pinap Berry', this)">🍍 Pinap Berry</div>
+          <div class="chip" onclick="setFilter('berry', 'Silver Pinap Berry', this)">🥈 Silver Pinap</div>
+          <div class="chip" onclick="setFilter('berry', 'Golden Razz Berry', this)">🥇 Golden Razz</div>
+          <div class="chip" onclick="setFilter('berry', 'None', this)">🚫 No Berry</div>
+        </div>
+      </div>
+
+      <div style="margin-top:6px;">
+        <button onclick="resetAllFilters()" style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:6px 12px; font-weight:700; font-size:12px; cursor:pointer;">↺ Reset All Filters</button>
+      </div>
     </div>
   </div>
 </div>
 
-<div style="max-width:1400px; margin:0 auto 12px auto; display:flex; justify-content:space-between; align-items:center; padding:0 4px;">
-  <div id="resultsSummary" style="font-size:13px; color:var(--text-muted);">Showing <b>120</b> of <b>1,401</b> Pokémon</div>
-  <button onclick="loadAll()" style="background:#1e293b; color:#38bdf8; border:1px solid var(--border); border-radius:8px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer;">⚡ Show All (1,401)</button>
+<div style="max-width:1400px; margin:0 auto 10px auto; display:flex; justify-content:space-between; align-items:center; padding:0 4px;">
+  <div id="resultsSummary" style="font-size:12px; color:var(--text-muted);">Showing <b>120</b> of <b>1,401</b> Pokémon</div>
+  <button onclick="loadAll()" style="background:#1e293b; color:#38bdf8; border:1px solid var(--border); border-radius:8px; padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;">⚡ Show All (1,401)</button>
 </div>
 
 <div id="gridContainer" class="grid-container"></div>
 
-<div id="loadMoreContainer" style="max-width:1400px; margin:24px auto; display:flex; justify-content:center; gap:12px;">
-  <button onclick="loadMore()" style="background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); border-radius:10px; padding:10px 22px; font-weight:700; font-size:14px; cursor:pointer;">
+<div id="loadMoreContainer" style="max-width:1400px; margin:20px auto; display:flex; justify-content:center; gap:10px;">
+  <button onclick="loadMore()" style="background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); border-radius:10px; padding:9px 18px; font-weight:700; font-size:13px; cursor:pointer;">
     ⬇️ Load Next (<span id="loadMoreCount"></span> remaining)
   </button>
-  <button onclick="loadAll()" style="background:linear-gradient(135deg, #38bdf8, #818cf8); color:#0f172a; border:none; border-radius:10px; padding:10px 20px; font-weight:800; font-size:14px; cursor:pointer;">
+  <button onclick="loadAll()" style="background:linear-gradient(135deg, #38bdf8, #818cf8); color:#0f172a; border:none; border-radius:10px; padding:9px 18px; font-weight:800; font-size:13px; cursor:pointer;">
     ⚡ Show All
   </button>
 </div>
+
+<!-- Floating Back to Top Button -->
+<button id="backToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="display:none; position:fixed; bottom:20px; right:16px; background:rgba(30,41,59,0.92); color:#38bdf8; border:1px solid #38bdf8; width:44px; height:44px; border-radius:50%; font-size:18px; font-weight:bold; cursor:pointer; z-index:90; box-shadow:0 4px 16px rgba(0,0,0,0.5); backdrop-filter:blur(8px); align-items:center; justify-content:center;">
+  ⬆️
+</button>
 
 <!-- Detail Modal -->
 <div id="modalOverlay" class="modal-overlay" onclick="closeModal(event)">
   <div class="modal-content" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Trainer Field Guide & Update Sync Modal -->
+<div id="guideOverlay" class="modal-overlay" onclick="closeGuideModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()" style="max-width:620px;">
+    <button class="modal-close" onclick="closeGuideModal()">✕</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+      <div>
+        <h2 style="font-size:18px; font-weight:800; background:linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Trainer Field Guide</h2>
+        <p style="font-size:11px; color:var(--text-muted);">Tactical Decision Framework & App Sync</p>
+      </div>
+      <span style="font-size:11px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:6px; font-weight:800;">v1.2.0</span>
+    </div>
+
+    <!-- Section 1: Catch Screen & Masterball -->
+    <div class="guide-section">
+      <div class="guide-title">🎯 1. Catch Screen CP Inspector & Masterball Decisions</div>
+      <div class="guide-p">Type any wild CP before throwing a ball to cross-reference all 1,401 Pokémon across <b>all 50 levels</b>:</div>
+      <div class="guide-card">
+        <div><b>🟣 Level 50 Match:</b> Triggers <b>MASTERBALL ALERT</b> + vibration! Wild level 50 hundos are exceptionally rare mathematical miracles—use a Masterball to guarantee capture.</div>
+        <div style="margin-top:4px;"><b>⭐ Level 40–49 Match:</b> Ultra-rare high-level hundo. Worth your Golden Razz + Ultra Ball curveball.</div>
+        <div style="margin-top:4px;"><b>❌ No Hundo Match:</b> Standard encounter. Save your Masterball and golden berries for higher priorities.</div>
+      </div>
+    </div>
+
+    <!-- Section 2: Recommended Berry -->
+    <div class="guide-section">
+      <div class="guide-title">🍇 2. Field Berry Recommendation Matrix</div>
+      <div class="guide-p">Optimize candy generation while preserving rare berries for raids and high-flee encounters:</div>
+      <div class="guide-card">
+        <div>🍍 <b>Pinap Berry:</b> Meta staples, trade evolution families, and starter lines where candy volume accelerates power-ups.</div>
+        <div style="margin-top:4px;">🥈 <b>Silver Pinap Berry:</b> Ultra-rare species (Frigibax, Dreepy, Larvesta) and high-CP evolved forms (double candy + catch bonus).</div>
+        <div style="margin-top:4px;">🥇 <b>Golden Razz Berry:</b> Legendaries, Mythicals, Ultra Beasts, and emergency high-flee encounters.</div>
+        <div style="margin-top:4px;">🚫 <b>No Berry:</b> Low utility / common spawns. Save berries to maximize speed-catching efficiency.</div>
+      </div>
+    </div>
+
+    <!-- Section 3: 0-2★ Action -->
+    <div class="guide-section">
+      <div class="guide-title">📋 3. Post-Event 0–2★ Appraisal Routine (Trade vs Transfer)</div>
+      <div class="guide-p">Eliminate appraisal paralysis after catching hundreds of Pokémon:</div>
+      <div class="guide-card">
+        <div>⭐ <b>Trade (Lucky / PvE Meta):</b> Elite raid attackers. Trade to re-roll for Lucky status and save 50% Stardust on maxing.</div>
+        <div style="margin-top:4px;">🍬 <b>Trade (XL Priority):</b> Species requiring Level 50 XL candy for Master or Ultra League. Trading grants guaranteed XL candies.</div>
+        <div style="margin-top:4px;">🔄 <b>Trade (Free Evolution):</b> Machop, Gastly, Timburr, Phantump, etc. Evolving after a trade costs <b>0 candy</b>!</div>
+        <div style="margin-top:4px;">⚔️ <b>Trade (PvP Re-roll):</b> Top Great/Ultra League species requiring low Attack IVs (0/15/15). Re-roll non-lucky trades.</div>
+        <div style="margin-top:4px;">🗑️ <b>Transfer (Low Utility):</b> Zero PvE or PvP meta relevance. Safe to mass transfer without regret.</div>
+      </div>
+    </div>
+
+    <!-- Section 4: Combat Intel -->
+    <div class="guide-section">
+      <div class="guide-title">⚔️ 4. Moveset Intelligence & Combat Ranks</div>
+      <div class="guide-p">Tap any card to view exact combat stats:</div>
+      <div class="guide-card">
+        <div><b>PvP Moves & Rank:</b> Official PvPoke rankings across Great, Ultra, and Master Leagues.</div>
+        <div style="margin-top:4px;"><b>PvE Cycle DPS:</b> Mathematically optimized attack rotation incorporating Same-Type Attack Bonus (STAB).</div>
+        <div style="margin-top:4px;"><b>Legacy / Elite TM Warnings:</b> Moves requiring an Elite TM are tagged with <code>(Elite)</code> alongside viable non-legacy alternatives.</div>
+      </div>
+    </div>
+
+    <!-- Section 5: Origin Sync & Updates -->
+    <div style="background:#0f172a; border:1px solid #38bdf8; border-radius:10px; padding:12px; margin-top:8px;">
+      <div style="font-size:13px; font-weight:800; color:#38bdf8; margin-bottom:4px;">🔄 App Sync & Update Engine</div>
+      <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+        Origin: <code>https://mdgallow.github.io/pogo-field-guide/</code><br/>
+        Status: <span id="updateStatusMsg" style="color:#34d399; font-weight:700;">Ready (Cached for 100% Offline Use)</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button onclick="checkForUpdates(true)" style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:12px; font-weight:800; cursor:pointer;">
+          🔄 Check Origin for Updates
+        </button>
+        <button onclick="applyAppUpdate()" style="background:#334155; color:#f8fafc; border:none; border-radius:8px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer;">
+          ⚡ Force Reload
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -664,11 +799,17 @@ function loadAll() {
 }
 
 window.addEventListener('scroll', () => {
+  // Infinite scroll threshold
   if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 900) {
     if (currentRenderLimit < currentFiltered.length) {
       currentRenderLimit += BATCH_SIZE;
       renderBatch();
     }
+  }
+  // Toggle floating Back to Top button
+  const topBtn = document.getElementById('backToTopBtn');
+  if (topBtn) {
+    topBtn.style.display = window.scrollY > 350 ? 'flex' : 'none';
   }
 });
 
@@ -717,6 +858,14 @@ function closeModal(e) {
   document.getElementById('modalOverlay').style.display = 'none';
 }
 
+function openGuideModal() {
+  document.getElementById('guideOverlay').style.display = 'flex';
+}
+
+function closeGuideModal(e) {
+  document.getElementById('guideOverlay').style.display = 'none';
+}
+
 function checkCaughtCp() {
   const cpVal = parseInt(document.getElementById('catchCpInput').value);
   const resultDiv = document.getElementById('checkerResult');
@@ -747,13 +896,70 @@ function checkCaughtCp() {
   }
 }
 
+// Update & Origin Sync Engine
+async function checkForUpdates(manual = false) {
+  const statusMsg = document.getElementById('updateStatusMsg');
+  if (statusMsg) statusMsg.innerHTML = '🔄 Contacting origin server...';
+
+  if (!navigator.onLine) {
+    if (statusMsg) statusMsg.innerHTML = '<span style="color:#f59e0b;">📴 Offline mode. Using cached database.</span>';
+    return;
+  }
+
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        await reg.update();
+        if (reg.waiting) {
+          if (statusMsg) statusMsg.innerHTML = '<span style="color:#38bdf8;">✨ New version detected! Tap Force Reload below.</span>';
+          return;
+        }
+      }
+    }
+
+    const res = await fetch('./manifest.json?t=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) {
+      if (statusMsg) {
+        statusMsg.innerHTML = '<span style="color:#34d399;">✅ Connected to origin. App is 100% up to date!</span>';
+      }
+      if (manual) {
+        alert('App is fully connected to origin (v1.2.0) and running the latest offline cache!');
+      }
+    } else {
+      if (statusMsg) statusMsg.innerHTML = '<span style="color:#ef4444;">⚠️ Origin server check returned non-200.</span>';
+    }
+  } catch (err) {
+    if (statusMsg) statusMsg.innerHTML = '<span style="color:#f87171;">⚠️ Network error syncing with origin.</span>';
+  }
+}
+
+function applyAppUpdate() {
+  if ('caches' in window) {
+    caches.keys().then(names => {
+      for (let name of names) caches.delete(name);
+    });
+  }
+  window.location.reload(true);
+}
+
 initTypePills();
 applyFilters();
 
 // PWA Service Worker & Install Logic (for Mobile)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW fail:', err));
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            const statusMsg = document.getElementById('updateStatusMsg');
+            if (statusMsg) statusMsg.innerHTML = '<span style="color:#38bdf8;">✨ New update installed in background!</span>';
+          }
+        });
+      });
+    }).catch(err => console.log('SW fail:', err));
   });
 }
 
