@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pogo-companion-v8';
+const CACHE_NAME = 'pogo-companion-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS_TO_CACHE = [
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
+  './pogo_qr_code.png',
   'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'
 ];
 
