@@ -511,10 +511,25 @@
     left: 68px;
   }
 
-  @keyframes pulse {
-    0% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.85; transform: scale(1.02); }
-    100% { opacity: 1; transform: scale(1); }
+  /* 3 Evaluation Modes: Blank, Catch Window, Storage Screen */
+  .vertical-hud-pill.hud-state-blank {
+    border-color: #475569 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+    opacity: 0.65;
+  }
+  .vertical-hud-pill.hud-state-blank:hover {
+    opacity: 0.95;
+    border-color: #94a3b8 !important;
+  }
+  .vertical-hud-pill.hud-state-catch {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(56, 189, 248, 0.35) !important;
+    opacity: 1;
+  }
+  .vertical-hud-pill.hud-state-storage {
+    border-color: #f59e0b !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(245, 158, 11, 0.35) !important;
+    opacity: 1;
   }
 </style>
 </head>
@@ -581,11 +596,26 @@
     
   
   <div class="checker-box">
-    <span style="font-size:12px; font-weight:800; color:var(--accent); white-space:nowrap;">🎯 Catch Screen:</span>
-    <input type="number" id="catchCpInput" placeholder="Enter CP (e.g. 1035)" inputmode="numeric" oninput="checkCaughtCp()" onkeydown="if(event.key==='Enter') checkCaughtCp()" />
-    <button onclick="checkCaughtCp()">Inspect</button>
-    <button id="clearCpBtn" onclick="clearCpFilter()" style="display:none; background:#334155; color:#f87171; border:none; border-radius:8px; padding:7px 10px; font-weight:800; font-size:12px; cursor:pointer;" title="Clear CP Filter">✕ Clear</button>
-    <div id="checkerResult" style="font-size:12px; font-weight:700; width:100%;"></div>
+    <!-- 3 Evaluation Mode Points: Blank Standby / Catch Window / Storage Screen -->
+    <div style="display:flex; gap:6px; margin-bottom:8px; width:100%; overflow-x:auto;">
+      <button id="modeCatchBtn" class="mode-tab active" onclick="setEvaluationMode('catch')" style="flex:1; background:rgba(56,189,248,0.2); border:1.5px solid #38bdf8; color:#38bdf8; border-radius:8px; padding:6px 6px; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap;">
+        🎯 Catch Window
+      </button>
+      <button id="modeStorageBtn" class="mode-tab" onclick="setEvaluationMode('storage')" style="flex:1; background:#0f172a; border:1px solid var(--border); color:var(--text-muted); border-radius:8px; padding:6px 6px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;">
+        🗑️ Storage (Delete vs Keep)
+      </button>
+      <button id="modeBlankBtn" class="mode-tab" onclick="setEvaluationMode('blank')" style="background:#0f172a; border:1px solid var(--border); color:var(--text-muted); border-radius:8px; padding:6px 9px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;" title="Blank / Standby Pill">
+        ⚪ Blank
+      </button>
+    </div>
+
+    <div style="display:flex; gap:8px; align-items:center; width:100%; flex-wrap:wrap;">
+      <span id="inspectorModeLabel" style="font-size:12px; font-weight:800; color:var(--accent); white-space:nowrap;">🎯 Catch Screen:</span>
+      <input type="number" id="catchCpInput" placeholder="Enter encounter CP (e.g. 1035)" inputmode="numeric" oninput="checkCaughtCp()" onkeydown="if(event.key==='Enter') checkCaughtCp()" style="flex:1; min-width:140px;" />
+      <button onclick="checkCaughtCp()">Inspect</button>
+      <button id="clearCpBtn" onclick="clearCpFilter()" style="display:none; background:#334155; color:#f87171; border:none; border-radius:8px; padding:7px 10px; font-weight:800; font-size:12px; cursor:pointer;" title="Clear CP Filter">✕ Clear</button>
+    </div>
+    <div id="checkerResult" style="font-size:12px; font-weight:700; width:100%; margin-top:4px;"></div>
   </div>
 </div>
 
@@ -721,6 +751,23 @@
         <p style="font-size:11px; color:var(--text-muted);">Tactical Decision Framework & App Sync</p>
       </div>
       <span style="font-size:11px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:6px; font-weight:800;">v1.2.0</span>
+    </div>
+
+    <!-- Section 0: 3 Tactical Evaluation States -->
+    <div class="guide-section" style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:10px 12px; margin-bottom:12px;">
+      <div class="guide-title" style="color:#38bdf8; font-size:13.5px;">🧭 3-Point HUD Decision Framework</div>
+      <div class="guide-p">The Vertical HUD Pill adapts into 3 distinct operational modes across your Pokémon GO gameplay:</div>
+      <div style="display:flex; flex-direction:column; gap:6px; font-size:11px; margin-top:6px;">
+        <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #64748b;">
+          <b>⚪ 1. Standby / Blank Pill (Exploration):</b> When walking on the overworld map, battling, or navigating menus, the HUD sits dormant in screen dead space without cluttering your view.
+        </div>
+        <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #38bdf8;">
+          <b>🎯 2. Catch Window (Balls & Berries):</b> Active during wild encounters (e.g. wild Swablu). Shows recommended berry (Slot 1), catch priority / 45 Hundo / 44 Priority match (Slot 2), and post-catch utility (Slot 3).
+        </div>
+        <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
+          <b>🗑️ 3. Storage Screen (Delete vs Keep):</b> Active when inspecting your Pokémon storage (e.g. Jolteon CP 266). Directly advises <b>🗑️ DELETE (Transfer)</b> for +1 candy if low utility, or <b>⭐ KEEP / TRADE</b> for Lucky or PvP meta species.
+        </div>
+      </div>
     </div>
 
     <!-- Section 1: Catch Screen & Masterball -->
@@ -1075,10 +1122,64 @@ function evaluateCpMatch(p, cpVal) {
   return null;
 }
 
+let evaluationMode = 'catch'; // 'catch' | 'storage' | 'blank'
+
+function setEvaluationMode(mode) {
+  evaluationMode = mode;
+  ['modeCatchBtn', 'modeStorageBtn', 'modeBlankBtn'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) {
+      b.classList.remove('active');
+      b.style.background = '#0f172a';
+      b.style.color = 'var(--text-muted)';
+      b.style.borderColor = 'var(--border)';
+    }
+  });
+
+  const activeBtn = document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1) + 'Btn');
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    if (mode === 'catch') {
+      activeBtn.style.background = 'rgba(56, 189, 248, 0.2)';
+      activeBtn.style.color = '#38bdf8';
+      activeBtn.style.borderColor = '#38bdf8';
+    } else if (mode === 'storage') {
+      activeBtn.style.background = 'rgba(245, 158, 11, 0.2)';
+      activeBtn.style.color = '#fbbf24';
+      activeBtn.style.borderColor = '#f59e0b';
+    } else {
+      activeBtn.style.background = 'rgba(148, 163, 184, 0.2)';
+      activeBtn.style.color = '#cbd5e1';
+      activeBtn.style.borderColor = '#94a3b8';
+    }
+  }
+
+  const lbl = document.getElementById('inspectorModeLabel');
+  const inp = document.getElementById('catchCpInput');
+  if (lbl && inp) {
+    if (mode === 'catch') {
+      lbl.innerText = '🎯 Catch Screen:';
+      inp.placeholder = 'Enter encounter CP (e.g. 1035)';
+    } else if (mode === 'storage') {
+      lbl.innerText = '🗑️ Storage Screen:';
+      inp.placeholder = 'Enter storage CP (e.g. 266)';
+    } else {
+      lbl.innerText = '⚪ Standby (Blank):';
+      inp.placeholder = 'Dormant - enter CP to awaken';
+    }
+  }
+
+  const topP = currentFiltered.length > 0 ? currentFiltered[0] : activeHudPokemon;
+  const match = topP ? evaluateCpMatch(topP, cpFilterVal) : null;
+  updateVerticalHud(topP, match);
+  if (cpFilterVal !== null) checkCaughtCp();
+}
+
 function updateVerticalHud(p, matchInfo) {
   activeHudPokemon = p;
   activeHudMatch = matchInfo;
 
+  const pill = document.getElementById('verticalHudPill');
   const bIcon = document.getElementById('hudBerryIcon');
   const bLabel = document.getElementById('hudBerryLabel');
   const cIcon = document.getElementById('hudCatchIcon');
@@ -1086,18 +1187,132 @@ function updateVerticalHud(p, matchInfo) {
   const aIcon = document.getElementById('hudActionIcon');
   const aLabel = document.getElementById('hudActionLabel');
 
-  if (!p) {
-    if (bIcon) bIcon.innerText = '🍍';
-    if (bLabel) bLabel.innerText = 'BERRY';
-    if (cIcon) cIcon.innerText = '🎯';
-    if (cLabel) cLabel.innerText = 'READY';
-    if (aIcon) aIcon.innerText = '📋';
-    if (aLabel) aLabel.innerText = 'ACTION';
+  if (pill) {
+    pill.classList.remove('hud-state-blank', 'hud-state-catch', 'hud-state-storage');
+    pill.classList.add('hud-state-' + evaluationMode);
+  }
+
+  // 1. BLANK / STANDBY STATE (Nothing to assess)
+  if (evaluationMode === 'blank' || (!p && evaluationMode !== 'storage' && evaluationMode !== 'catch')) {
+    if (bIcon) bIcon.innerText = '⚪';
+    if (bLabel) { bLabel.innerText = 'IDLE'; bLabel.style.color = 'var(--text-muted)'; }
+    if (cIcon) cIcon.innerText = '⚪';
+    if (cLabel) { cLabel.innerText = 'STANDBY'; cLabel.style.color = 'var(--text-muted)'; }
+    if (aIcon) aIcon.innerText = '⚪';
+    if (aLabel) { aLabel.innerText = 'READY'; aLabel.style.color = 'var(--text-muted)'; }
+    if (document.getElementById('hudPopover').style.display !== 'none') {
+      updateHudPopover();
+    }
     return;
   }
 
-  // 1. Berry Slot
+  // 2. STORAGE SCREEN (DELETE vs KEEP DECISION)
+  if (evaluationMode === 'storage') {
+    if (!p) {
+      if (bIcon) bIcon.innerText = '🗑️';
+      if (bLabel) { bLabel.innerText = 'DELETE'; bLabel.style.color = '#f87171'; }
+      if (cIcon) cIcon.innerText = '📊';
+      if (cLabel) { cLabel.innerText = 'ASSESS'; cLabel.style.color = ''; }
+      if (aIcon) aIcon.innerText = '🍬';
+      if (aLabel) { aLabel.innerText = '+1 CANDY'; aLabel.style.color = ''; }
+      if (document.getElementById('hudPopover').style.display !== 'none') {
+        updateHudPopover();
+      }
+      return;
+    }
+
+    // Slot 1: The Core Storage Decision (DELETE vs KEEP/TRADE)
+    if (bIcon && bLabel) {
+      if (p.act.includes('Transfer')) {
+        bIcon.innerText = '🗑️';
+        bLabel.innerText = 'DELETE';
+        bLabel.style.color = '#f87171';
+      } else if (p.act.includes('Lucky')) {
+        bIcon.innerText = '⭐';
+        bLabel.innerText = 'KEEP';
+        bLabel.style.color = '#fbbf24';
+      } else if (p.act.includes('Free')) {
+        bIcon.innerText = '🔄';
+        bLabel.innerText = 'TRADE';
+        bLabel.style.color = '#34d399';
+      } else if (p.act.includes('XL')) {
+        bIcon.innerText = '🍬';
+        bLabel.innerText = 'TRADE';
+        bLabel.style.color = '#38bdf8';
+      } else if (p.act.includes('PvP')) {
+        bIcon.innerText = '⚔️';
+        bLabel.innerText = 'KEEP';
+        bLabel.style.color = '#c084fc';
+      } else {
+        bIcon.innerText = '🗑️';
+        bLabel.innerText = 'DELETE';
+        bLabel.style.color = '#f87171';
+      }
+    }
+
+    // Slot 2: IV & CP Match Status
+    if (cIcon && cLabel) {
+      cLabel.style.color = '';
+      if (matchInfo) {
+        if (matchInfo.type === '45') {
+          cIcon.innerText = '👑';
+          cLabel.innerText = '45 HUNDO';
+          cLabel.style.color = '#34d399';
+        } else {
+          cIcon.innerText = '⭐';
+          cLabel.innerText = '44 98%';
+          cLabel.style.color = '#c084fc';
+        }
+      } else {
+        cIcon.innerText = '📊';
+        cLabel.innerText = p.act.includes('Transfer') ? '0-2★ JUNK' : '0-2★ KEEP';
+      }
+    }
+
+    // Slot 3: Rationale / Benefit
+    if (aIcon && aLabel) {
+      aLabel.style.color = '';
+      if (p.act.includes('Transfer')) {
+        aIcon.innerText = '🍬';
+        aLabel.innerText = '+1 CANDY';
+      } else if (p.act.includes('Lucky')) {
+        aIcon.innerText = '⭐';
+        aLabel.innerText = '50% DUST';
+      } else if (p.act.includes('Free')) {
+        aIcon.innerText = '🔄';
+        aLabel.innerText = '0 CANDY';
+      } else if (p.act.includes('XL')) {
+        aIcon.innerText = '🍬';
+        aLabel.innerText = '+1 XL';
+      } else if (p.act.includes('PvP')) {
+        aIcon.innerText = '⚔️';
+        aLabel.innerText = 'PVP IV';
+      } else {
+        aIcon.innerText = '🍬';
+        aLabel.innerText = '+1 CANDY';
+      }
+    }
+
+    if (document.getElementById('hudPopover').style.display !== 'none') {
+      updateHudPopover();
+    }
+    return;
+  }
+
+  // 3. CATCH WINDOW (CATCH DECISION: BALLS & BERRIES)
+  if (!p) {
+    if (bIcon) bIcon.innerText = '🍍';
+    if (bLabel) { bLabel.innerText = 'BERRY'; bLabel.style.color = ''; }
+    if (cIcon) cIcon.innerText = '🎯';
+    if (cLabel) { cLabel.innerText = 'CATCH'; cLabel.style.color = ''; }
+    if (aIcon) aIcon.innerText = '🍬';
+    if (aLabel) { aLabel.innerText = 'ACTION'; aLabel.style.color = ''; }
+    return;
+  }
+
+  // Slot 1: Berry Directive
   if (bIcon && bLabel) {
+    bLabel.style.color = '';
     if (p.berry === 'Pinap Berry') {
       bIcon.innerText = '🍍';
       bLabel.innerText = 'PINAP';
@@ -1113,8 +1328,9 @@ function updateVerticalHud(p, matchInfo) {
     }
   }
 
-  // 2. Catch Priority Slot
+  // Slot 2: Catch Priority
   if (cIcon && cLabel) {
+    cLabel.style.color = '';
     if (matchInfo) {
       if (matchInfo.type === '45') {
         if (matchInfo.isL50) {
@@ -1134,8 +1350,9 @@ function updateVerticalHud(p, matchInfo) {
     }
   }
 
-  // 3. Action Recommendation Slot
+  // Slot 3: Action Recommendation
   if (aIcon && aLabel) {
+    aLabel.style.color = '';
     if (p.act.includes('Lucky')) {
       aIcon.innerText = '⭐';
       aLabel.innerText = 'LUCKY';
@@ -1165,14 +1382,37 @@ function updateHudPopover() {
   const contentElem = document.getElementById('hudPopoverContent');
   if (!contentElem) return;
 
-  if (!activeHudPokemon) {
-    if (titleElem) titleElem.innerText = 'Field HUD Standing By';
+  // Mode 1: Blank Pill (Standby)
+  if (evaluationMode === 'blank') {
+    if (titleElem) titleElem.innerText = '⚪ Field HUD: Standby Mode';
     contentElem.innerHTML = `
-      <div style="color:var(--text-muted); margin-bottom:6px;">Docked on the edge dead space. Enter a CP above or select a Pokémon card to load real-time directives!</div>
+      <div style="color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
+        The HUD pill is in <b>Standby (Blank)</b> mode to keep encounter dead space clear while you walk or explore.
+      </div>
+      <div style="background:#1e293b; padding:8px 10px; border-radius:8px; margin-bottom:8px; font-size:10.5px; line-height:1.6;">
+        <div>🎯 <b>Catch Window:</b> Select above when entering a wild encounter.</div>
+        <div>🗑️ <b>Storage Screen:</b> Select above when reviewing caught Pokémon to delete or keep.</div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button onclick="setEvaluationMode('catch')" style="flex:1; background:linear-gradient(135deg, #38bdf8, #818cf8); color:#0f172a; border:none; border-radius:6px; padding:6px; font-weight:800; font-size:11px; cursor:pointer;">
+          🎯 Catch Mode
+        </button>
+        <button onclick="setEvaluationMode('storage')" style="flex:1; background:linear-gradient(135deg, #f59e0b, #ef4444); color:#fff; border:none; border-radius:6px; padding:6px; font-weight:800; font-size:11px; cursor:pointer;">
+          🗑️ Storage Mode
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  if (!activeHudPokemon) {
+    if (titleElem) titleElem.innerText = evaluationMode === 'storage' ? '🗑️ Storage Review Ready' : '🎯 Catch Window Ready';
+    contentElem.innerHTML = `
+      <div style="color:var(--text-muted); margin-bottom:6px;">Docked on edge dead space. Enter a CP above or select a Pokémon card to load real-time directives!</div>
       <div style="background:#1e293b; padding:8px; border-radius:8px; font-size:10.5px;">
-        <div>🍇 <b>Slot 1:</b> Berry recommendation</div>
-        <div>🎯 <b>Slot 2:</b> 45 Hundo & 44 Priority match</div>
-        <div>📋 <b>Slot 3:</b> 0-2★ Trade vs Transfer directive</div>
+        <div>${evaluationMode === 'storage' ? '🗑️ <b>Slot 1:</b> DELETE vs KEEP directive' : '🍇 <b>Slot 1:</b> Berry recommendation'}</div>
+        <div>${evaluationMode === 'storage' ? '📊 <b>Slot 2:</b> 100% 45 / 98% 44 / 0-2★ Junk' : '🎯 <b>Slot 2:</b> 45 Hundo & 44 Priority match'}</div>
+        <div>${evaluationMode === 'storage' ? '🍬 <b>Slot 3:</b> +1 Candy on delete or trade saving' : '📋 <b>Slot 3:</b> 0-2★ Trade vs Transfer directive'}</div>
       </div>
     `;
     return;
@@ -1180,7 +1420,44 @@ function updateHudPopover() {
 
   const p = activeHudPokemon;
   const m = activeHudMatch;
-  if (titleElem) titleElem.innerText = `${p.name} (#${p.id}) Intel`;
+
+  // Mode 3: Storage Review (Delete vs Keep)
+  if (evaluationMode === 'storage') {
+    if (titleElem) titleElem.innerText = `${p.name} (#${p.id}) • Storage Decision`;
+    const isDelete = p.act.includes('Transfer');
+    const badgeColor = isDelete ? '#ef4444' : '#10b981';
+    const recHtml = isDelete
+      ? `<div style="background:rgba(239,68,68,0.18); border:1px solid #ef4444; border-radius:8px; padding:8px; margin-bottom:8px;">
+          <div style="font-weight:900; color:#f87171; font-size:12px;">🗑️ RECOMMENDATION: DELETE (TRANSFER)</div>
+          <div style="color:var(--text-muted); font-size:10.5px; margin-top:3px; line-height:1.4;">Zero PvE/PvP meta relevance. Safe to mass transfer to Professor Willow for +1 candy and reclaim storage space.</div>
+        </div>`
+      : `<div style="background:rgba(16,185,129,0.18); border:1px solid #10b981; border-radius:8px; padding:8px; margin-bottom:8px;">
+          <div style="font-weight:900; color:#34d399; font-size:12px;">⭐ RECOMMENDATION: DO NOT DELETE! (${p.act})</div>
+          <div style="color:var(--text-muted); font-size:10.5px; margin-top:3px; line-height:1.4;">High utility species! Trade with a friend for Lucky re-roll (50% Stardust discount), free evolution, or guaranteed XL candy.</div>
+        </div>`;
+
+    contentElem.innerHTML = `
+      ${recHtml}
+      <div style="background:#1e293b; padding:8px 10px; border-radius:8px; margin-bottom:8px; line-height:1.6;">
+        <div>📊 <b>Action Directive:</b> <b style="color:${badgeColor}">${p.act}</b></div>
+        <div>🎯 <b>Hundo/44 Status:</b> ${m ? `<span style="color:#34d399; font-weight:800;">${m.label} (Level ${m.level})</span>` : `<span style="color:var(--text-muted);">Standard IV (Max L50: ${p.max_cp || '-'} CP)</span>`}</div>
+        <div>🍬 <b>Transfer Reward:</b> +1 ${p.name} Candy</div>
+        <div>⚔️ <b>PvP Meta:</b> ${p.pvp_q} / ${p.pvp_c} (Rank: ${p.pvp_r})</div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button onclick="openDetails(${p.id}, '${p.name.replace(/'/g, "\\'") }'); closeHudPopover();" style="flex:1; background:linear-gradient(135deg, #f59e0b, #ef4444); color:#fff; border:none; border-radius:6px; padding:6px; font-weight:800; font-size:11px; cursor:pointer;">
+          📊 50-Level Matrix (45 & 44s)
+        </button>
+        <button onclick="toggleFullScreen()" style="background:#334155; color:#f8fafc; border:none; border-radius:6px; padding:6px 10px; font-weight:800; font-size:11px; cursor:pointer;" title="Toggle Full Screen Mode">
+          ⛶ Fullscreen
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  // Mode 2: Catch Window (Catch vs Flee)
+  if (titleElem) titleElem.innerText = `${p.name} (#${p.id}) • Catch Window`;
 
   let catchHtml = '';
   if (m) {
@@ -1560,7 +1837,16 @@ let pipAnimId = null;
 function renderHudCanvas(ctx, w, h) {
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = '#0f172a';
-  ctx.strokeStyle = '#38bdf8';
+  
+  // Dynamic border color based on evaluation state
+  let borderCol = '#38bdf8'; // Catch Window: Cyan
+  if (evaluationMode === 'blank') {
+    borderCol = '#475569'; // Standby / Dormant: Slate Gray
+  } else if (evaluationMode === 'storage') {
+    borderCol = '#f59e0b'; // Storage Screen: Amber / Warning
+  }
+  
+  ctx.strokeStyle = borderCol;
   ctx.lineWidth = 4;
   ctx.beginPath();
   if (ctx.roundRect) {
@@ -1571,17 +1857,27 @@ function renderHudCanvas(ctx, w, h) {
   ctx.fill();
   ctx.stroke();
 
-  const bIcon = document.getElementById('hudBerryIcon')?.innerText || '🍍';
-  const bLabel = document.getElementById('hudBerryLabel')?.innerText || 'BERRY';
-  ctx.font = '32px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
+  // Mode badge at top of PiP pill
+  ctx.font = 'bold 9px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  ctx.fillStyle = borderCol;
+  const modeTag = evaluationMode === 'blank' ? 'STANDBY' : (evaluationMode === 'storage' ? 'STORAGE' : 'CATCH');
+  ctx.fillText(modeTag, w / 2, 16);
+
+  // Slot 1: Berry (Catch) / Decision (Storage) / Idle (Blank)
+  const bIcon = document.getElementById('hudBerryIcon')?.innerText || (evaluationMode === 'blank' ? '⚪' : (evaluationMode === 'storage' ? '🗑️' : '🍍'));
+  const bLabel = document.getElementById('hudBerryLabel')?.innerText || (evaluationMode === 'blank' ? 'IDLE' : (evaluationMode === 'storage' ? 'DELETE' : 'BERRY'));
+  const bCol = evaluationMode === 'blank' ? '#64748b' : (evaluationMode === 'storage' ? '#f87171' : '#fbbf24');
+  
+  ctx.font = '30px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(bIcon, w / 2, 48);
+  ctx.fillText(bIcon, w / 2, 50);
   ctx.font = 'bold 11px sans-serif';
-  ctx.fillStyle = '#fbbf24';
+  ctx.fillStyle = bCol;
   ctx.fillText(bLabel, w / 2, 78);
 
+  // Separator 1
   ctx.strokeStyle = '#334155';
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -1589,28 +1885,35 @@ function renderHudCanvas(ctx, w, h) {
   ctx.lineTo(w - 16, 94);
   ctx.stroke();
 
-  const cIcon = document.getElementById('hudCatchIcon')?.innerText || '🎯';
-  const cLabel = document.getElementById('hudCatchLabel')?.innerText || 'CATCH';
-  ctx.font = '32px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
+  // Slot 2: Catch Priority (Catch) / IV Status (Storage) / Standby (Blank)
+  const cIcon = document.getElementById('hudCatchIcon')?.innerText || (evaluationMode === 'blank' ? '⚪' : (evaluationMode === 'storage' ? '📊' : '🎯'));
+  const cLabel = document.getElementById('hudCatchLabel')?.innerText || (evaluationMode === 'blank' ? 'STANDBY' : (evaluationMode === 'storage' ? 'ASSESS' : 'CATCH'));
+  const cCol = evaluationMode === 'blank' ? '#64748b' : (evaluationMode === 'storage' ? '#38bdf8' : '#34d399');
+  
+  ctx.font = '30px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
   ctx.fillStyle = '#ffffff';
   ctx.fillText(cIcon, w / 2, 130);
   ctx.font = 'bold 11px sans-serif';
-  ctx.fillStyle = '#34d399';
-  ctx.fillText(cLabel, w / 2, 160);
+  ctx.fillStyle = cCol;
+  ctx.fillText(cLabel, w / 2, 158);
 
+  // Separator 2
   ctx.beginPath();
-  ctx.moveTo(16, 176);
-  ctx.lineTo(w - 16, 176);
+  ctx.moveTo(16, 174);
+  ctx.lineTo(w - 16, 174);
   ctx.stroke();
 
-  const aIcon = document.getElementById('hudActionIcon')?.innerText || '🍬';
-  const aLabel = document.getElementById('hudActionLabel')?.innerText || 'ACTION';
-  ctx.font = '32px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
+  // Slot 3: Future Action (Catch) / Benefit Reward (Storage) / Ready (Blank)
+  const aIcon = document.getElementById('hudActionIcon')?.innerText || (evaluationMode === 'blank' ? '⚪' : (evaluationMode === 'storage' ? '🍬' : '🍬'));
+  const aLabel = document.getElementById('hudActionLabel')?.innerText || (evaluationMode === 'blank' ? 'READY' : (evaluationMode === 'storage' ? '+1 CANDY' : 'ACTION'));
+  const aCol = evaluationMode === 'blank' ? '#64748b' : (evaluationMode === 'storage' ? '#c084fc' : '#c084fc');
+  
+  ctx.font = '30px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(aIcon, w / 2, 212);
+  ctx.fillText(aIcon, w / 2, 210);
   ctx.font = 'bold 11px sans-serif';
-  ctx.fillStyle = '#c084fc';
-  ctx.fillText(aLabel, w / 2, 242);
+  ctx.fillStyle = aCol;
+  ctx.fillText(aLabel, w / 2, 238);
 }
 
 async function launchPipHud() {
@@ -1744,12 +2047,36 @@ window.addEventListener('paste', e => {
 
 function processImageFile(file) {
   const msg = document.getElementById('ocrStatusMsg');
-  if (msg) msg.innerText = 'Processing screenshot...';
+  if (msg) msg.innerText = 'Analyzing screenshot pixels...';
   const reader = new FileReader();
   reader.onload = (event) => {
     const img = new Image();
     img.onload = () => {
-      if (msg) msg.innerText = `Screenshot loaded (${img.width}x${img.height}). Enter the visible CP into Catch Screen inspector!`;
+      // Canvas pixel analysis: Storage Screen (white bottom card) vs Catch Window (wild background)
+      try {
+        const testCanvas = document.createElement('canvas');
+        testCanvas.width = img.width;
+        testCanvas.height = img.height;
+        const tctx = testCanvas.getContext('2d');
+        tctx.drawImage(img, 0, 0);
+        
+        // Sample at 65% height, center width
+        const sampleY = Math.floor(img.height * 0.65);
+        const sampleX = Math.floor(img.width * 0.5);
+        const pData = tctx.getImageData(sampleX, sampleY, 1, 1).data;
+        const isStorageScreen = (pData[0] > 230 && pData[1] > 230 && pData[2] > 230);
+        
+        const detectedMode = isStorageScreen ? 'storage' : 'catch';
+        setEvaluationMode(detectedMode);
+        
+        if (msg) {
+          msg.innerHTML = isStorageScreen
+            ? `📸 <b>Storage Screen Detected!</b> (White stat card verified). Switched to <b>Storage (Delete vs Keep)</b> mode. Enter visible CP (e.g. 266) to evaluate!`
+            : `📸 <b>Catch Window Detected!</b> (Wild encounter verified). Switched to <b>Catch Window</b> mode. Enter visible CP (e.g. 1035) to evaluate!`;
+        }
+      } catch (e) {
+        console.warn('Canvas pixel test failed:', e);
+      }
       closeScannerModal();
       const cpInp = document.getElementById('catchCpInput');
       if (cpInp) {
@@ -1803,22 +2130,63 @@ function checkCaughtCp() {
   
   const totalCount = matching45.length + matching44.length;
   if (totalCount === 0) {
-    resultDiv.innerHTML = `<span style="color:#f87171;">❌ No 45 Hundo or 44 Priority match for ${cpVal} CP (Standard Wild Spawn)</span>`;
+    if (evaluationMode === 'storage') {
+      resultDiv.innerHTML = `
+        <div style="background:rgba(239,68,68,0.2); border:1px solid #ef4444; border-radius:8px; padding:8px 12px; margin-top:4px;">
+          <div style="color:#f87171; font-weight:900; font-size:12.5px;">🗑️ STORAGE DECISION: SAFE TO DELETE (Transfer)</div>
+          <div style="color:var(--text-muted); font-size:11px; margin-top:2px; line-height:1.4;">
+            CP <b>${cpVal}</b> has <b>no 45 Hundo (15/15/15) or 44 Priority (98%)</b> match across levels 1–50. If non-shiny/non-legacy, transfer to Professor Willow for <b>+1 Candy</b>!
+          </div>
+        </div>
+      `;
+    } else {
+      resultDiv.innerHTML = `<span style="color:#f87171;">❌ No 45 Hundo or 44 Priority match for ${cpVal} CP (Standard Wild Spawn)</span>`;
+    }
   } else {
     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     const hasLvl50_45 = matching45.some(m => m.isL50);
     
-    if (hasLvl50_45) {
-      const sample = matching45.filter(m => m.isL50).slice(0, 2).map(m => `${m.name} (L50)`).join(', ');
-      resultDiv.innerHTML = `<span style="color:#e879f9; font-weight:800; animation:pulse 1s infinite;">🟣 MASTERBALL PRIORITY! Level 50 100% IV: ${sample} (${matching45.length} Hundos, ${matching44.length} Priority 44s)</span>`;
-    } else if (matching45.length > 0) {
-      const sample = matching45.slice(0, 2).map(m => `${m.name} (L${m.lvl})`).join(', ');
-      const extra = matching45.length > 2 ? ' +' + (matching45.length - 2) : '';
-      resultDiv.innerHTML = `<span style="color:#34d399; font-weight:800;">🎯 100% IV Hundo Match: ${sample}${extra} (${matching45.length} Hundos, ${matching44.length} Priority 44s)</span>`;
+    if (evaluationMode === 'storage') {
+      if (hasLvl50_45) {
+        const sample = matching45.filter(m => m.isL50).slice(0, 2).map(m => `${m.name} (L50)`).join(', ');
+        resultDiv.innerHTML = `
+          <div style="background:rgba(232,121,249,0.2); border:1px solid #e879f9; border-radius:8px; padding:8px 12px; margin-top:4px;">
+            <div style="color:#e879f9; font-weight:900; font-size:12.5px;">⭐ DO NOT DELETE! 🟣 Level 50 Hundo Candidate: ${sample}</div>
+            <div style="color:var(--text-muted); font-size:11px; margin-top:2px;">This CP matches an extraordinary maxed Level 50 perfect 100% IV! Lock and favorite immediately.</div>
+          </div>
+        `;
+      } else if (matching45.length > 0) {
+        const sample = matching45.slice(0, 2).map(m => `${m.name} (L${m.lvl})`).join(', ');
+        const extra = matching45.length > 2 ? ' +' + (matching45.length - 2) + ' more' : '';
+        resultDiv.innerHTML = `
+          <div style="background:rgba(52,211,153,0.2); border:1px solid #34d399; border-radius:8px; padding:8px 12px; margin-top:4px;">
+            <div style="color:#34d399; font-weight:900; font-size:12.5px;">⭐ DO NOT DELETE! 👑 100% IV Hundo Match: ${sample}${extra}</div>
+            <div style="color:var(--text-muted); font-size:11px; margin-top:2px;">Appraise in-game: if stats are 3-star pink badge (15/15/15), this is a guaranteed perfect Hundo!</div>
+          </div>
+        `;
+      } else {
+        const sample = matching44.slice(0, 2).map(m => `${m.name} (L${m.lvl})`).join(', ');
+        const extra = matching44.length > 2 ? ' +' + (matching44.length - 2) + ' more' : '';
+        resultDiv.innerHTML = `
+          <div style="background:rgba(192,132,252,0.2); border:1px solid #c084fc; border-radius:8px; padding:8px 12px; margin-top:4px;">
+            <div style="color:#c084fc; font-weight:900; font-size:12.5px;">⭐ DO NOT DELETE! ⭐ 98% IV Priority Match (44 Stat): ${sample}${extra}</div>
+            <div style="color:var(--text-muted); font-size:11px; margin-top:2px;">Close-to-perfect IV candidate. Worth keeping or developing!</div>
+          </div>
+        `;
+      }
     } else {
-      const sample = matching44.slice(0, 2).map(m => `${m.name} (L${m.lvl})`).join(', ');
-      const extra = matching44.length > 2 ? ' +' + (matching44.length - 2) : '';
-      resultDiv.innerHTML = `<span style="color:#c084fc; font-weight:800;">⭐ 98% IV Priority Catch (44 Stat): ${sample}${extra} (${matching44.length} Priority 44 species)</span>`;
+      if (hasLvl50_45) {
+        const sample = matching45.filter(m => m.isL50).slice(0, 2).map(m => `${m.name} (L50)`).join(', ');
+        resultDiv.innerHTML = `<span style="color:#e879f9; font-weight:800; animation:pulse 1s infinite;">🟣 MASTERBALL PRIORITY! Level 50 100% IV: ${sample} (${matching45.length} Hundos, ${matching44.length} Priority 44s)</span>`;
+      } else if (matching45.length > 0) {
+        const sample = matching45.slice(0, 2).map(m => `${m.name} (L${m.lvl})`).join(', ');
+        const extra = matching45.length > 2 ? ' +' + (matching45.length - 2) : '';
+        resultDiv.innerHTML = `<span style="color:#34d399; font-weight:800;">🎯 100% IV Hundo Match: ${sample}${extra} (${matching45.length} Hundos, ${matching44.length} Priority 44s)</span>`;
+      } else {
+        const sample = matching44.slice(0, 2).map(m => `${m.name} (L${m.lvl})`).join(', ');
+        const extra = matching44.length > 2 ? ' +' + (matching44.length - 2) : '';
+        resultDiv.innerHTML = `<span style="color:#c084fc; font-weight:800;">⭐ 98% IV Priority Catch (44 Stat): ${sample}${extra} (${matching44.length} Priority 44 species)</span>`;
+      }
     }
   }
   
