@@ -1932,42 +1932,59 @@ function renderHudCanvas(ctx, w, h) {
   ctx.lineWidth = 3.5;
   ctx.beginPath();
   if (ctx.roundRect) {
-    ctx.roundRect(4, 4, w - 8, h - 8, 20);
+    ctx.roundRect(4, 4, w - 8, h - 8, 22);
   } else {
     ctx.rect(4, 4, w - 8, h - 8);
   }
   ctx.fill();
   ctx.stroke();
 
-  // Top Trigger / Action Banner in PiP Canvas
-  const bannerBg = isCurrentlyScanning ? '#ec4899' : (isAutoScanActive ? '#059669' : '#a855f7');
-  ctx.fillStyle = bannerBg;
+  // 1. Prominent TAP BUTTON at the very top of the pill
+  const btnBg = isCurrentlyScanning ? '#ec4899' : (isAutoScanActive ? '#059669' : '#8b5cf6');
+  ctx.fillStyle = btnBg;
+  ctx.beginPath();
   if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(8, 8, w - 16, 22, 6);
-    ctx.fill();
+    ctx.roundRect(8, 8, w - 16, 34, 10);
   } else {
-    ctx.fillRect(8, 8, w - 16, 22);
+    ctx.rect(8, 8, w - 16, 34);
   }
+  ctx.fill();
   
-  ctx.font = 'bold 8.5px sans-serif';
+  // Button border for 3D tactile appearance
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Button text
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#ffffff';
   
   if (isCurrentlyScanning) {
-    ctx.fillText('⚡ SCANNING...', w / 2, 19);
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText('⚡ SCANNING...', w / 2, 20);
+    ctx.font = 'bold 7.5px sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillText('Reading Screen', w / 2, 32);
   } else if (isAutoScanActive) {
-    ctx.fillText('🟢 AUTO-SCAN ON', w / 2, 19);
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText('🟢 AUTO-SCAN', w / 2, 20);
+    ctx.font = 'bold 7.5px sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillText('Monitoring Screen', w / 2, 32);
   } else {
-    ctx.fillText('▶ TAP PLAY TO SCAN', w / 2, 19);
+    ctx.font = 'bold 10.5px sans-serif';
+    ctx.fillText('⚡ TAP TO SCAN', w / 2, 20);
+    ctx.font = 'bold 7.5px sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillText('TAP BUTTON NOW', w / 2, 32);
   }
 
-  // Mode badge below trigger bar
+  // 2. Mode badge below the tap button
   ctx.font = 'bold 8.5px sans-serif';
   ctx.fillStyle = borderCol;
   const modeTag = evaluationMode === 'blank' ? '• STANDBY •' : (evaluationMode === 'storage' ? '• STORAGE •' : '• CATCH •');
-  ctx.fillText(modeTag, w / 2, 40);
+  ctx.fillText(modeTag, w / 2, 54);
 
   // Slot 1: Berry (Catch) / Decision (Storage) / Idle (Blank)
   const bIcon = document.getElementById('hudBerryIcon')?.innerText || (evaluationMode === 'blank' ? '⚪' : (evaluationMode === 'storage' ? '🗑️' : '🍍'));
@@ -1976,17 +1993,17 @@ function renderHudCanvas(ctx, w, h) {
   
   ctx.font = '26px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(bIcon, w / 2, 72);
+  ctx.fillText(bIcon, w / 2, 84);
   ctx.font = 'bold 10px sans-serif';
   ctx.fillStyle = bCol;
-  ctx.fillText(bLabel, w / 2, 97);
+  ctx.fillText(bLabel, w / 2, 108);
 
   // Separator 1
   ctx.strokeStyle = '#334155';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(14, 112);
-  ctx.lineTo(w - 14, 112);
+  ctx.moveTo(14, 124);
+  ctx.lineTo(w - 14, 124);
   ctx.stroke();
 
   // Slot 2: Catch Priority (Catch) / IV Status (Storage) / Standby (Blank)
@@ -1996,15 +2013,15 @@ function renderHudCanvas(ctx, w, h) {
   
   ctx.font = '26px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(cIcon, w / 2, 142);
+  ctx.fillText(cIcon, w / 2, 154);
   ctx.font = 'bold 10px sans-serif';
   ctx.fillStyle = cCol;
-  ctx.fillText(cLabel, w / 2, 167);
+  ctx.fillText(cLabel, w / 2, 178);
 
   // Separator 2
   ctx.beginPath();
-  ctx.moveTo(14, 182);
-  ctx.lineTo(w - 14, 182);
+  ctx.moveTo(14, 194);
+  ctx.lineTo(w - 14, 194);
   ctx.stroke();
 
   // Slot 3: Future Action (Catch) / Benefit Reward (Storage) / Ready (Blank)
@@ -2014,15 +2031,15 @@ function renderHudCanvas(ctx, w, h) {
   
   ctx.font = '26px "Segoe UI Emoji", AppleColorEmoji, sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(aIcon, w / 2, 212);
+  ctx.fillText(aIcon, w / 2, 224);
   ctx.font = 'bold 10px sans-serif';
   ctx.fillStyle = aCol;
-  ctx.fillText(aLabel, w / 2, 237);
+  ctx.fillText(aLabel, w / 2, 248);
 
   // Micro footer
   ctx.font = '7.5px sans-serif';
   ctx.fillStyle = '#475569';
-  ctx.fillText('PoGo Companion', w / 2, 258);
+  ctx.fillText('PoGo Companion', w / 2, 270);
 }
 
 function setupMediaSession() {
@@ -2049,10 +2066,22 @@ function setupMediaSession() {
 }
 
 async function launchPipHud() {
-  // 1. Try Document Picture-in-Picture (Desktop Chrome / Edge / Experimental Android flags)
+  // 1. Auto-request screen stream on PiP launch so the overlay is ready to scan immediately!
+  if (!screenStream || !screenStream.active) {
+    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        setupScreenStreamActive();
+      } catch (streamErr) {
+        console.warn('Screen stream prompt note:', streamErr);
+      }
+    }
+  }
+
+  // 2. Try Document Picture-in-Picture (Desktop Chrome / Edge / Experimental Android flags)
   if ('documentPictureInPicture' in window) {
     try {
-      const pipWin = await window.documentPictureInPicture.requestWindow({ width: 100, height: 290 });
+      const pipWin = await window.documentPictureInPicture.requestWindow({ width: 100, height: 300 });
       document.querySelectorAll('style, link[rel="stylesheet"]').forEach(s => {
         pipWin.document.head.appendChild(s.cloneNode(true));
       });
@@ -2080,15 +2109,15 @@ async function launchPipHud() {
     }
   }
 
-  // 2. Fallback: Canvas Video Picture-in-Picture (Works natively on Android Chrome!)
+  // 3. Fallback: Canvas Video Picture-in-Picture (Works natively on Android Chrome!)
   try {
     if (!pipCanvas) {
       pipCanvas = document.createElement('canvas');
       pipCanvas.width = 120;
-      pipCanvas.height = 270;
+      pipCanvas.height = 300;
     }
     const ctx = pipCanvas.getContext('2d');
-    renderHudCanvas(ctx, 120, 270);
+    renderHudCanvas(ctx, 120, 300);
 
     if (!pipVideo) {
       pipVideo = document.createElement('video');
@@ -2104,6 +2133,13 @@ async function launchPipHud() {
       pipVideo.addEventListener('leavepictureinpicture', () => {
         if (pipAnimId) cancelAnimationFrame(pipAnimId);
       });
+
+      // CRITICAL FOR ANDROID TOUCH TAPS:
+      // Tapping the floating PiP window on Android sends a pause event to the video!
+      pipVideo.addEventListener('pause', async () => {
+        try { await pipVideo.play(); } catch(e) {}
+        performOneTapAssessment();
+      });
     }
 
     const stream = pipCanvas.captureStream(10);
@@ -2113,7 +2149,7 @@ async function launchPipHud() {
 
     if (pipAnimId) cancelAnimationFrame(pipAnimId);
     function loopDraw() {
-      renderHudCanvas(ctx, 120, 270);
+      renderHudCanvas(ctx, 120, 300);
       pipAnimId = requestAnimationFrame(loopDraw);
     }
     loopDraw();
@@ -2127,7 +2163,7 @@ async function launchPipHud() {
     console.warn('Video PiP failed:', vErr);
   }
 
-  // 3. Fallback alert with instructions
+  // 4. Fallback alert with instructions
   alert('To overlay over Pokémon GO on Android: Open your Recent Apps screen, tap the Companion icon at the top, and tap "Open in pop-up view" (Samsung) or "Split Screen"! On iPhone: swipe the bottom home bar to switch instantly.');
 }
 
@@ -2288,6 +2324,26 @@ async function performSilentAutoCheck() {
 }
 
 let screenStream = null;
+
+function setupScreenStreamActive() {
+  const btn = document.getElementById('startStreamBtn');
+  const status = document.getElementById('streamStatus');
+  if (btn) btn.innerText = '⏹️ Stop Screen Stream';
+  if (status) status.innerText = '🟢 Stream Active - Monitoring Encounters';
+  setupMediaSession();
+  
+  if (screenStream) {
+    screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+      screenStream = null;
+      stopAutoScanLoop();
+      isAutoScanActive = false;
+      updateAutoScanUI();
+      if (btn) btn.innerText = '📡 Start Screen Stream';
+      if (status) status.innerText = 'Stream ended';
+    });
+  }
+}
+
 async function toggleScreenStream() {
   const btn = document.getElementById('startStreamBtn');
   const status = document.getElementById('streamStatus');
@@ -2307,20 +2363,10 @@ async function toggleScreenStream() {
       return;
     }
     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-    if (btn) btn.innerText = '⏹️ Stop Screen Stream';
-    if (status) status.innerText = '🟢 Stream Active - Monitoring Encounters';
-    setupMediaSession();
+    setupScreenStreamActive();
     if (isAutoScanActive) {
       startAutoScanLoop();
     }
-    screenStream.getVideoTracks()[0].addEventListener('ended', () => {
-      screenStream = null;
-      stopAutoScanLoop();
-      isAutoScanActive = false;
-      updateAutoScanUI();
-      if (btn) btn.innerText = '📡 Start Screen Stream';
-      if (status) status.innerText = 'Stream ended';
-    });
   } catch (err) {
     console.warn(err);
     if (status) status.innerText = 'Stream cancelled / permission denied';
@@ -2575,7 +2621,19 @@ async function assessCanvasImage(canvas, isSilent = false) {
 async function performOneTapAssessment() {
   setupMediaSession();
   
-  // 1. Try Screen Stream (Zero-tap if stream active)
+  // 1. If screen stream is not active yet, request it immediately so the scan can proceed!
+  if (!screenStream || !screenStream.active) {
+    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        setupScreenStreamActive();
+      } catch (err) {
+        console.warn('Screen capture cancelled:', err);
+      }
+    }
+  }
+
+  // 2. Try Screen Stream (Instant live assessment)
   if (screenStream && screenStream.active) {
     try {
       if (!ocrHiddenVideo) {
