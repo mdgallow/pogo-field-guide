@@ -35,15 +35,27 @@ jobs:
         with:
           gradle-version: '8.4'
 
-      - name: Build Android APK
+      - name: Generate Official Release Keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore android/release-keystore.jks \
+            -alias pogo-release \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass pogo2026pass \
+            -keypass pogo2026pass \
+            -dname "CN=PoGo Companion, OU=Mobile, O=PoGo Field Guide, L=San Jose, ST=CA, C=US"
+
+      - name: Build Android Release APK
         run: |
           cd android
-          gradle assembleDebug --no-daemon --stacktrace
+          gradle assembleRelease --no-daemon --stacktrace
 
       - name: Stage APK for Pages & Direct Download
         run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk ./pogo-companion.apk
-          echo "APK successfully built and staged:"
+          cp android/app/build/outputs/apk/release/app-release.apk ./pogo-companion.apk
+          echo "Official Signed Release APK successfully built and staged:"
           ls -lh ./pogo-companion.apk
 
       - name: Upload APK Artifact
