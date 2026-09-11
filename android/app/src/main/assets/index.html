@@ -702,19 +702,25 @@
   <input type="file" id="screenshotFileInput" accept="image/*" style="display: none;" onchange="handleScreenshotUpload(event)" />
 </div>
 
-<!-- 🚀 Prominent 1-Tap Launch Floating Mini HUD Hero Bar -->
-<div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px;">
-  <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
-    <span style="font-size: 20px;">📱</span>
+<!-- 🚀 Prominent Download Standalone Android APK & Web Launch Bars -->
+<div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
+  <a href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
+    <span style="font-size: 20px;">🤖</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.0.0 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.0.0</span>
+  </a>
+
+  <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
+    <span style="font-size: 18px;">📱</span>
     <span>LAUNCH FLOATING MINI HUD</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">FOR POKÉMON GO</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">WEB / POP-UP</span>
   </button>
 </div>
 
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion</h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.0.0</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">

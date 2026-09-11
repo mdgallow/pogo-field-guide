@@ -74,7 +74,7 @@ class FloatingOverlayService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("PoGo Companion Floating Pill Active")
+            .setContentTitle("PoGo Companion v2.0.0 Active")
             .setContentText("Tap to open full Pokédex or tap pill to scan")
             .setSmallIcon(android.R.drawable.sym_def_app_icon)
             .setContentIntent(pendingIntent)
