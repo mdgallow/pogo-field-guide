@@ -692,14 +692,27 @@
     <div id="miniActionLabel" style="font-size: 9px; font-weight: 800; color: #c084fc; margin-top: 2px; text-transform: uppercase;">ACTION</div>
   </div>
 
-  <!-- Minimal Bottom Controls -->
-  <div style="display: flex; justify-content: space-between; align-items: center; width: 68px; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 4px; margin-top: 4px;">
-    <button onclick="toggleMiniMode(false)" style="background: rgba(59, 130, 246, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 5px; padding: 3px 6px; font-size: 9px; font-weight: 800; cursor: pointer;" title="Return to Full Pokédex">⛶</button>
-    <button onclick="clearMiniCp()" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 5px; padding: 3px 6px; font-size: 9px; font-weight: 800; cursor: pointer;" title="Clear Filter">🗑️</button>
+  <!-- Prominent 1-Tap Expand Back to Full App -->
+  <div style="width: 68px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 4px; margin-top: 4px; display: flex; flex-direction: column; gap: 3px;">
+    <button id="miniExpandBtn" onclick="toggleMiniMode(false)" style="width: 100%; background: rgba(56, 189, 248, 0.22); color: #38bdf8; border: 1.5px solid rgba(56, 189, 248, 0.6); border-radius: 7px; padding: 5px 0; font-size: 9.5px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);" title="Expand to Full Pokédex App">
+      <span style="font-size: 11px;">⛶</span> EXPAND
+    </button>
+    <button onclick="clearMiniCp()" style="width: 100%; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 6px; padding: 3px 0; font-size: 8px; font-weight: 800; cursor: pointer;" title="Clear Selection">
+      RESET 🗑️
+    </button>
   </div>
 
   <!-- Dedicated File Input for Instant 1-Tap Screenshot Upload -->
   <input type="file" id="screenshotFileInput" accept="image/*" style="display: none;" onchange="handleScreenshotUpload(event)" />
+</div>
+
+<!-- 🚀 Prominent 1-Tap Launch Floating Mini HUD Hero Bar -->
+<div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px;">
+  <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
+    <span style="font-size: 20px;">📱</span>
+    <span>LAUNCH FLOATING MINI HUD</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">FOR POKÉMON GO</span>
+  </button>
 </div>
 
 <div class="header-box">
@@ -2248,6 +2261,18 @@ function showSamsungPopUpFallback(err) {
   openSamsungGuideModal();
 }
 
+function launchMiniFloatingOverlay() {
+  toggleMiniMode(true);
+  showScanToast('📱 Mini HUD Active! Overlay over Pokémon GO', '#38bdf8');
+  if (typeof documentPictureInPicture !== 'undefined' && documentPictureInPicture.requestWindow) {
+    try {
+      launchPiPHud();
+    } catch (e) {
+      console.warn('PiP note:', e);
+    }
+  }
+}
+
 function toggleMiniMode(forceState) {
   const isMini = (forceState !== undefined) ? forceState : !document.body.classList.contains('mini-hud-mode');
   if (isMini) {
@@ -2745,21 +2770,34 @@ if (typeof window !== 'undefined') {
   });
 }
 
-function createBinarizedCanvas(srcCanvas, sx, sy, sw, sh, isWhiteText, thresh = 180) {
+function createBinarizedCanvas(srcCanvas, sx, sy, sw, sh, isWhiteText, forceThresh = null) {
   const c = document.createElement('canvas');
-  const targetW = Math.max(1, Math.floor(sw * 2));
-  const targetH = Math.max(1, Math.floor(sh * 2));
+  const targetW = Math.max(1, Math.floor(sw * 2.5));
+  const targetH = Math.max(1, Math.floor(sh * 2.5));
   c.width = targetW;
   c.height = targetH;
   const cctx = c.getContext('2d');
-  cctx.imageSmoothingEnabled = false;
+  cctx.imageSmoothingEnabled = true;
   cctx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, targetW, targetH);
   
   const imgData = cctx.getImageData(0, 0, targetW, targetH);
   const d = imgData.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-    const val = isWhiteText ? (lum > thresh ? 0 : 255) : (lum < thresh ? 0 : 255);
+  let minL = 255, maxL = 0;
+  const lums = new Uint8Array(targetW * targetH);
+  
+  for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+    const lum = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
+    lums[j] = lum;
+    if (lum < minL) minL = lum;
+    if (lum > maxL) maxL = lum;
+  }
+  
+  // Calculate dynamic adaptive threshold based on actual crop contrast
+  let thresh = forceThresh !== null ? forceThresh : (minL + (maxL - minL) * (isWhiteText ? 0.52 : 0.48));
+  if (maxL - minL < 25) thresh = 128; // Fallback for very low contrast
+  
+  for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+    const val = isWhiteText ? (lums[j] > thresh ? 0 : 255) : (lums[j] < thresh ? 0 : 255);
     d[i] = val;
     d[i+1] = val;
     d[i+2] = val;
@@ -2768,19 +2806,103 @@ function createBinarizedCanvas(srcCanvas, sx, sy, sw, sh, isWhiteText, thresh = 
   return c;
 }
 
-function findBestPokemonMatch(rawName) {
-  if (!rawName) return null;
-  const clean = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (!clean || clean.length < 3) return null;
-  
-  let p = POKEMON_DATA.find(x => x.name.toLowerCase().replace(/[^a-z0-9]/g, '') === clean);
-  if (p) return p;
-  
-  p = POKEMON_DATA.find(x => x.name.toLowerCase().replace(/[^a-z0-9]/g, '').startsWith(clean) || clean.startsWith(x.name.toLowerCase().replace(/[^a-z0-9]/g, '')));
-  if (p) return p;
-  
-  p = POKEMON_DATA.find(x => clean.includes(x.name.toLowerCase().replace(/[^a-z0-9]/g, '')));
-  return p || null;
+function levenshteinDistance(a, b) {
+  const m = a.length, n = b.length;
+  const d = [];
+  for (let i = 0; i <= m; i++) d[i] = [i];
+  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+    }
+  }
+  return d[m][n];
+}
+
+function normalizeOcrErrors(str) {
+  return str
+    .replace(/0/g, 'o')
+    .replace(/[1|!]/g, 'l')
+    .replace(/5/g, 's')
+    .replace(/8/g, 'b')
+    .replace(/rn/g, 'm')
+    .replace(/cl/g, 'd')
+    .replace(/vv/g, 'w')
+    .replace(/@/g, 'a');
+}
+
+function matchPokemonAdvanced(rawText, cpVal = null) {
+  if (!rawText) return null;
+  const rawClean = rawText.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!rawClean) return null;
+
+  const normClean = normalizeOcrErrors(rawClean);
+  const rawWords = rawClean.split(' ').filter(w => w.length >= 3 && !['the', 'and', 'for', 'with', 'level', 'lvl'].includes(w));
+  const normWords = normClean.split(' ').filter(w => w.length >= 3 && !['the', 'and', 'for', 'with', 'level', 'lvl'].includes(w));
+  const candidateTokens = Array.from(new Set([
+    rawClean.replace(/\s/g, ''),
+    normClean.replace(/\s/g, ''),
+    ...rawWords,
+    ...normWords
+  ])).filter(t => t.length >= 3);
+
+  // Strategy 1: Direct Exact Match
+  for (const token of candidateTokens) {
+    const direct = POKEMON_DATA.find(p => p.name.toLowerCase().replace(/[^a-z0-9]/g, '') === token);
+    if (direct) return direct;
+  }
+
+  // Strategy 2: Prefix / Suffix exact containment
+  for (const token of candidateTokens) {
+    if (token.length >= 4) {
+      const sub = POKEMON_DATA.find(p => {
+        const pName = p.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return pName.startsWith(token) || token.startsWith(pName);
+      });
+      if (sub) return sub;
+    }
+  }
+
+  // Strategy 3: Fuzzy Levenshtein Distance Match with CP-Range Boost
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const p of POKEMON_DATA) {
+    const pName = p.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    for (const token of candidateTokens) {
+      const dist = levenshteinDistance(token, pName);
+      const maxLen = Math.max(token.length, pName.length);
+      const similarity = 1 - (dist / maxLen);
+
+      let cpBoost = 0;
+      if (cpVal && p.max_cp && cpVal <= p.max_cp) {
+        cpBoost = 0.05;
+        if (p.cps && p.cps.some(c => Math.abs(c - cpVal) <= 3)) {
+          cpBoost = 0.12;
+        }
+      }
+
+      const totalScore = similarity + cpBoost;
+      if (totalScore > bestScore && similarity >= 0.68) {
+        bestScore = totalScore;
+        bestMatch = p;
+      }
+    }
+  }
+  if (bestMatch) return bestMatch;
+
+  // Strategy 4: Fallback by CP match if CP was detected
+  if (cpVal && cpVal > 20) {
+    const cpExact = POKEMON_DATA.find(p => p.cps && p.cps.includes(cpVal));
+    if (cpExact) return cpExact;
+  }
+
+  return null;
+}
+
+function findBestPokemonMatch(rawName, cpVal = null) {
+  return matchPokemonAdvanced(rawName, cpVal);
 }
 
 function showScanToast(msg, borderColor = '#38bdf8') {
@@ -2837,15 +2959,21 @@ async function assessCanvasImage(canvas, isSilent = false) {
     const H = canvas.height;
     const ctx = canvas.getContext('2d');
     
-    // 1. Pixel Check: Storage Screen (white bottom card)
-    const sampleY1 = Math.floor(H * 0.62);
-    const sampleY2 = Math.floor(H * 0.72);
-    const sampleX = Math.floor(W * 0.5);
-    const pData1 = ctx.getImageData(sampleX, sampleY1, 1, 1).data;
-    const pData2 = ctx.getImageData(sampleX, sampleY2, 1, 1).data;
-    const isWhiteStorageCard = (pData1[0] > 220 && pData1[1] > 220 && pData1[2] > 220) &&
-                               (pData2[0] > 220 && pData2[1] > 220 && pData2[2] > 220);
-    
+    // 1. Dynamic Page Detection: Check bottom card luminance across 10 sample points
+    const testPoints = [
+      [0.25, 0.68], [0.50, 0.68], [0.75, 0.68],
+      [0.25, 0.78], [0.50, 0.78], [0.75, 0.78],
+      [0.20, 0.86], [0.50, 0.86], [0.80, 0.86], [0.50, 0.92]
+    ];
+    let whiteCardPoints = 0;
+    for (const [rx, ry] of testPoints) {
+      const p = ctx.getImageData(Math.floor(W * rx), Math.floor(H * ry), 1, 1).data;
+      if (p[0] > 210 && p[1] > 210 && p[2] > 210) {
+        whiteCardPoints++;
+      }
+    }
+    const isLikelyStorageScreen = (whiteCardPoints >= 4);
+
     const worker = await ensureOcrWorker();
     if (!worker) {
       if (!isSilent) alert('OCR Engine is still initializing. Please try again in 2 seconds!');
@@ -2856,23 +2984,21 @@ async function assessCanvasImage(canvas, isSilent = false) {
     let detectedSpeciesName = null;
     let matchedPokemon = null;
 
-    if (isWhiteStorageCard) {
-      // BRANCH 2: Storage Screen Candidate
-      // CP Arc: y: 3.5%-12%, x: 25%-75%
-      const cpCrop = createBinarizedCanvas(canvas, W * 0.25, H * 0.035, W * 0.50, H * 0.085, true, 185);
+    // --- Dynamic Branch 2: Storage Screen Candidate ---
+    if (isLikelyStorageScreen) {
+      // Crop CP Arc: y: 3.5%-13%, x: 22%-78%
+      const cpCrop = createBinarizedCanvas(canvas, W * 0.22, H * 0.035, W * 0.56, H * 0.095, true);
       const cpRes = await worker.recognize(cpCrop);
       const cpMatch = (cpRes.data.text || '').match(/(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})/i);
       if (cpMatch) detectedCp = parseInt(cpMatch[1], 10);
       
-      // Name Area: y: 38%-48%, x: 18%-82%
-      const nameCrop = createBinarizedCanvas(canvas, W * 0.18, H * 0.38, W * 0.64, H * 0.10, false, 150);
+      // Crop Pokémon Name: y: 36%-49%, x: 16%-84%
+      const nameCrop = createBinarizedCanvas(canvas, W * 0.16, H * 0.36, W * 0.68, H * 0.13, false);
       const nameRes = await worker.recognize(nameCrop);
-      const rawName = (nameRes.data.text || '').replace(/[^a-zA-Z\s]/g, '').trim();
-      if (rawName) {
-        detectedSpeciesName = rawName;
-        matchedPokemon = findBestPokemonMatch(rawName);
-      }
-      
+      const rawNameText = nameRes.data.text || '';
+      matchedPokemon = matchPokemonAdvanced(rawNameText, detectedCp);
+      if (matchedPokemon) detectedSpeciesName = matchedPokemon.name;
+
       if (matchedPokemon || detectedCp) {
         // Confirmed BRANCH 2: STORAGE
         setEvaluationMode('storage');
@@ -2901,20 +3027,17 @@ async function assessCanvasImage(canvas, isSilent = false) {
       }
     }
 
-    // If not storage card or storage card OCR found no pokemon/CP, test BRANCH 1: CATCH WINDOW
-    // Encounter Capsule: y: 22%-42%, x: 8%-92% (covers all phone screen heights and status bars)
-    const capsuleCrop = createBinarizedCanvas(canvas, W * 0.08, H * 0.22, W * 0.84, H * 0.20, true, 170);
+    // --- Dynamic Branch 1: Catch Screen (Encounter Capsule) ---
+    // Encounter Capsule: y: 22%-42%, x: 8%-92% (covers all phone ratios)
+    const capsuleCrop = createBinarizedCanvas(canvas, W * 0.08, H * 0.22, W * 0.84, H * 0.20, true);
     const capRes = await worker.recognize(capsuleCrop);
     const rawText = capRes.data.text || '';
     
     const cpMatch = rawText.match(/(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})/i);
     if (cpMatch) detectedCp = parseInt(cpMatch[1], 10);
     
-    const cleanName = rawText.replace(/(?:CP|CO|CR|GR|OP)?\s*\d{2,5}/ig, '').replace(/[^a-zA-Z\s]/g, '').trim();
-    if (cleanName) {
-      detectedSpeciesName = cleanName;
-      matchedPokemon = findBestPokemonMatch(cleanName);
-    }
+    matchedPokemon = matchPokemonAdvanced(rawText, detectedCp);
+    if (matchedPokemon) detectedSpeciesName = matchedPokemon.name;
 
     if (matchedPokemon || (detectedCp && detectedCp > 10)) {
       // Confirmed BRANCH 1: CATCH WINDOW
@@ -2941,8 +3064,27 @@ async function assessCanvasImage(canvas, isSilent = false) {
       return { mode: 'catch', pokemon: matchedPokemon, cp: detectedCp };
     }
 
-    // Neither Branch 1 nor Branch 2 matched!
-    // BRANCH 3: BLANK / STANDBY (Map, Gym, Raid, Battle, Shop, Home, or unrecognized screen)
+    // --- Dynamic Fallback: Top-Half Broad Scan ---
+    const topCrop = createBinarizedCanvas(canvas, W * 0.05, H * 0.05, W * 0.90, H * 0.45, true);
+    const topRes = await worker.recognize(topCrop);
+    const topText = topRes.data.text || '';
+    const topCpMatch = topText.match(/(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})/i);
+    if (!detectedCp && topCpMatch) detectedCp = parseInt(topCpMatch[1], 10);
+    const topPokemon = matchPokemonAdvanced(topText, detectedCp);
+
+    if (topPokemon) {
+      const mode = isLikelyStorageScreen ? 'storage' : 'catch';
+      setEvaluationMode(mode);
+      activeHudPokemon = topPokemon;
+      const match = detectedCp ? evaluateCpMatch(topPokemon, detectedCp) : null;
+      updateVerticalHud(topPokemon, match);
+      const sumText = `⚡ Scanned: ${topPokemon.name} (${detectedCp ? detectedCp + ' CP' : 'CP'})`;
+      showScanToast(sumText, '#38bdf8');
+      if (!isSilent) closeScannerModal();
+      return { mode, pokemon: topPokemon, cp: detectedCp };
+    }
+
+    // --- Dynamic Branch 3: Blank / Standby (Map, Gym, Raid, Shop, Home) ---
     setEvaluationMode('blank');
     activeHudPokemon = null;
     activeHudMatch = null;
