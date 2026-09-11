@@ -558,22 +558,13 @@
   }
 
   /* Mini Floating HUD Mode (for Samsung Pop-Up View & Micro Floating Windows) */
-  body.mini-hud-mode {
-    background: #090d16 !important;
-    padding: 8px !important;
-    margin: 0 !important;
-    min-height: 100vh;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    overflow-y: auto !important;
-  }
-  /* Mini HUD Mode: Ultra-Compact Vertical Floating Pill (Exact 76px Optimal Size) */
+  html.mini-hud-mode,
   body.mini-hud-mode {
     margin: 0 !important;
     padding: 0 !important;
-    background: transparent !important;
+    background: #090d16 !important;
+    background-color: #090d16 !important;
+    color-scheme: dark !important;
     width: 100vw !important;
     height: 100vh !important;
     overflow: hidden !important;
@@ -2959,20 +2950,21 @@ async function assessCanvasImage(canvas, isSilent = false) {
     const H = canvas.height;
     const ctx = canvas.getContext('2d');
     
-    // 1. Dynamic Page Detection: Check bottom card luminance across 10 sample points
+    // 1. Dynamic Page Detection: Check bottom card luminance across left-side sample points
+    // (Sampling the left side ensures any floating HUD or pop-up window docked on the right never creates false white reads)
     const testPoints = [
-      [0.25, 0.68], [0.50, 0.68], [0.75, 0.68],
-      [0.25, 0.78], [0.50, 0.78], [0.75, 0.78],
-      [0.20, 0.86], [0.50, 0.86], [0.80, 0.86], [0.50, 0.92]
+      [0.12, 0.62], [0.20, 0.62], [0.30, 0.62],
+      [0.12, 0.68], [0.20, 0.68], [0.30, 0.68],
+      [0.12, 0.72], [0.20, 0.72], [0.30, 0.72]
     ];
     let whiteCardPoints = 0;
     for (const [rx, ry] of testPoints) {
       const p = ctx.getImageData(Math.floor(W * rx), Math.floor(H * ry), 1, 1).data;
-      if (p[0] > 210 && p[1] > 210 && p[2] > 210) {
+      if (p[0] > 205 && p[1] > 205 && p[2] > 205) {
         whiteCardPoints++;
       }
     }
-    const isLikelyStorageScreen = (whiteCardPoints >= 4);
+    const isLikelyStorageScreen = (whiteCardPoints >= 3);
 
     const worker = await ensureOcrWorker();
     if (!worker) {
@@ -3028,8 +3020,8 @@ async function assessCanvasImage(canvas, isSilent = false) {
     }
 
     // --- Dynamic Branch 1: Catch Screen (Encounter Capsule) ---
-    // Encounter Capsule: y: 22%-42%, x: 8%-92% (covers all phone ratios)
-    const capsuleCrop = createBinarizedCanvas(canvas, W * 0.08, H * 0.22, W * 0.84, H * 0.20, true);
+    // Encounter Capsule: y: 22%-42%, x: 6%-84% (leaves right-edge dead space clear for docked HUD overlay)
+    const capsuleCrop = createBinarizedCanvas(canvas, W * 0.06, H * 0.22, W * 0.78, H * 0.20, true);
     const capRes = await worker.recognize(capsuleCrop);
     const rawText = capRes.data.text || '';
     
