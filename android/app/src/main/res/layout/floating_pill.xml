@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pillRoot"
+    android:layout_width="76dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:background="@drawable/pill_background"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <!-- Mode Badge -->
+    <TextView
+        android:id="@+id/pillModeBadge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="STANDBY"
+        android:textColor="@color/slate_text"
+        android:textSize="8.5sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:background="@drawable/badge_bg"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- ⚡ 1-Tap SCAN Hero Button -->
+    <LinearLayout
+        android:id="@+id/pillScanBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/scan_btn_bg"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:id="@+id/pillScanIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚡"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/pillScanText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SCAN"
+            android:textColor="@color/white"
+            android:textSize="8.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Slot 1: Berry Slot -->
+    <LinearLayout
+        android:id="@+id/pillBerrySlot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:id="@+id/pillBerryIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚪"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/pillBerryLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="IDLE"
+            android:textColor="@color/slate_text"
+            android:textSize="8.5sp"
+            android:textStyle="bold"
+            android:layout_marginTop="1dp" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#26FFFFFF"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp" />
+
+    <!-- Slot 2: Target / Level 50 CP Slot -->
+    <LinearLayout
+        android:id="@+id/pillCatchSlot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:id="@+id/pillCatchIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚪"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/pillCatchLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="STANDBY"
+            android:textColor="@color/slate_text"
+            android:textSize="8.5sp"
+            android:textStyle="bold"
+            android:layout_marginTop="1dp" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#26FFFFFF"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp" />
+
+    <!-- Slot 3: Action Slot -->
+    <LinearLayout
+        android:id="@+id/pillActionSlot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:id="@+id/pillActionIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚪"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/pillActionLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="READY"
+            android:textColor="@color/slate_text"
+            android:textSize="8.5sp"
+            android:textStyle="bold"
+            android:layout_marginTop="1dp" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#33FFFFFF"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="3dp" />
+
+    <!-- ⛶ EXPAND Button (Restores Full Pokédex Screen) -->
+    <TextView
+        android:id="@+id/pillExpandBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="⛶ EXPAND"
+        android:textColor="@color/cyan_accent"
+        android:textSize="8.5sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:background="@drawable/expand_btn_bg"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="2dp" />
+
+    <!-- ✕ CLOSE Button -->
+    <TextView
+        android:id="@+id/pillCloseBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="✕ CLOSE"
+        android:textColor="#F87171"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:clickable="true"
+        android:focusable="true" />
+
+</LinearLayout>

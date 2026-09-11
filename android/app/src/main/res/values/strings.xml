@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">PoGo Companion</string>
+    <string name="overlay_permission_title">Display Over Other Apps</string>
+    <string name="overlay_permission_desc">To float the mini companion pill over Pokémon GO, please grant "Display over other apps" permission.</string>
+    <string name="launch_overlay">🚀 LAUNCH FLOATING PILL</string>
+    <string name="stop_overlay">🛑 STOP OVERLAY</string>
+    <string name="channel_name">PoGo Overlay Service</string>
+</resources>
