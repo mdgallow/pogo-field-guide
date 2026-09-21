@@ -11,20 +11,24 @@ android {
         applicationId = "com.pogo.companion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "2.1.4"
+        versionCode = 8
+        versionName = "2.1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // CI writes ../release-keystore.p12: the permanent key when the KEYSTORE_BASE64 /
+    // KEYSTORE_PASSWORD repo secrets exist (see tools/setup-signing.sh), otherwise a throwaway.
+    // Only builds signed with the permanent key can be installed over each other.
+    val releaseKeystore = file("../release-keystore.p12")
     signingConfigs {
         create("release") {
-            val keystoreFile = file("../release-keystore.jks")
-            if (keystoreFile.exists()) {
-                storeFile = keystoreFile
-                storePassword = "pogo2026pass"
+            if (releaseKeystore.exists()) {
+                storeFile = releaseKeystore
+                storeType = "pkcs12"
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
                 keyAlias = "pogo-release"
-                keyPassword = "pogo2026pass"
+                keyPassword = System.getenv("KEYSTORE_PASSWORD")
                 enableV1Signing = true
                 enableV2Signing = true
                 enableV3Signing = true
@@ -35,8 +39,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            val keystoreFile = file("../release-keystore.jks")
-            if (keystoreFile.exists()) {
+            if (releaseKeystore.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
             proguardFiles(

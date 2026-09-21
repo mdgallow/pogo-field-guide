@@ -730,15 +730,15 @@
     <div><b style="color:#c084fc;">3. AFTER CATCH / REASON</b> – what to do with it and why:<br>
       <b>LUCKY TRADE</b> – worth trading for a lucky (half-price power-ups). <b>XL CANDY</b> – trade or keep for XL candy. <b>EVOLVE TO …</b> – weak now, but its evolution is valuable and raising one is the only way to get it. <b>FREE EVOLVE AFTER TRADE</b> – trade this one and its next evolution costs 0 candy. <b>EVOLVE TO …, THEN TRADE</b> – trading it now does nothing; evolve it one step first (Abra → Kadabra), then trade. <b>PVP IVs</b> – trade to re-roll for battle-league stats. <b>TRANSFER</b> / <b>+1 CANDY</b> – send it to the professor.</div>
   </div>
-  <div style="margin-top: 6px; color: #94a3b8;">A name ending in <b>?</b> (like “Pichu?”) means the Pokémon has a nickname, so it was identified from its candy: the family is right, the exact stage is a best guess. <b>???</b> means only the CP could be read.</div>
+  <div style="margin-top: 6px; color: #94a3b8;">In your storage the pill ignores nicknames: it reads the candy label, the CP and whether there is an EVOLVE button, so “Robot 39” or a Charizard still named “Charmander 44” are identified correctly. A name ending in <b>?</b> (like “Pichu?”) means those clues still fit more than one stage: the family is right, the exact stage is a best guess. <b>???</b> means only the CP could be read.</div>
 </details>
 
 <!-- 🚀 Prominent Download Standalone Android APK & Web Launch Bars -->
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
   <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.4 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.4</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.5 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.5</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -751,7 +751,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.4</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.5</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -3121,10 +3121,15 @@ function matchPokemonAdvanced(rawText, cpVal = null) {
   return bestMatch;
 }
 
-// Nicknamed Pokémon ("Robot 39") can't be matched by name, but the storage page always prints
-// "<BASE SPECIES> CANDY". That names the evolution family; the CP then rules out members it is
-// too high for (lowest stage that fits wins). Returns { pokemon, ambiguous } or null.
-function matchPokemonByCandy(candyText, cpVal) {
+// On the storage page the name is the one thing a player can edit ("Robot 39", "Charmander 44",
+// or a Charizard still called Charmander), so it is not trusted there. Three things on the same
+// page cannot be edited:
+//   1. "<BASE SPECIES> CANDY"  -> which evolution family this is
+//   2. the CP                   -> rules out stages it is too high for
+//   3. the EVOLVE button        -> present = not the final stage, absent = final stage
+// The name is only a tie-breaker between stages that survive all three.
+// Returns { pokemon, ambiguous } or null when the candy label could not be read.
+function matchPokemonFromStoragePage(candyText, cpVal, nameText, buttonsText) {
   const m = (candyText || '').toUpperCase().match(/([A-Z][A-Z'’.\- ♀♂]*?)\s+CANDY/);
   if (!m) return null;
   const key = str => str.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -3137,10 +3142,35 @@ function matchPokemonByCandy(candyText, cpVal) {
   }
   if (!base) return null;
 
-  const family = POKEMON_DATA.filter(p => p.evo === base.evo || p.name === base.evo);
-  const fits = family.filter(p => !cpVal || !p.max_cp || cpVal <= p.max_cp);
-  const candidates = (fits.length ? fits : family).sort((a, b) => (a.max_cp || 0) - (b.max_cp || 0));
-  // Candy only names the family: if the CP fits several stages, say so instead of pretending.
+  const family = POKEMON_DATA.filter(p => p === base || p.evo === base.evo || base.finals.includes(p));
+  let candidates = family.filter(p => !cpVal || !p.max_cp || cpVal <= p.max_cp);
+  if (!candidates.length) candidates = family;
+
+  // Only read the EVOLVE button's absence as "final stage" if POWER UP (right above it) was seen,
+  // i.e. that part of the page really was on screen. MEGA EVOLVE is a different button.
+  const buttonLines = (buttonsText || '').toUpperCase().split('\n');
+  const sawPowerUp = buttonLines.some(l => /POWER\s*UP/.test(l));
+  const sawEvolve = buttonLines.some(l => /\bEVOLVE\b/.test(l) && !/MEGA/.test(l));
+  if (sawEvolve || sawPowerUp) {
+    const byButton = candidates.filter(p => (p.finals.length > 0) === sawEvolve);
+    if (byButton.length) candidates = byButton;
+  }
+
+  // Still more than one stage that can evolve (a Charmeleon kept as "Charmander"): the candy cost
+  // printed on the EVOLVE button separates them. First stages cost 12-50, middle stages 100+.
+  const evolvable = candidates.filter(p => p.finals.length > 0);
+  if (sawEvolve && evolvable.length > 1) {
+    const at = buttonLines.findIndex(l => /\bEVOLVE\b/.test(l) && !/MEGA/.test(l));
+    const cost = parseInt((buttonLines.slice(at, at + 2).join(' ').match(/\b(12|25|50|100|200|400)\b/) || [])[1], 10);
+    const byCost = cost >= 100 ? evolvable.filter(p => p.isEvolvedForm)
+      : cost <= 25 ? evolvable.filter(p => !p.isEvolvedForm) : [];
+    if (byCost.length) candidates = byCost;
+  }
+
+  candidates.sort((a, b) => (a.max_cp || 0) - (b.max_cp || 0));
+  const named = matchPokemonAdvanced(nameText, cpVal);
+  if (named && candidates.includes(named)) return { pokemon: named, ambiguous: false };
+  // Several stages still fit and the name didn't settle it: say so instead of pretending.
   return { pokemon: candidates[0], ambiguous: candidates.length > 1 };
 }
 
@@ -3189,6 +3219,7 @@ const SCAN_REGIONS = {
   storageCp:    { x: 0.22, y: 0.035, w: 0.56, h: 0.095, whiteText: true },
   storageName:  { x: 0.16, y: 0.36,  w: 0.68, h: 0.13,  whiteText: false },
   storageCandy: { x: 0.45, y: 0.55,  w: 0.55, h: 0.25,  whiteText: false },
+  storageButtons: { x: 0.05, y: 0.62, w: 0.75, h: 0.33, whiteText: true },
   catchCapsule: { x: 0.06, y: 0.22,  w: 0.78, h: 0.20,  whiteText: true },
   topHalf:      { x: 0.05, y: 0.05,  w: 0.90, h: 0.45,  whiteText: true }
 };
@@ -3207,11 +3238,13 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
 
   if (isLikelyStorageScreen) {
     cp = parseCp(await readRegion(SCAN_REGIONS.storageCp));
-    const pokemon = matchPokemonAdvanced(await readRegion(SCAN_REGIONS.storageName), cp);
-    if (pokemon) return { mode: 'storage', pokemon, cp };
-    const byCandy = matchPokemonByCandy(await readRegion(SCAN_REGIONS.storageCandy), cp);
-    if (byCandy) return { mode: 'storage', pokemon: byCandy.pokemon, cp, ambiguous: byCandy.ambiguous };
-    if (cp) return { mode: 'storage', pokemon: null, cp };
+    const nameText = await readRegion(SCAN_REGIONS.storageName);
+    const fromPage = matchPokemonFromStoragePage(await readRegion(SCAN_REGIONS.storageCandy), cp,
+      nameText, await readRegion(SCAN_REGIONS.storageButtons));
+    if (fromPage) return { mode: 'storage', pokemon: fromPage.pokemon, cp, ambiguous: fromPage.ambiguous };
+    // Candy label unreadable (scrolled, covered): the name is all there is.
+    const byName = matchPokemonAdvanced(nameText, cp);
+    if (byName || cp) return { mode: 'storage', pokemon: byName, cp };
   }
 
   const capsuleText = await readRegion(SCAN_REGIONS.catchCapsule);

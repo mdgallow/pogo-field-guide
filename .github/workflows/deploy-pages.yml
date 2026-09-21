@@ -35,17 +35,21 @@ jobs:
         with:
           gradle-version: '8.4'
 
-      - name: Generate Official Release Keystore
+      - name: Prepare signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          keytool -genkeypair -v \
-            -keystore android/release-keystore.jks \
-            -alias pogo-release \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass pogo2026pass \
-            -keypass pogo2026pass \
-            -dname "CN=PoGo Companion, OU=Mobile, O=PoGo Field Guide, L=San Jose, ST=CA, C=US"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Using the permanent signing key from repo secrets"
+            echo "$KEYSTORE_BASE64" | base64 -d > android/release-keystore.p12
+            echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No signing secrets set (run tools/setup-signing.sh once). Using a throwaway key: this APK cannot be installed over any other build."
+            THROWAWAY=$(openssl rand -hex 16)
+            keytool -genkeypair -keystore android/release-keystore.p12 -storetype PKCS12               -alias pogo-release -keyalg RSA -keysize 2048 -validity 10000               -storepass "$THROWAWAY" -keypass "$THROWAWAY"               -dname "CN=PoGo Companion, OU=Mobile, O=PoGo Field Guide, C=US"
+            echo "KEYSTORE_PASSWORD=$THROWAWAY" >> "$GITHUB_ENV"
+          fi
 
       - name: Build Android Release APK
         run: |
