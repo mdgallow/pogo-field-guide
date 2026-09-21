@@ -713,13 +713,13 @@
   <div style="margin-top: 8px;">The top of the pill shows which screen it saw (<b>CATCH</b> or <b>STORAGE</b>), the Pokémon it read, and its CP. Below that are three answers:</div>
   <div style="margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px;">
     <div><b style="color:#fbbf24;">1. BERRY</b> (catch screen) – which berry to throw: Pinap, Silver Pinap, Golden Razz, or No Berry.<br>
-      <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b> or <b>TRADE</b>.</div>
+      <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b>, <b>TRADE</b>, <b>KEEP BEST</b> (keep your best one to evolve, transfer the rest) or <b>CHECK FIRST</b> (the CP might be perfect: appraise before deleting).</div>
     <div><b style="color:#34d399;">2. IV CHECK</b> – does this exact CP line up with perfect stats?<br>
       <b>MAYBE 100%</b> – the CP matches a perfect (15/15/15) Pokémon; appraise it to be sure. “L20” is the level it would be.<br>
       <b>MAYBE 98%</b> – matches a near-perfect one (one stat at 14).<br>
       <b>NOT PERFECT</b> – this CP cannot be a perfect one.</div>
     <div><b style="color:#c084fc;">3. AFTER CATCH / REASON</b> – what to do with it and why:<br>
-      <b>LUCKY TRADE</b> – worth trading for a lucky (half-price power-ups). <b>XL CANDY</b> – trade or keep for XL candy. <b>FREE EVOLVE</b> – trading makes its evolution free. <b>PVP IVs</b> – trade to re-roll for battle-league stats. <b>TRANSFER</b> / <b>+1 CANDY</b> – send it to the professor.</div>
+      <b>LUCKY TRADE</b> – worth trading for a lucky (half-price power-ups). <b>XL CANDY</b> – trade or keep for XL candy. <b>EVOLVE TO …</b> – weak now, but its evolution is valuable and raising one is the only way to get it. <b>FREE EVOLVE AFTER TRADE</b> – trade this one and its next evolution costs 0 candy. <b>EVOLVE TO …, THEN TRADE</b> – trading it now does nothing; evolve it one step first (Abra → Kadabra), then trade. <b>PVP IVs</b> – trade to re-roll for battle-league stats. <b>TRANSFER</b> / <b>+1 CANDY</b> – send it to the professor.</div>
   </div>
   <div style="margin-top: 6px; color: #94a3b8;">A name ending in <b>?</b> (like “Pichu?”) means the Pokémon has a nickname, so it was identified from its candy: the family is right, the exact stage is a best guess. <b>???</b> means only the CP could be read.</div>
 </details>
@@ -728,8 +728,8 @@
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
   <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.1 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.1</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.2 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.2</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -742,7 +742,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.1</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.2</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -1264,6 +1264,113 @@ function toggleFilterPanel() {
   document.getElementById('toggleArrow').innerText = isHidden ? '▲' : '▼';
 }
 
+// --- Family-aware guidance ------------------------------------------------------------------
+// POKEMON_DATA tags a whole evolution family with one action. That is wrong at the edges:
+//  * "Free Evolution" only applies to the stage that actually evolves by trade (Kadabra, not
+//    Abra or Alakazam).
+//  * A low stage marked "Transfer" may be the only way to ever own its valuable final form.
+// annotateFamilyGuidance() works out each species' place in its family once at startup;
+// getGuidance() turns that into the words shown on the pill, cards and toasts.
+const TRADE_EVOLVERS = new Set(['Kadabra', 'Machoke', 'Graveler', 'Haunter', 'Boldore', 'Gurdurr',
+  'Karrablast', 'Shelmet', 'Phantump', 'Pumpkaboo']);
+const KEEP_RANK = 200; // a fully evolved Pokémon ranked this high in raids or PvP is worth keeping
+
+const baseSpecies = name => name.replace(/\s*\(.*\)$/, '');
+const bestRank = p => Math.min(p.pvp_n || 9999, p.pve_n || 9999);
+
+function annotateFamilyGuidance() {
+  const key = n => n.toLowerCase().replace(/\b(forme?|breed|variety)\b/g, '').replace(/[^a-z0-9]/g, '');
+  const index = new Map(POKEMON_DATA.map(p => [key(p.name), p]));
+
+  for (const p of POKEMON_DATA) {
+    p.finals = (p.evo || '').split(' / ').map(n => index.get(key(n))).filter(f => f && f !== p);
+  }
+  for (const p of POKEMON_DATA) {
+    p.plan = null;
+    if (p.act.includes('Free')) {
+      if (TRADE_EVOLVERS.has(baseSpecies(p.name))) {
+        p.plan = 'trade_evolve';
+      } else if (p.finals.length) {
+        p.plan = 'evolve_then_trade';
+        p.tradeStage = POKEMON_DATA.find(q => q.evo === p.evo && TRADE_EVOLVERS.has(baseSpecies(q.name)));
+      } else {
+        p.plan = 'evolved';
+      }
+    } else if (p.act.includes('Transfer')) {
+      const valuable = p.finals.filter(f => !f.act.includes('Transfer')).sort((a, b) => bestRank(a) - bestRank(b));
+      if (valuable.length) {
+        p.plan = 'grow';
+        p.growInto = valuable[0];
+      }
+    }
+  }
+}
+
+function describeValue(p) {
+  if (p.act.includes('Lucky')) return 'a top raid attacker';
+  if (p.act.includes('PvP')) return 'a strong battle-league pick';
+  if (p.act.includes('XL')) return 'worth powering up with XL candy';
+  return 'worth having';
+}
+
+// Returns the advice for one species:
+//  verdict/reason -> storage pill, next -> catch pill, badge/badgeAct/note -> cards and detail view.
+function getGuidance(p, matchInfo) {
+  let g;
+  if (p.plan === 'grow') {
+    const target = baseSpecies(p.growInto.name);
+    g = { verdict: 'KEEP BEST', color: '#34d399', icon: '🌱', reason: `EVOLVE TO ${target.toUpperCase()}`,
+      badge: `Keep best → evolve to ${target}`, badgeAct: p.growInto.act,
+      note: `Weak on its own, but ${p.growInto.name} is ${describeValue(p.growInto)} and you can only get a good one by raising it. Keep your best ${p.name} and transfer the rest.` };
+  } else if (p.plan === 'evolve_then_trade') {
+    const stage = p.tradeStage ? baseSpecies(p.tradeStage.name) : 'its next stage';
+    g = { verdict: 'KEEP', color: '#34d399', icon: '🔄', reason: `EVOLVE TO ${stage.toUpperCase()}, THEN TRADE`,
+      badge: `Evolve to ${stage}, then trade`, badgeAct: p.act,
+      note: `Trading ${p.name} does nothing special. Evolve it to ${stage} first: a traded ${stage} evolves again for 0 candy.` };
+  } else if (p.plan === 'trade_evolve') {
+    g = { verdict: 'TRADE', color: '#34d399', icon: '🔄', reason: 'FREE EVOLVE AFTER TRADE',
+      badge: 'Trade → evolves for free', badgeAct: p.act,
+      note: `After a trade, ${p.name} evolves for 0 candy.` };
+  } else if (p.plan === 'evolved') {
+    const keep = bestRank(p) <= KEEP_RANK;
+    const raid = (p.pve_n || 9999) <= (p.pvp_n || 9999);
+    g = keep
+      ? { verdict: 'KEEP', color: '#fbbf24', icon: '⭐', reason: raid ? 'RAID ATTACKER' : 'PVP',
+          badge: raid ? 'Keep (raid attacker)' : 'Keep (PvP)', badgeAct: 'Lucky' }
+      : { verdict: 'DELETE', color: '#f87171', icon: '🗑️', reason: '+1 CANDY',
+          badge: 'Transfer (Low Utility)', badgeAct: 'Transfer' };
+    g.note = 'Already fully evolved, so the free trade evolution no longer applies.';
+  } else if (p.act.includes('Lucky')) {
+    g = { verdict: 'KEEP', color: '#fbbf24', icon: '⭐', reason: 'LUCKY TRADE' };
+  } else if (p.act.includes('XL')) {
+    g = { verdict: 'TRADE', color: '#38bdf8', icon: '🍬', reason: 'XL CANDY' };
+  } else if (p.act.includes('PvP')) {
+    g = { verdict: 'KEEP', color: '#c084fc', icon: '⚔️', reason: 'PVP IVs' };
+  } else {
+    g = { verdict: 'DELETE', color: '#f87171', icon: '🗑️', reason: '+1 CANDY' };
+  }
+
+  g.badge = g.badge || p.act;
+  g.badgeAct = g.badgeAct || p.act;
+  g.next = g.verdict === 'DELETE' ? 'TRANSFER' : g.reason;
+  // Never tell anyone to delete something whose CP lines up with perfect or near-perfect IVs.
+  if (matchInfo && g.verdict === 'DELETE') {
+    g = { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎', reason: 'APPRAISE BEFORE DELETING', next: 'APPRAISE IT' };
+  }
+  g.isDelete = g.verdict === 'DELETE';
+  return g;
+}
+
+function actionBadgeHtml(p) {
+  const g = getGuidance(p, null);
+  return `<div class="badge-action ${getActionClass(g.badgeAct)}">${g.badge}</div>`;
+}
+
+function guidanceNoteHtml(p) {
+  const g = getGuidance(p, null);
+  return g.note ? `<div style="font-size:10.5px; color:#94a3b8; line-height:1.4; margin:4px 0 2px 0;">${g.note}</div>` : '';
+}
+
 function getActionClass(act) {
   if(act.includes('Lucky')) return 'act-lucky';
   if(act.includes('XL')) return 'act-xl';
@@ -1504,33 +1611,13 @@ function renderHudSlots(p, matchInfo) {
       return;
     }
 
+    const guidance = getGuidance(p, matchInfo);
+
     // Slot 1: The Core Storage Decision (DELETE vs KEEP/TRADE)
     if (bIcon && bLabel) {
-      if (p.act.includes('Transfer')) {
-        bIcon.innerText = '🗑️';
-        bLabel.innerText = 'DELETE';
-        bLabel.style.color = '#f87171';
-      } else if (p.act.includes('Lucky')) {
-        bIcon.innerText = '⭐';
-        bLabel.innerText = 'KEEP';
-        bLabel.style.color = '#fbbf24';
-      } else if (p.act.includes('Free')) {
-        bIcon.innerText = '🔄';
-        bLabel.innerText = 'TRADE';
-        bLabel.style.color = '#34d399';
-      } else if (p.act.includes('XL')) {
-        bIcon.innerText = '🍬';
-        bLabel.innerText = 'TRADE';
-        bLabel.style.color = '#38bdf8';
-      } else if (p.act.includes('PvP')) {
-        bIcon.innerText = '⚔️';
-        bLabel.innerText = 'KEEP';
-        bLabel.style.color = '#c084fc';
-      } else {
-        bIcon.innerText = '🗑️';
-        bLabel.innerText = 'DELETE';
-        bLabel.style.color = '#f87171';
-      }
+      bIcon.innerText = guidance.icon;
+      bLabel.innerText = guidance.verdict;
+      bLabel.style.color = guidance.color;
     }
 
     // Slot 2: IV & CP Match Status
@@ -1555,25 +1642,8 @@ function renderHudSlots(p, matchInfo) {
     // Slot 3: Rationale / Benefit
     if (aIcon && aLabel) {
       aLabel.style.color = '';
-      if (p.act.includes('Transfer')) {
-        aIcon.innerText = '🍬';
-        aLabel.innerText = '+1 CANDY';
-      } else if (p.act.includes('Lucky')) {
-        aIcon.innerText = '⭐';
-        aLabel.innerText = 'LUCKY TRADE';
-      } else if (p.act.includes('Free')) {
-        aIcon.innerText = '🔄';
-        aLabel.innerText = 'FREE EVOLVE';
-      } else if (p.act.includes('XL')) {
-        aIcon.innerText = '🍬';
-        aLabel.innerText = 'XL CANDY';
-      } else if (p.act.includes('PvP')) {
-        aIcon.innerText = '⚔️';
-        aLabel.innerText = 'PVP IVs';
-      } else {
-        aIcon.innerText = '🍬';
-        aLabel.innerText = '+1 CANDY';
-      }
+      aIcon.innerText = guidance.icon;
+      aLabel.innerText = guidance.reason;
     }
 
     return;
@@ -1590,10 +1660,10 @@ function renderHudSlots(p, matchInfo) {
     return;
   }
 
-  // Slot 1: Berry Directive
+  // Slot 1: Berry Directive (anything worth raising is worth the extra candy)
   if (bIcon && bLabel) {
     bLabel.style.color = '';
-    if (p.berry === 'Pinap Berry') {
+    if (p.berry === 'Pinap Berry' || p.plan === 'grow') {
       bIcon.innerText = '🍍';
       bLabel.innerText = 'PINAP';
     } else if (p.berry === 'Silver Pinap Berry') {
@@ -1632,23 +1702,10 @@ function renderHudSlots(p, matchInfo) {
 
   // Slot 3: Action Recommendation
   if (aIcon && aLabel) {
+    const guidance = getGuidance(p, matchInfo);
     aLabel.style.color = '';
-    if (p.act.includes('Lucky')) {
-      aIcon.innerText = '⭐';
-      aLabel.innerText = 'LUCKY TRADE';
-    } else if (p.act.includes('XL')) {
-      aIcon.innerText = '🍬';
-      aLabel.innerText = 'XL CANDY';
-    } else if (p.act.includes('Free')) {
-      aIcon.innerText = '🔄';
-      aLabel.innerText = 'FREE EVOLVE';
-    } else if (p.act.includes('PvP')) {
-      aIcon.innerText = '⚔️';
-      aLabel.innerText = 'PVP';
-    } else {
-      aIcon.innerText = '🗑️';
-      aLabel.innerText = 'TRANSFER';
-    }
+    aIcon.innerText = guidance.icon;
+    aLabel.innerText = guidance.next;
   }
 }
 
@@ -1942,9 +1999,10 @@ function renderBatch() {
           </div>
           ${matchBadge}
           <div class="badges-row">
-            <div class="badge-action ${getActionClass(p.act)}">${p.act}</div>
+            ${actionBadgeHtml(p)}
             ${getBerryBadge(p.berry)}
           </div>
+          ${guidanceNoteHtml(p)}
           <div class="card-footer">
             <span>Evolves: <b>${p.evo}</b></span>
             <span>Max CP (L50): <b style="color:#34d399;">${p.max_cp || '-'} CP</b></span>
@@ -2050,9 +2108,10 @@ function renderModalContent() {
         <div style="color:#38bdf8; font-weight:800; font-size:12px;">#${p.id} • ${p.region} Region</div>
         <h2 style="font-size:20px; font-weight:800;">${p.name}</h2>
         <div style="display:flex; gap:6px; margin-top:4px;">
-          <div class="badge-action ${getActionClass(p.act)}">${p.act}</div>
+          ${actionBadgeHtml(p)}
           ${getBerryBadge(p.berry)}
         </div>
+        ${guidanceNoteHtml(p)}
       </div>
     </div>
 
@@ -3088,10 +3147,10 @@ function applyScanResult(mode, pokemon, cp, isSilent = false, ambiguous = false)
     const cpText = cp ? `${cp} CP` : 'CP';
     if (mode === 'storage') {
       const pName = pokemon ? pokemon.name + (ambiguous ? '?' : '') : 'Box Pokémon';
-      const isDel = pokemon ? pokemon.act.includes('Transfer') : true;
-      summary = isDel
-        ? `📦 Storage: ${pName} (${cpText}) ➔ 🗑️ DELETE (Transfer for +1 Candy)`
-        : `📦 Storage: ${pName} (${cpText}) ➔ ⭐ KEEP / TRADE!`;
+      const guidance = pokemon ? getGuidance(pokemon, cp ? evaluateCpMatch(pokemon, cp) : null) : null;
+      summary = guidance
+        ? `📦 Storage: ${pName} (${cpText}) ➔ ${guidance.verdict}: ${guidance.reason}`
+        : `📦 Storage: ${pName} (${cpText}) ➔ could not identify it`;
       color = '#fbbf24';
     } else {
       const pName = pokemon ? pokemon.name : 'Wild Spawn';
@@ -3541,6 +3600,7 @@ function applyAppUpdate() {
   window.location.reload(true);
 }
 
+annotateFamilyGuidance();
 applyHudDock(currentDock);
 initTypePills();
 applyFilters();
