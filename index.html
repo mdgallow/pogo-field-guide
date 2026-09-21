@@ -719,7 +719,7 @@
   <div style="margin-top: 8px;">The top of the pill shows which screen it saw (<b>CATCH</b> or <b>STORAGE</b>), the Pokémon it read, and its CP. Below that are three answers:</div>
   <div style="margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px;">
     <div><b style="color:#fbbf24;">1. BERRY</b> (catch screen) – which berry to throw: Pinap, Silver Pinap, Razz, Golden Razz, or No Berry. A Pinap doubles candy but does nothing for the catch, so when the Pokémon is hard to catch at this CP (every starter is, for example) the pill says <b>RAZZ BERRY (TOO HARD FOR PINAP)</b> instead of letting you burn balls.<br>
-      <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b>, <b>TRADE</b>, <b>KEEP BEST</b> (keep your best one to evolve, transfer the rest) or <b>CHECK FIRST</b> (the CP might be perfect: appraise before deleting).</div>
+      <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b>, <b>TRADE</b>, <b>KEEP BEST</b> (keep your best one to evolve, transfer the rest) or <b>CHECK FIRST</b> (the CP might be perfect, or it is the strongest of its family you have scanned: look before deleting). A Pokémon you favorited in the game always says <b>KEEP · YOU FAVORITED IT</b>. Everything scanned in storage is remembered in <b>My Log</b>.</div>
     <div><b style="color:#38bdf8;">BALL</b> (catch screen) – which ball to throw, from the game’s real catch rate for that species and how high its CP is: <b>POKÉ BALL (EASY)</b>, <b>GREAT BALL (MEDIUM)</b>, <b>ULTRA BALL (HARD)</b>. A possible perfect always says Ultra Ball.<br>
       Legendaries: <b>SAVE YOUR MASTER BALL</b> unless it is <b>PERFECT 100%</b> and you are on your last balls. A 98% is within 1% of perfect and not worth it. Roaming Galarian birds are the exception: <b>MASTER BALL NOW</b>, they run after one throw.</div>
     <div><b style="color:#34d399;">2. IV CHECK</b> – does this exact CP line up with perfect stats?<br>
@@ -737,8 +737,8 @@
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
   <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.5 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.5</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.6 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.6</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -751,7 +751,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.5</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.6</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -764,6 +764,7 @@
       <button onclick="openScannerModal()" style="background:linear-gradient(135deg, #a855f7, #6366f1); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(168,85,247,0.3);">
         📱 HUD
       </button>
+      <button onclick="openLogModal()" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer;">My Log</button>
       <button onclick="openGuideModal()" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(59,130,246,0.3);">
         📖 Guide
       </button>
@@ -932,6 +933,24 @@
   </div>
 </div>
 
+<!-- Personal Pokémon log -->
+<div id="logOverlay" class="modal-overlay" onclick="closeLogModal()" style="display:none;">
+  <div class="modal-content" onclick="event.stopPropagation()" style="max-width:620px;">
+    <button class="modal-close" onclick="closeLogModal()">✕</button>
+    <h2 style="font-size:18px; font-weight:800; margin-bottom:4px;">My Pokémon Log</h2>
+    <div style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
+      Every Pokémon you scan in your storage is remembered on this device, recognised by its family and its exact height and weight, so renaming, powering up or favoriting it never confuses the pill. A favorited Pokémon is never marked DELETE, and neither is the strongest one you have scanned in a family. <span id="logCount" style="color:#38bdf8; font-weight:800;"></span>
+    </div>
+    <div id="logBody" style="max-height:50vh; overflow-y:auto;"></div>
+    <textarea id="logTransferBox" style="display:none; width:100%; height:90px; margin-top:10px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:8px; font-size:11px; padding:6px; box-sizing:border-box;"></textarea>
+    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+      <button onclick="exportPokeLog()" style="flex:1; background:#1e293b; color:#38bdf8; border:1px solid #38bdf8; border-radius:8px; padding:8px; font-weight:800; font-size:12px; cursor:pointer;">Backup (copy text)</button>
+      <button onclick="importPokeLog()" style="flex:1; background:#1e293b; color:#34d399; border:1px solid #34d399; border-radius:8px; padding:8px; font-weight:800; font-size:12px; cursor:pointer;">Import</button>
+      <button onclick="clearPokeLog()" style="background:#1e293b; color:#f87171; border:1px solid #f87171; border-radius:8px; padding:8px 12px; font-weight:800; font-size:12px; cursor:pointer;">Clear all</button>
+    </div>
+  </div>
+</div>
+
 <!-- Trainer Field Guide & Update Sync Modal -->
 <div id="guideOverlay" class="modal-overlay" onclick="closeGuideModal(event)">
   <div class="modal-content" onclick="event.stopPropagation()" style="max-width:620px;">
@@ -944,31 +963,20 @@
       <span style="font-size:11px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:6px; font-weight:800;">v1.2.0</span>
     </div>
 
-    <!-- Section 0: 3 Tactical Evaluation States -->
+    <!-- How to use: pill, scanning, log -->
     <div class="guide-section" style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:10px 12px; margin-bottom:12px;">
-      <div class="guide-title" style="color:#38bdf8; font-size:13.5px;">🧭 3-Point HUD Decision Framework</div>
-      <div class="guide-p">The Vertical HUD Pill adapts into 3 distinct operational modes across your Pokémon GO gameplay:</div>
-      <div style="display:flex; flex-direction:column; gap:6px; font-size:11px; margin-top:6px;">
-        <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #64748b;">
-          <b>⚪ 1. Standby / Blank Pill (Exploration):</b> When walking on the overworld map, battling, or navigating menus, the HUD sits dormant in screen dead space without cluttering your view.
-        </div>
+      <div class="guide-title" style="color:#38bdf8; font-size:13.5px;">How to use it</div>
+      <div style="display:flex; flex-direction:column; gap:6px; font-size:11px; margin-top:6px; line-height:1.5;">
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #38bdf8;">
-          <b>🎯 2. Catch Window (Balls & Berries):</b> Active during wild encounters (e.g. wild Swablu). Shows recommended berry (Slot 1), catch priority / 45 Hundo / 44 Priority match (Slot 2), and post-catch utility (Slot 3).
-        </div>
+          <b>1. Minimize to the pill.</b> In the Android app tap <b>MINIMIZE TO PILL</b>. Android asks once per play session to see your screen: tap <b>Start now</b>. The app disappears and a small pill sits on the right edge, over Pokémon GO. Drag it up or down. <b>OPEN</b> brings the full app back, <b>CLOSE</b> stops it.</div>
+        <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #ec4899;">
+          <b>2. Tap SCAN.</b> The pill blinks out for a moment, reads the screen on your phone (nothing is saved or sent anywhere) and tells you what it saw: <b>CATCH</b>, <b>STORAGE</b> or <b>STANDBY</b>, then the Pokémon and its CP.</div>
+        <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #fbbf24;">
+          <b>3. On a wild or raid Pokémon</b> it answers four things: <b>BERRY</b> (Pinap only when the catch can afford it), <b>BALL</b> (Poké / Great / Ultra from the game’s real catch rates), <b>IV CHECK</b> (could this CP be perfect?) and <b>AFTER CATCH</b> (keep, trade, evolve or transfer). Raid legendaries get a firm PERFECT / 98% / NOT PERFECT and honest Master Ball advice.</div>
+        <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #34d399;">
+          <b>4. On a Pokémon in your storage</b> it answers <b>VERDICT</b> (DELETE, KEEP, TRADE, KEEP BEST, CHECK FIRST), <b>IV CHECK</b> and <b>REASON</b>. Nicknames do not matter: it reads the candy name, the CP and the EVOLVE button, so “Robot 39” or a Charizard still called “Charmander 44” are identified correctly.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
-          <b>🗑️ 3. Storage Screen (Delete vs Keep):</b> Active when inspecting your Pokémon storage (e.g. Jolteon CP 266). Directly advises <b>🗑️ DELETE (Transfer)</b> for +1 candy if low utility, or <b>⭐ KEEP / TRADE</b> for Lucky or PvP meta species.
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 1: Catch Screen & Masterball -->
-    <div class="guide-section">
-      <div class="guide-title">🎯 1. Catch Screen CP Inspector & Masterball Decisions</div>
-      <div class="guide-p">Type any wild CP before throwing a ball to cross-reference all 1,401 Pokémon across <b>all 50 levels</b>:</div>
-      <div class="guide-card">
-        <div><b>🟣 Level 50 Match:</b> Triggers <b>MASTERBALL ALERT</b> + vibration! Wild level 50 hundos are exceptionally rare mathematical miracles—use a Masterball to guarantee capture.</div>
-        <div style="margin-top:4px;"><b>⭐ Level 40–49 Match:</b> Ultra-rare high-level hundo. Worth your Golden Razz + Ultra Ball curveball.</div>
-        <div style="margin-top:4px;"><b>❌ No Hundo Match:</b> Standard encounter. Save your Masterball and golden berries for higher priorities.</div>
+          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by its family plus its exact height and weight. That is how the pill protects the ones that matter: anything you <b>favorited</b> in the game always says KEEP, and the <b>strongest of a family</b> you have scanned never says DELETE. Open <b>My Log</b> to see the list or make a backup. Uninstalling the app erases the log, so back it up first.</div>
       </div>
     </div>
 
@@ -1394,6 +1402,11 @@ function annotateFamilyGuidance() {
     p.isRoaming = ROAMING_LEGENDARIES.has(p.name);
     p.is_leg = p.isLegendary;
   }
+  // familyRoot = the lowest stage of the line (the species its candy is named after).
+  for (const p of POKEMON_DATA) {
+    const line = POKEMON_DATA.filter(q => q.evo === p.evo || q.finals.includes(p));
+    p.familyRoot = line.reduce((a, b) => ((a.max_cp || 0) <= (b.max_cp || 0) ? a : b), p).name;
+  }
   // Evolved = something else in the data evolves into it, or it sits above a lower family member.
   for (const p of POKEMON_DATA) {
     for (const f of p.finals) f.isEvolvedForm = true;
@@ -1421,6 +1434,156 @@ function annotateFamilyGuidance() {
         p.growInto = valuable[0];
       }
     }
+  }
+}
+
+// --- Personal Pokémon log -------------------------------------------------------------------
+// The game shows no unique id, so a scanned Pokémon is recognised by things a player cannot
+// edit: its evolution family plus its exact height and weight (each Pokémon rolls its own, shown
+// to two decimals). The catch-date tag is recorded when the game shows one (older Pokémon only).
+// Stored on this device only (localStorage). `ivs` stays null until an appraisal scan fills it.
+const POKE_LOG_KEY = 'pogo_log_v1';
+let pokeLog = loadPokeLog();
+// What the log knows about the Pokémon in the current storage scan; read by getGuidance().
+let scanContext = null;
+
+function loadPokeLog() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(POKE_LOG_KEY));
+    return Array.isArray(saved) ? saved : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function savePokeLog() {
+  try { localStorage.setItem(POKE_LOG_KEY, JSON.stringify(pokeLog)); } catch (e) { console.warn('Log not saved:', e); }
+}
+
+// Pulls "12.34kg", "1.23m" and the "2021 / 06/10" date tag out of the storage page text.
+function parseStorageDetails(statsText, dateText) {
+  const num = m => (m ? parseFloat(m[1].replace(',', '.')) : null);
+  const date = (dateText || '').match(/\b(20[12]\d)\b[\s\S]{0,6}?(\d{2})\/(\d{2})/);
+  return {
+    weight: num((statsText || '').match(/(\d{1,4}[.,]\d{1,2})\s*k[gq]/i)),
+    height: num((statsText || '').match(/(\d{1,2}[.,]\d{1,2})\s*m\b/i)),
+    date: date ? `${date[1]}-${date[2]}-${date[3]}` : null
+  };
+}
+
+// Finds or creates the log entry for a storage scan. Returns null when the size could not be read
+// (no fingerprint, so nothing is logged rather than logging a guess).
+function recordStorageScan(pokemon, cp, details, favorite, matchInfo) {
+  if (!details || !details.weight || !details.height) return null;
+  const family = pokemon.familyRoot;
+  let entry = pokeLog.find(e => e.family === family && e.weight === details.weight && e.height === details.height);
+  const now = new Date().toISOString();
+  if (!entry) {
+    entry = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), family,
+      weight: details.weight, height: details.height, ivs: null, firstSeen: now, scans: 0 };
+    pokeLog.push(entry);
+  }
+  entry.species = pokemon.name;
+  entry.cp = cp || entry.cp || null;
+  entry.favorite = !!favorite;
+  entry.date = details.date || entry.date || null;
+  entry.ivGuess = matchInfo ? (matchInfo.type === '45' ? 'maybe 100%' : 'maybe 98%') : null;
+  entry.lastSeen = now;
+  entry.scans += 1;
+  savePokeLog();
+  return entry;
+}
+
+function buildScanContext(pokemon, cp, details, favorite, matchInfo) {
+  const entry = recordStorageScan(pokemon, cp, details, favorite, matchInfo);
+  const relatives = entry ? pokeLog.filter(e => e.family === entry.family) : [];
+  const bestCp = relatives.reduce((best, e) => Math.max(best, e.cp || 0), 0);
+  return { species: pokemon.name, favorite: !!favorite, root: pokemon.familyRoot,
+    logged: relatives.length, bestCp, isStrongest: !!entry && !!cp && cp >= bestCp };
+}
+
+// Lets what we know about THIS Pokémon overrule the advice for its species.
+function applyLogContext(g, p) {
+  const c = scanContext;
+  if (!c || c.species !== p.name) return g;
+  if (c.favorite && g.verdict !== 'KEEP') {
+    return { ...g, verdict: 'KEEP', color: '#34d399', icon: '⭐', reason: 'YOU FAVORITED IT' };
+  }
+  if (c.logged >= 2 && g.verdict === 'DELETE' && c.isStrongest) {
+    return { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎',
+      reason: `STRONGEST ${c.root.toUpperCase()} FAMILY OF ${c.logged} YOU SCANNED` };
+  }
+  if (c.logged >= 2 && g.verdict === 'KEEP BEST') {
+    return { ...g, reason: c.isStrongest
+      ? `YOUR STRONGEST OF ${c.logged} SCANNED. ${g.reason}`
+      : `YOU SCANNED A STRONGER ONE (CP ${c.bestCp})` };
+  }
+  return g;
+}
+
+function openLogModal() {
+  renderLogModal();
+  document.getElementById('logOverlay').style.display = 'flex';
+}
+
+function closeLogModal() {
+  document.getElementById('logOverlay').style.display = 'none';
+}
+
+function renderLogModal() {
+  const rows = [...pokeLog].sort((a, b) => (b.lastSeen || '').localeCompare(a.lastSeen || '')).map(e => `
+    <tr style="border-top:1px solid var(--border);">
+      <td style="padding:6px 4px;"><b>${e.species}</b>${e.favorite ? ' <span style="color:#fbbf24;">favorite</span>' : ''}<br>
+        <span style="color:var(--text-muted);">${e.weight}kg · ${e.height}m${e.date ? ' · caught ' + e.date : ''}</span></td>
+      <td style="padding:6px 4px; text-align:right;">${e.cp || '-'} CP</td>
+      <td style="padding:6px 4px; text-align:right;">${e.ivs ? e.ivs.join('/') : (e.ivGuess || 'not appraised')}</td>
+      <td style="padding:6px 4px; text-align:right;"><button onclick="deleteLogEntry('${e.id}')" style="background:none; border:none; color:#f87171; cursor:pointer; font-weight:800;">remove</button></td>
+    </tr>`).join('');
+  document.getElementById('logBody').innerHTML = pokeLog.length
+    ? `<table style="width:100%; border-collapse:collapse; font-size:12px;">${rows}</table>`
+    : '<div style="color:var(--text-muted); font-size:12px;">Nothing logged yet. Scan a Pokémon in your storage and it appears here.</div>';
+  document.getElementById('logCount').innerText = `${pokeLog.length} logged`;
+}
+
+function deleteLogEntry(id) {
+  pokeLog = pokeLog.filter(e => e.id !== id);
+  savePokeLog();
+  renderLogModal();
+}
+
+function clearPokeLog() {
+  if (!confirm('Remove every logged Pokémon from this device?')) return;
+  pokeLog = [];
+  savePokeLog();
+  renderLogModal();
+}
+
+// Backup is copy / paste so it works the same in the browser and inside the Android app.
+function exportPokeLog() {
+  const box = document.getElementById('logTransferBox');
+  box.style.display = 'block';
+  box.value = JSON.stringify(pokeLog);
+  box.select();
+}
+
+function importPokeLog() {
+  const box = document.getElementById('logTransferBox');
+  if (box.style.display === 'none' || !box.value.trim()) {
+    box.style.display = 'block';
+    box.value = '';
+    box.placeholder = 'Paste a log backup here, then tap Import again';
+    return;
+  }
+  try {
+    const incoming = JSON.parse(box.value);
+    if (!Array.isArray(incoming)) throw new Error('not a log backup');
+    const known = new Set(pokeLog.map(e => e.id));
+    pokeLog.push(...incoming.filter(e => e && e.id && e.family && !known.has(e.id)));
+    savePokeLog();
+    box.style.display = 'none';
+    renderLogModal();
+  } catch (err) {
+    alert('That is not a valid log backup: ' + err.message);
   }
 }
 
@@ -1475,6 +1638,7 @@ function getGuidance(p, matchInfo) {
   if (matchInfo && g.verdict === 'DELETE') {
     g = { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎', reason: 'APPRAISE BEFORE DELETING', next: 'APPRAISE IT' };
   }
+  g = applyLogContext(g, p);
   g.isDelete = g.verdict === 'DELETE';
   return g;
 }
@@ -3220,6 +3384,8 @@ const SCAN_REGIONS = {
   storageName:  { x: 0.16, y: 0.36,  w: 0.68, h: 0.13,  whiteText: false },
   storageCandy: { x: 0.45, y: 0.55,  w: 0.55, h: 0.25,  whiteText: false },
   storageButtons: { x: 0.05, y: 0.62, w: 0.75, h: 0.33, whiteText: true },
+  storageStats: { x: 0.0,  y: 0.42, w: 1.0,  h: 0.22, whiteText: false },
+  storageDate:  { x: 0.5,  y: 0.28, w: 0.5,  h: 0.18, whiteText: true },
   catchCapsule: { x: 0.06, y: 0.22,  w: 0.78, h: 0.20,  whiteText: true },
   topHalf:      { x: 0.05, y: 0.05,  w: 0.90, h: 0.45,  whiteText: true }
 };
@@ -3241,7 +3407,10 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
     const nameText = await readRegion(SCAN_REGIONS.storageName);
     const fromPage = matchPokemonFromStoragePage(await readRegion(SCAN_REGIONS.storageCandy), cp,
       nameText, await readRegion(SCAN_REGIONS.storageButtons));
-    if (fromPage) return { mode: 'storage', pokemon: fromPage.pokemon, cp, ambiguous: fromPage.ambiguous };
+    if (fromPage) {
+      const details = parseStorageDetails(await readRegion(SCAN_REGIONS.storageStats), await readRegion(SCAN_REGIONS.storageDate));
+      return { mode: 'storage', pokemon: fromPage.pokemon, cp, ambiguous: fromPage.ambiguous, details };
+    }
     // Candy label unreadable (scrolled, covered): the name is all there is.
     const byName = matchPokemonAdvanced(nameText, cp);
     if (byName || cp) return { mode: 'storage', pokemon: byName, cp };
@@ -3262,9 +3431,13 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
 }
 
 // Applies one scan outcome to the CP inspector, HUD slots, status lines and toast.
-function applyScanResult(mode, pokemon, cp, isSilent = false, ambiguous = false) {
+// result: { mode, pokemon, cp, ambiguous, details, favorite } as produced by classifyScan().
+function applyScanResult(result, isSilent = false) {
+  let { mode, pokemon, cp } = result;
+  const ambiguous = !!result.ambiguous;
   scanMatchAmbiguous = ambiguous;
   scanRoamingUnclearFor = null;
+  scanContext = null;
   if (mode === 'catch' && pokemon) {
     const resolved = resolveRoamingBird(pokemon, cp);
     pokemon = resolved.pokemon;
@@ -3284,6 +3457,9 @@ function applyScanResult(mode, pokemon, cp, isSilent = false, ambiguous = false)
     if (cp && cpInp) {
       cpInp.value = cp;
       checkCaughtCp();
+    }
+    if (mode === 'storage' && pokemon && !ambiguous) {
+      scanContext = buildScanContext(pokemon, cp, result.details, result.favorite, cp ? evaluateCpMatch(pokemon, cp) : null);
     }
     // Without a species, clear the slots: the CP filter's top row is a guess, not a read.
     updateVerticalHud(pokemon, (pokemon && cp && !ambiguous) ? evaluateCpMatch(pokemon, cp) : null);
@@ -3336,12 +3512,26 @@ window.assessNativeOcr = async function (payload) {
       .map(l => l.t)
       .join('\n');
     const res = await classifyScan(!!payload.storage, readRegion);
-    applyScanResult(res.mode, res.pokemon, res.cp, true, res.ambiguous);
+    applyScanResult({ ...res, favorite: !!payload.favorite }, true);
   } catch (err) {
     console.error('Native scan assessment error:', err);
-    applyScanResult('blank', null, null, true);
+    applyScanResult({ mode: 'blank', pokemon: null, cp: null }, true);
   }
 };
+
+// The in-game favorite star (top right of the storage page) is solid gold when set, a grey
+// outline when not. Same check as FloatingOverlayService.looksFavorited().
+function looksFavorited(ctx, W, H) {
+  const x0 = Math.floor(W * 0.84), y0 = Math.floor(H * 0.045);
+  const w = Math.floor(W * 0.13), h = Math.floor(H * 0.065);
+  const px = ctx.getImageData(x0, y0, w, h).data;
+  let gold = 0, total = 0;
+  for (let i = 0; i < px.length; i += 16) {
+    total++;
+    if (px[i] > 220 && px[i + 1] > 165 && px[i + 2] < 100) gold++;
+  }
+  return gold / total > 0.10;
+}
 
 async function assessCanvasImage(canvas, isSilent = false) {
   isCurrentlyScanning = true;
@@ -3389,7 +3579,7 @@ async function assessCanvasImage(canvas, isSilent = false) {
       return (await worker.recognize(crop)).data.text || '';
     };
     const res = await classifyScan(isLikelyStorageScreen, readRegion);
-    return applyScanResult(res.mode, res.pokemon, res.cp, isSilent, res.ambiguous);
+    return applyScanResult({ ...res, favorite: isLikelyStorageScreen && looksFavorited(ctx, W, H) }, isSilent);
 
   } catch (err) {
     console.error('Scan assessment error:', err);

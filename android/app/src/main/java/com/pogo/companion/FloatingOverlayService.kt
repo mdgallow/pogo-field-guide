@@ -11,7 +11,6 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
-import android.graphics.Rect
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.Image
@@ -73,9 +72,6 @@ class FloatingOverlayService : Service() {
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
     private val scanRequested = AtomicBoolean(false)
-    /** Pill bounds in capture-frame pixels; OCR text inside it is the pill's own labels. */
-    @Volatile private var pillRectInCapture = Rect()
-
     private val scanTimeout = Runnable {
         if (scanRequested.compareAndSet(true, false)) {
             Log.w(TAG, "No frame arrived for scan")
@@ -113,6 +109,7 @@ class FloatingOverlayService : Service() {
         private const val DEFAULT_VALUE_COLOR = 0xFFE2E8F0.toInt()
         private const val MAX_CAPTURE_WIDTH = 1080
         private const val SCAN_TIMEOUT_MS = 1500L
+        private const val PILL_HIDE_MS = 150L
         private const val EVAL_TIMEOUT_MS = 4000L
 
         @Volatile var isRunning = false
@@ -333,7 +330,9 @@ class FloatingOverlayService : Service() {
             image = reader.acquireLatestImage() ?: return
             if (scanRequested.compareAndSet(true, false)) {
                 mainHandler.removeCallbacks(scanTimeout)
-                runOcr(imageToBitmap(image))
+                val frame = imageToBitmap(image)
+                mainHandler.post { showPillReading() }
+                runOcr(frame)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Frame processing failed", e)
@@ -387,27 +386,32 @@ class FloatingOverlayService : Service() {
             })
             return
         }
-        if (scanRequested.get()) return
-
         val view = pillView ?: return
-        val loc = IntArray(2)
-        view.getLocationOnScreen(loc)
-        val scale = captureWidth.toFloat() / screenWidth
-        pillRectInCapture = Rect(
-            (loc[0] * scale).toInt(), (loc[1] * scale).toInt(),
-            ((loc[0] + view.width) * scale).toInt(), ((loc[1] + view.height) * scale).toInt()
-        )
+        if (scanRequested.get() || view.alpha < 1f) return
 
-        // Changing the label also forces a fresh frame if the screen underneath is static.
+        // Blink the pill out so nothing underneath it (date tag, favorite star, candy label)
+        // is hidden from the scan. The mirror needs a moment to show the pill gone; the second
+        // alpha change then forces a fresh frame even if the game screen is completely still.
+        view.alpha = 0f
+        mainHandler.postDelayed({
+            scanRequested.set(true)
+            pillView?.alpha = 0.01f
+            mainHandler.postDelayed(scanTimeout, SCAN_TIMEOUT_MS)
+        }, PILL_HIDE_MS)
+    }
+
+    /** Frame is in hand: bring the pill back, showing that it is working. */
+    private fun showPillReading() {
+        val view = pillView ?: return
+        view.alpha = 1f
         view.findViewById<TextView>(R.id.pillScanBtn)?.text = "READING…"
-        scanRequested.set(true)
-        mainHandler.postDelayed(scanTimeout, SCAN_TIMEOUT_MS)
     }
 
     private fun runOcr(bitmap: Bitmap) {
         val isStorage = looksLikeStorageCard(bitmap)
+        val isFavorite = isStorage && looksFavorited(bitmap)
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage) }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -430,14 +434,33 @@ class FloatingOverlayService : Service() {
         return white >= 3
     }
 
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean) {
-        val pillRect = pillRectInCapture
+    /**
+     * The in-game favorite star (top right of the storage page) is solid gold when set and a grey
+     * outline when not. Same check as looksFavorited() in index.html.
+     */
+    private fun looksFavorited(bitmap: Bitmap): Boolean {
+        val x0 = (bitmap.width * 0.84f).toInt()
+        val y0 = (bitmap.height * 0.045f).toInt()
+        val x1 = (bitmap.width * 0.97f).toInt()
+        val y1 = (bitmap.height * 0.11f).toInt()
+        var gold = 0
+        var total = 0
+        for (y in y0 until y1 step 4) {
+            for (x in x0 until x1 step 4) {
+                val c = bitmap.getPixel(x, y)
+                total++
+                if ((c shr 16 and 0xFF) > 220 && (c shr 8 and 0xFF) > 165 && (c and 0xFF) < 100) gold++
+            }
+        }
+        return total > 0 && gold.toFloat() / total > 0.10f
+    }
+
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         for (block in text.textBlocks) {
             for (line in block.lines) {
                 val box = line.boundingBox ?: continue
-                if (Rect.intersects(box, pillRect)) continue
                 plainText.append(line.text).append('\n')
                 lines.put(
                     JSONObject()
@@ -454,7 +477,9 @@ class FloatingOverlayService : Service() {
         if (evaluator != null) {
             // The WebView holds the Pokédex data; it answers through OverlayBus.pillUpdater.
             mainHandler.postDelayed(evalTimeout, EVAL_TIMEOUT_MS)
-            evaluator(JSONObject().put("storage", isStorage).put("lines", lines).toString())
+            evaluator(
+                JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines).toString()
+            )
             return
         }
 
@@ -484,6 +509,7 @@ class FloatingOverlayService : Service() {
         }
         mainHandler.removeCallbacks(evalTimeout)
         val v = pillView ?: return
+        v.alpha = 1f
         val mode = state.mode.uppercase()
 
         v.findViewById<TextView>(R.id.pillScanBtn)?.text = "SCAN"
