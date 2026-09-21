@@ -184,11 +184,11 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun updatePill(
             mode: String, target: String,
-            berryIcon: String, berryLabel: String,
-            catchIcon: String, catchLabel: String,
-            actionIcon: String, actionLabel: String
+            caption1: String, value1: String,
+            caption2: String, value2: String,
+            caption3: String, value3: String
         ) {
-            val state = PillState(mode, target, berryIcon, berryLabel, catchIcon, catchLabel, actionIcon, actionLabel)
+            val state = PillState(mode, target, caption1, value1, caption2, value2, caption3, value3)
             runOnUiThread { OverlayBus.pillUpdater?.invoke(state) }
         }
     }

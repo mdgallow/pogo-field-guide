@@ -1,12 +1,15 @@
 package com.pogo.companion
 
-/** What the floating pill displays after an evaluation. */
+/**
+ * What the floating pill displays after an evaluation. Text only: each slot is a caption
+ * naming the question ("VERDICT") and the answer under it ("TRADE").
+ */
 data class PillState(
     val mode: String,
     val target: String,
-    val berryIcon: String, val berryLabel: String,
-    val catchIcon: String, val catchLabel: String,
-    val actionIcon: String, val actionLabel: String
+    val caption1: String, val value1: String,
+    val caption2: String, val value2: String,
+    val caption3: String, val value3: String
 )
 
 /**

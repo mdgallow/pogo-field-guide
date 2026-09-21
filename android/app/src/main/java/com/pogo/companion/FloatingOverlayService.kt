@@ -78,7 +78,7 @@ class FloatingOverlayService : Service() {
     private val scanTimeout = Runnable {
         if (scanRequested.compareAndSet(true, false)) {
             Log.w(TAG, "No frame arrived for scan")
-            finishScan(PillState("STANDBY", "NO FRAME", "⚪", "IDLE", "⚪", "RETRY", "⚪", "READY"))
+            finishScan(PillState("STANDBY", "", "", "NO PICTURE", "", "TAP SCAN AGAIN", "", ""))
         }
     }
 
@@ -92,7 +92,7 @@ class FloatingOverlayService : Service() {
         override fun onStop() {
             // System or user revoked capture (e.g. screen lock on Android 14+).
             releaseCapture()
-            finishScan(PillState("PAUSED", "TAP SCAN", "⚪", "IDLE", "⚪", "RE-ARM", "⚪", "READY"))
+            finishScan(PillState("PAUSED", "", "", "SCREEN ACCESS ENDED", "", "TAP SCAN TO RESTART", "", ""))
         }
     }
 
@@ -107,6 +107,8 @@ class FloatingOverlayService : Service() {
 
         private const val PREFS = "pogo_overlay"
         private const val PREF_PILL_Y = "pill_y"
+        private const val PILL_WIDTH_DP = 72
+        private const val CAPTION_COLOR = 0xFF94A3B8.toInt()
         private const val MAX_CAPTURE_WIDTH = 1080
         private const val SCAN_TIMEOUT_MS = 1500L
         private const val EVAL_TIMEOUT_MS = 4000L
@@ -212,8 +214,10 @@ class FloatingOverlayService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
+        // inflate(…, null) drops the root's layout_width, so the pill width is set on the window.
+        val pillWidthPx = (PILL_WIDTH_DP * resources.displayMetrics.density).toInt()
         params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            pillWidthPx,
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
@@ -392,7 +396,7 @@ class FloatingOverlayService : Service() {
         )
 
         // Changing the label also forces a fresh frame if the screen underneath is static.
-        view.findViewById<TextView>(R.id.pillScanText)?.text = "…"
+        view.findViewById<TextView>(R.id.pillScanBtn)?.text = "READING…"
         scanRequested.set(true)
         mainHandler.postDelayed(scanTimeout, SCAN_TIMEOUT_MS)
     }
@@ -459,14 +463,14 @@ class FloatingOverlayService : Service() {
             finishScan(
                 PillState(
                     if (isStorage) "STORAGE" else "CATCH", "CP $cp",
-                    "⚪", "NO DATA", "⚪", "OPEN APP", "⛶", "EXPAND"
+                    "", "APP WAS CLOSED", "", "TAP OPEN, THEN MINIMIZE AGAIN", "", ""
                 )
             )
         }
     }
 
     private fun showStandby() {
-        finishScan(PillState("STANDBY", "", "⚪", "IDLE", "⚪", "STANDBY", "⚪", "READY"))
+        finishScan(PillState("STANDBY", "", "", "NOTHING TO READ", "", "TAP SCAN ON A POKÉMON", "", ""))
     }
 
     /** Ends any pending scan and renders [state]. Always runs on the main thread. */
@@ -480,30 +484,23 @@ class FloatingOverlayService : Service() {
         val mode = state.mode.uppercase()
         val isStorage = mode == "STORAGE"
 
-        v.findViewById<TextView>(R.id.pillScanText)?.text = "SCAN"
+        v.findViewById<TextView>(R.id.pillScanBtn)?.text = "SCAN"
         v.findViewById<TextView>(R.id.pillModeBadge)?.text = mode
-        v.findViewById<TextView>(R.id.pillTargetLabel)?.apply {
-            text = state.target
-            visibility = if (state.target.isBlank()) View.GONE else View.VISIBLE
-        }
+        setTextOrHide(v.findViewById(R.id.pillTargetLabel), state.target, 0xFFFFFFFF.toInt())
 
-        v.findViewById<TextView>(R.id.pillBerryIcon)?.text = state.berryIcon
-        v.findViewById<TextView>(R.id.pillBerryLabel)?.apply {
-            text = state.berryLabel
-            setTextColor(if (isStorage) 0xFFF87171.toInt() else 0xFFFBBF24.toInt())
-        }
+        setTextOrHide(v.findViewById(R.id.pillSlot1Caption), state.caption1, CAPTION_COLOR)
+        setTextOrHide(v.findViewById(R.id.pillSlot1Value), state.value1, if (isStorage) 0xFFF87171.toInt() else 0xFFFBBF24.toInt())
+        setTextOrHide(v.findViewById(R.id.pillSlot2Caption), state.caption2, CAPTION_COLOR)
+        setTextOrHide(v.findViewById(R.id.pillSlot2Value), state.value2, 0xFF34D399.toInt())
+        setTextOrHide(v.findViewById(R.id.pillSlot3Caption), state.caption3, CAPTION_COLOR)
+        setTextOrHide(v.findViewById(R.id.pillSlot3Value), state.value3, 0xFFC084FC.toInt())
+    }
 
-        v.findViewById<TextView>(R.id.pillCatchIcon)?.text = state.catchIcon
-        v.findViewById<TextView>(R.id.pillCatchLabel)?.apply {
-            text = state.catchLabel
-            setTextColor(if (isStorage) 0xFFFBBF24.toInt() else 0xFF34D399.toInt())
-        }
-
-        v.findViewById<TextView>(R.id.pillActionIcon)?.text = state.actionIcon
-        v.findViewById<TextView>(R.id.pillActionLabel)?.apply {
-            text = state.actionLabel
-            setTextColor(0xFFC084FC.toInt())
-        }
+    /** Empty lines collapse so the pill is never taller than what it has to say. */
+    private fun setTextOrHide(view: TextView, value: String, color: Int) {
+        view.text = value
+        view.setTextColor(color)
+        view.visibility = if (value.isBlank()) View.GONE else View.VISIBLE
     }
 
     private fun vibrateTap() {

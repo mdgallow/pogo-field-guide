@@ -677,19 +677,19 @@
 
   <!-- Slot 1: Berry Square -->
   <div id="miniBerrySlot" style="width: 100%; box-sizing: border-box; padding: 4px 0; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.12); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div id="miniBerryIcon" style="font-size: 22px; line-height: 1.1;">🍍</div>
+    <div id="miniBerryIcon" style="font-size: 7.5px; font-weight: 800; letter-spacing: 0.4px; color: #94a3b8; text-transform: uppercase;"></div>
     <div id="miniBerryLabel" style="font-size: 9px; font-weight: 800; color: #fbbf24; margin-top: 2px; text-transform: uppercase;">PINAP</div>
   </div>
 
   <!-- Slot 2: Catch / Storage Assessment Square -->
   <div id="miniCatchSlot" style="width: 100%; box-sizing: border-box; padding: 4px 0; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.12); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div id="miniCatchIcon" style="font-size: 22px; line-height: 1.1;">🎯</div>
+    <div id="miniCatchIcon" style="font-size: 7.5px; font-weight: 800; letter-spacing: 0.4px; color: #94a3b8; text-transform: uppercase;"></div>
     <div id="miniCatchLabel" style="font-size: 9px; font-weight: 800; color: #34d399; margin-top: 2px; text-transform: uppercase;">STANDBY</div>
   </div>
 
   <!-- Slot 3: Action Square -->
   <div id="miniActionSlot" style="width: 100%; box-sizing: border-box; padding: 4px 0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div id="miniActionIcon" style="font-size: 22px; line-height: 1.1;">🍬</div>
+    <div id="miniActionIcon" style="font-size: 7.5px; font-weight: 800; letter-spacing: 0.4px; color: #94a3b8; text-transform: uppercase;"></div>
     <div id="miniActionLabel" style="font-size: 9px; font-weight: 800; color: #c084fc; margin-top: 2px; text-transform: uppercase;">ACTION</div>
   </div>
 
@@ -706,6 +706,23 @@
   <!-- Dedicated File Input for Instant 1-Tap Screenshot Upload -->
   <input type="file" id="screenshotFileInput" accept="image/*" style="display: none;" onchange="handleScreenshotUpload(event)" />
 </div>
+
+<!-- What the three lines on the pill mean -->
+<details id="pillLegend" style="max-width: 1400px; margin: 0 auto 10px auto; padding: 8px 12px; background: #0f172a; border: 1px solid rgba(56,189,248,0.4); border-radius: 12px; font-size: 12px; line-height: 1.55; color: #cbd5e1;">
+  <summary style="cursor: pointer; font-weight: 800; color: #38bdf8; list-style-position: inside;">How to read the pill <span style="color:#64748b; font-weight:600;">(tap to open)</span></summary>
+  <div style="margin-top: 8px;">The top of the pill shows which screen it saw (<b>CATCH</b> or <b>STORAGE</b>), the Pokémon it read, and its CP. Below that are three answers:</div>
+  <div style="margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px;">
+    <div><b style="color:#fbbf24;">1. BERRY</b> (catch screen) – which berry to throw: Pinap, Silver Pinap, Golden Razz, or No Berry.<br>
+      <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b> or <b>TRADE</b>.</div>
+    <div><b style="color:#34d399;">2. IV CHECK</b> – does this exact CP line up with perfect stats?<br>
+      <b>MAYBE 100%</b> – the CP matches a perfect (15/15/15) Pokémon; appraise it to be sure. “L20” is the level it would be.<br>
+      <b>MAYBE 98%</b> – matches a near-perfect one (one stat at 14).<br>
+      <b>NOT PERFECT</b> – this CP cannot be a perfect one.</div>
+    <div><b style="color:#c084fc;">3. AFTER CATCH / REASON</b> – what to do with it and why:<br>
+      <b>LUCKY TRADE</b> – worth trading for a lucky (half-price power-ups). <b>XL CANDY</b> – trade or keep for XL candy. <b>FREE EVOLVE</b> – trading makes its evolution free. <b>PVP IVs</b> – trade to re-roll for battle-league stats. <b>TRANSFER</b> / <b>+1 CANDY</b> – send it to the professor.</div>
+  </div>
+  <div style="margin-top: 6px; color: #94a3b8;">A name ending in <b>?</b> (like “Pichu?”) means the Pokémon has a nickname, so it was identified from its candy: the family is right, the exact stage is a best guess. <b>???</b> means only the CP could be read.</div>
+</details>
 
 <!-- 🚀 Prominent Download Standalone Android APK & Web Launch Bars -->
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
@@ -1267,6 +1284,7 @@ const isNativeApp = !!(window.AndroidBridge && window.AndroidBridge.minimizeToPi
 let currentDock = localStorage.getItem('pogo_hud_dock') || 'right';
 let activeHudPokemon = null;
 let activeHudMatch = null;
+let scanMatchAmbiguous = false; // last scan identified the family but not which member
 let currentDetailPokemon = null;
 let currentDetailTab = '45';
 let currentRenderLimit = 120;
@@ -1480,7 +1498,7 @@ function renderHudSlots(p, matchInfo) {
       if (bIcon) bIcon.innerText = '🗑️';
       if (bLabel) { bLabel.innerText = 'DELETE'; bLabel.style.color = '#f87171'; }
       if (cIcon) cIcon.innerText = '📊';
-      if (cLabel) { cLabel.innerText = 'ASSESS'; cLabel.style.color = ''; }
+      if (cLabel) { cLabel.innerText = 'UNKNOWN'; cLabel.style.color = ''; }
       if (aIcon) aIcon.innerText = '🍬';
       if (aLabel) { aLabel.innerText = '+1 CANDY'; aLabel.style.color = ''; }
       return;
@@ -1521,16 +1539,16 @@ function renderHudSlots(p, matchInfo) {
       if (matchInfo) {
         if (matchInfo.type === '45') {
           cIcon.innerText = '👑';
-          cLabel.innerText = '45 HUNDO';
+          cLabel.innerText = 'MAYBE 100%';
           cLabel.style.color = '#34d399';
         } else {
           cIcon.innerText = '⭐';
-          cLabel.innerText = '44 98%';
+          cLabel.innerText = 'MAYBE 98%';
           cLabel.style.color = '#c084fc';
         }
       } else {
         cIcon.innerText = '📊';
-        cLabel.innerText = p.act.includes('Transfer') ? '0-2★ JUNK' : '0-2★ KEEP';
+        cLabel.innerText = 'NOT PERFECT';
       }
     }
 
@@ -1542,16 +1560,16 @@ function renderHudSlots(p, matchInfo) {
         aLabel.innerText = '+1 CANDY';
       } else if (p.act.includes('Lucky')) {
         aIcon.innerText = '⭐';
-        aLabel.innerText = '50% DUST';
+        aLabel.innerText = 'LUCKY TRADE';
       } else if (p.act.includes('Free')) {
         aIcon.innerText = '🔄';
-        aLabel.innerText = '0 CANDY';
+        aLabel.innerText = 'FREE EVOLVE';
       } else if (p.act.includes('XL')) {
         aIcon.innerText = '🍬';
-        aLabel.innerText = '+1 XL';
+        aLabel.innerText = 'XL CANDY';
       } else if (p.act.includes('PvP')) {
         aIcon.innerText = '⚔️';
-        aLabel.innerText = 'PVP IV';
+        aLabel.innerText = 'PVP IVs';
       } else {
         aIcon.innerText = '🍬';
         aLabel.innerText = '+1 CANDY';
@@ -1564,11 +1582,11 @@ function renderHudSlots(p, matchInfo) {
   // 3. CATCH WINDOW (CATCH DECISION: BALLS & BERRIES)
   if (!p) {
     if (bIcon) bIcon.innerText = '🍍';
-    if (bLabel) { bLabel.innerText = 'BERRY'; bLabel.style.color = ''; }
+    if (bLabel) { bLabel.innerText = 'PINAP'; bLabel.style.color = ''; }
     if (cIcon) cIcon.innerText = '🎯';
-    if (cLabel) { cLabel.innerText = 'CATCH'; cLabel.style.color = ''; }
+    if (cLabel) { cLabel.innerText = 'UNKNOWN'; cLabel.style.color = ''; }
     if (aIcon) aIcon.innerText = '🍬';
-    if (aLabel) { aLabel.innerText = 'ACTION'; aLabel.style.color = ''; }
+    if (aLabel) { aLabel.innerText = 'UNKNOWN'; aLabel.style.color = ''; }
     return;
   }
 
@@ -1580,13 +1598,13 @@ function renderHudSlots(p, matchInfo) {
       bLabel.innerText = 'PINAP';
     } else if (p.berry === 'Silver Pinap Berry') {
       bIcon.innerText = '🥈';
-      bLabel.innerText = 'SILVER';
+      bLabel.innerText = 'SILVER PINAP';
     } else if (p.berry === 'Golden Razz Berry') {
       bIcon.innerText = '🥇';
-      bLabel.innerText = 'GOLD';
+      bLabel.innerText = 'GOLDEN RAZZ';
     } else {
       bIcon.innerText = '🚫';
-      bLabel.innerText = 'NONE';
+      bLabel.innerText = 'NO BERRY';
     }
   }
 
@@ -1597,18 +1615,18 @@ function renderHudSlots(p, matchInfo) {
       if (matchInfo.type === '45') {
         if (matchInfo.isL50) {
           cIcon.innerText = '🟣';
-          cLabel.innerText = 'L50 45';
+          cLabel.innerText = 'MAYBE 100% L50';
         } else {
           cIcon.innerText = '👑';
-          cLabel.innerText = `L${matchInfo.level} 45`;
+          cLabel.innerText = `MAYBE 100% L${matchInfo.level}`;
         }
       } else {
         cIcon.innerText = '⭐';
-        cLabel.innerText = `L${matchInfo.level} 44`;
+        cLabel.innerText = `MAYBE 98% L${matchInfo.level}`;
       }
     } else {
       cIcon.innerText = '🎯';
-      cLabel.innerText = p.max_cp ? `L50 ${p.max_cp}` : 'STD';
+      cLabel.innerText = 'NOT PERFECT';
     }
   }
 
@@ -1617,19 +1635,19 @@ function renderHudSlots(p, matchInfo) {
     aLabel.style.color = '';
     if (p.act.includes('Lucky')) {
       aIcon.innerText = '⭐';
-      aLabel.innerText = 'LUCKY';
+      aLabel.innerText = 'LUCKY TRADE';
     } else if (p.act.includes('XL')) {
       aIcon.innerText = '🍬';
-      aLabel.innerText = 'XL META';
+      aLabel.innerText = 'XL CANDY';
     } else if (p.act.includes('Free')) {
       aIcon.innerText = '🔄';
-      aLabel.innerText = 'FREE';
+      aLabel.innerText = 'FREE EVOLVE';
     } else if (p.act.includes('PvP')) {
       aIcon.innerText = '⚔️';
       aLabel.innerText = 'PVP';
     } else {
       aIcon.innerText = '🗑️';
-      aLabel.innerText = 'XFER';
+      aLabel.innerText = 'TRANSFER';
     }
   }
 }
@@ -2322,19 +2340,17 @@ function clearMiniCp() {
 }
 
 function syncMiniHudSlots() {
-  const bIcon = document.getElementById('hudBerryIcon')?.innerText;
+  const captions = slotCaptions();
   const bLabel = document.getElementById('hudBerryLabel')?.innerText;
   const bColor = document.getElementById('hudBerryLabel')?.style.color;
-  const cIcon = document.getElementById('hudCatchIcon')?.innerText;
   const cLabel = document.getElementById('hudCatchLabel')?.innerText;
   const cColor = document.getElementById('hudCatchLabel')?.style.color;
-  const aIcon = document.getElementById('hudActionIcon')?.innerText;
   const aLabel = document.getElementById('hudActionLabel')?.innerText;
   const aColor = document.getElementById('hudActionLabel')?.style.color;
 
   const mBIcon = document.getElementById('miniBerryIcon');
   const mBLabel = document.getElementById('miniBerryLabel');
-  if (mBIcon && bIcon) mBIcon.innerText = bIcon;
+  if (mBIcon) mBIcon.innerText = captions[0];
   if (mBLabel && bLabel) {
     mBLabel.innerText = bLabel;
     mBLabel.style.color = bColor || '#fbbf24';
@@ -2342,7 +2358,7 @@ function syncMiniHudSlots() {
 
   const mCIcon = document.getElementById('miniCatchIcon');
   const mCLabel = document.getElementById('miniCatchLabel');
-  if (mCIcon && cIcon) mCIcon.innerText = cIcon;
+  if (mCIcon) mCIcon.innerText = captions[1];
   if (mCLabel && cLabel) {
     mCLabel.innerText = cLabel;
     mCLabel.style.color = cColor || '#34d399';
@@ -2350,7 +2366,7 @@ function syncMiniHudSlots() {
 
   const mAIcon = document.getElementById('miniActionIcon');
   const mALabel = document.getElementById('miniActionLabel');
-  if (mAIcon && aIcon) mAIcon.innerText = aIcon;
+  if (mAIcon) mAIcon.innerText = captions[2];
   if (mALabel && aLabel) {
     mALabel.innerText = aLabel;
     mALabel.style.color = aColor || '#c084fc';
@@ -2374,20 +2390,33 @@ function syncMiniHudSlots() {
   pushNativePill();
 }
 
+// The pill is text-only: each slot is a small caption saying what the value below it answers.
+function slotCaptions() {
+  if (evaluationMode === 'storage') return ['VERDICT', 'IV CHECK', 'REASON'];
+  if (evaluationMode === 'catch') return ['BERRY', 'IV CHECK', 'AFTER CATCH'];
+  return ['', '', ''];
+}
+
 // Mirrors the HUD slots onto the native Android overlay pill (no-op in the browser / PWA).
 function pushNativePill() {
   if (!isNativeApp) return;
   const txt = id => document.getElementById(id)?.innerText || '';
+  const captions = slotCaptions();
   let target = '';
   if (evaluationMode !== 'blank') {
     const cp = document.getElementById('catchCpInput')?.value;
-    target = [activeHudPokemon ? activeHudPokemon.name : '', cp ? `${cp} CP` : ''].filter(Boolean).join('\n');
+    const name = activeHudPokemon ? activeHudPokemon.name + (scanMatchAmbiguous ? '?' : '') : (cp ? '???' : '');
+    target = [name, cp ? `${cp} CP` : ''].filter(Boolean).join('\n');
+  }
+  if (evaluationMode === 'blank') {
+    AndroidBridge.updatePill('STANDBY', '', '', 'NOTHING TO READ', '', 'TAP SCAN ON A POKÉMON', '', '');
+    return;
   }
   AndroidBridge.updatePill(
-    evaluationMode === 'blank' ? 'STANDBY' : evaluationMode, target,
-    txt('hudBerryIcon'), txt('hudBerryLabel'),
-    txt('hudCatchIcon'), txt('hudCatchLabel'),
-    txt('hudActionIcon'), txt('hudActionLabel')
+    evaluationMode, target,
+    captions[0], txt('hudBerryLabel'),
+    captions[1], txt('hudCatchLabel'),
+    captions[2], txt('hudActionLabel')
   );
 }
 
@@ -2919,15 +2948,30 @@ function matchPokemonAdvanced(rawText, cpVal = null) {
       }
     }
   }
-  if (bestMatch) return bestMatch;
+  return bestMatch;
+}
 
-  // Strategy 4: Fallback by CP match if CP was detected
-  if (cpVal && cpVal > 20) {
-    const cpExact = POKEMON_DATA.find(p => p.cps && p.cps.includes(cpVal));
-    if (cpExact) return cpExact;
+// Nicknamed Pokémon ("Robot 39") can't be matched by name, but the storage page always prints
+// "<BASE SPECIES> CANDY". That names the evolution family; the CP then rules out members it is
+// too high for (lowest stage that fits wins). Returns { pokemon, ambiguous } or null.
+function matchPokemonByCandy(candyText, cpVal) {
+  const m = (candyText || '').toUpperCase().match(/([A-Z][A-Z'’.\- ♀♂]*?)\s+CANDY/);
+  if (!m) return null;
+  const key = str => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+  // OCR may glue a neighbouring label onto the line ("STARDUST MELTAN CANDY"): try shorter tails.
+  const words = m[1].trim().split(/\s+/);
+  let base = null;
+  for (let i = 0; i < words.length && !base; i++) {
+    const tail = key(words.slice(i).join(''));
+    base = tail && POKEMON_DATA.find(p => key(p.name) === tail);
   }
+  if (!base) return null;
 
-  return null;
+  const family = POKEMON_DATA.filter(p => p.evo === base.evo || p.name === base.evo);
+  const fits = family.filter(p => !cpVal || !p.max_cp || cpVal <= p.max_cp);
+  const candidates = (fits.length ? fits : family).sort((a, b) => (a.max_cp || 0) - (b.max_cp || 0));
+  // Candy only names the family: if the CP fits several stages, say so instead of pretending.
+  return { pokemon: candidates[0], ambiguous: candidates.length > 1 };
 }
 
 function findBestPokemonMatch(rawName, cpVal = null) {
@@ -2974,6 +3018,7 @@ function showScanToast(msg, borderColor = '#38bdf8') {
 const SCAN_REGIONS = {
   storageCp:    { x: 0.22, y: 0.035, w: 0.56, h: 0.095, whiteText: true },
   storageName:  { x: 0.16, y: 0.36,  w: 0.68, h: 0.13,  whiteText: false },
+  storageCandy: { x: 0.45, y: 0.55,  w: 0.55, h: 0.25,  whiteText: false },
   catchCapsule: { x: 0.06, y: 0.22,  w: 0.78, h: 0.20,  whiteText: true },
   topHalf:      { x: 0.05, y: 0.05,  w: 0.90, h: 0.45,  whiteText: true }
 };
@@ -2993,7 +3038,10 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
   if (isLikelyStorageScreen) {
     cp = parseCp(await readRegion(SCAN_REGIONS.storageCp));
     const pokemon = matchPokemonAdvanced(await readRegion(SCAN_REGIONS.storageName), cp);
-    if (pokemon || cp) return { mode: 'storage', pokemon, cp };
+    if (pokemon) return { mode: 'storage', pokemon, cp };
+    const byCandy = matchPokemonByCandy(await readRegion(SCAN_REGIONS.storageCandy), cp);
+    if (byCandy) return { mode: 'storage', pokemon: byCandy.pokemon, cp, ambiguous: byCandy.ambiguous };
+    if (cp) return { mode: 'storage', pokemon: null, cp };
   }
 
   const capsuleText = await readRegion(SCAN_REGIONS.catchCapsule);
@@ -3011,7 +3059,8 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
 }
 
 // Applies one scan outcome to the CP inspector, HUD slots, status lines and toast.
-function applyScanResult(mode, pokemon, cp, isSilent = false) {
+function applyScanResult(mode, pokemon, cp, isSilent = false, ambiguous = false) {
+  scanMatchAmbiguous = ambiguous;
   let summary;
   let color;
 
@@ -3027,14 +3076,18 @@ function applyScanResult(mode, pokemon, cp, isSilent = false) {
       cpInp.value = cp;
       checkCaughtCp();
     }
-    if (pokemon) {
-      updateVerticalHud(pokemon, cp ? evaluateCpMatch(pokemon, cp) : null);
+    // Without a species, clear the slots: the CP filter's top row is a guess, not a read.
+    updateVerticalHud(pokemon, (pokemon && cp && !ambiguous) ? evaluateCpMatch(pokemon, cp) : null);
+    if (ambiguous) {
+      // The IV check is per species; with the exact stage unknown it would be a coin flip.
+      const ivLabel = document.getElementById('hudCatchLabel');
+      if (ivLabel) ivLabel.innerText = 'UNKNOWN';
     }
     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
     const cpText = cp ? `${cp} CP` : 'CP';
     if (mode === 'storage') {
-      const pName = pokemon ? pokemon.name : 'Box Pokémon';
+      const pName = pokemon ? pokemon.name + (ambiguous ? '?' : '') : 'Box Pokémon';
       const isDel = pokemon ? pokemon.act.includes('Transfer') : true;
       summary = isDel
         ? `📦 Storage: ${pName} (${cpText}) ➔ 🗑️ DELETE (Transfer for +1 Candy)`
@@ -3074,7 +3127,7 @@ window.assessNativeOcr = async function (payload) {
       .map(l => l.t)
       .join('\n');
     const res = await classifyScan(!!payload.storage, readRegion);
-    applyScanResult(res.mode, res.pokemon, res.cp, true);
+    applyScanResult(res.mode, res.pokemon, res.cp, true, res.ambiguous);
   } catch (err) {
     console.error('Native scan assessment error:', err);
     applyScanResult('blank', null, null, true);
@@ -3127,7 +3180,7 @@ async function assessCanvasImage(canvas, isSilent = false) {
       return (await worker.recognize(crop)).data.text || '';
     };
     const res = await classifyScan(isLikelyStorageScreen, readRegion);
-    return applyScanResult(res.mode, res.pokemon, res.cp, isSilent);
+    return applyScanResult(res.mode, res.pokemon, res.cp, isSilent, res.ambiguous);
 
   } catch (err) {
     console.error('Scan assessment error:', err);

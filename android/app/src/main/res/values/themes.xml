@@ -6,4 +6,32 @@
         <item name="android:statusBarColor">@color/bg_dark</item>
         <item name="android:navigationBarColor">@color/bg_dark</item>
     </style>
+
+    <!-- Floating pill: a small grey caption naming the question, then the bold answer under it -->
+    <style name="PillCaption">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/slate_text</item>
+        <item name="android:textSize">7sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_marginTop">2dp</item>
+    </style>
+
+    <style name="PillValue">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/slate_text</item>
+        <item name="android:textSize">9.5sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:layout_marginBottom">2dp</item>
+    </style>
+
+    <style name="PillDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">#26FFFFFF</item>
+    </style>
 </resources>
