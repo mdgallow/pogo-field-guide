@@ -681,6 +681,12 @@
     <div id="miniBerryLabel" style="font-size: 9px; font-weight: 800; color: #fbbf24; margin-top: 2px; text-transform: uppercase;">PINAP</div>
   </div>
 
+  <!-- Ball to throw (catch screen only) -->
+  <div id="miniBallSlot" style="display: none; width: 100%; box-sizing: border-box; padding: 4px 0; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.12); flex-direction: column; align-items: center; justify-content: center;">
+    <div style="font-size: 7.5px; font-weight: 800; letter-spacing: 0.4px; color: #94a3b8;">BALL</div>
+    <div id="miniBallLabel" style="font-size: 9px; font-weight: 800; color: #38bdf8; margin-top: 2px; text-transform: uppercase;"></div>
+  </div>
+
   <!-- Slot 2: Catch / Storage Assessment Square -->
   <div id="miniCatchSlot" style="width: 100%; box-sizing: border-box; padding: 4px 0; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.12); display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div id="miniCatchIcon" style="font-size: 7.5px; font-weight: 800; letter-spacing: 0.4px; color: #94a3b8; text-transform: uppercase;"></div>
@@ -714,10 +720,13 @@
   <div style="margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px;">
     <div><b style="color:#fbbf24;">1. BERRY</b> (catch screen) – which berry to throw: Pinap, Silver Pinap, Golden Razz, or No Berry.<br>
       <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b>, <b>TRADE</b>, <b>KEEP BEST</b> (keep your best one to evolve, transfer the rest) or <b>CHECK FIRST</b> (the CP might be perfect: appraise before deleting).</div>
+    <div><b style="color:#38bdf8;">BALL</b> (catch screen) – which ball to throw, from how hard it is to catch at this CP: <b>POKÉ BALL (EASY)</b>, <b>GREAT BALL (MEDIUM)</b>, <b>ULTRA BALL (HARD)</b>. A possible perfect always says Ultra Ball.<br>
+      Legendaries: <b>SAVE YOUR MASTER BALL</b> unless it is <b>PERFECT 100%</b> and you are on your last balls. A 98% is within 1% of perfect and not worth it. Roaming Galarian birds are the exception: <b>MASTER BALL NOW</b>, they run after one throw.</div>
     <div><b style="color:#34d399;">2. IV CHECK</b> – does this exact CP line up with perfect stats?<br>
       <b>MAYBE 100%</b> – the CP matches a perfect (15/15/15) Pokémon; appraise it to be sure. “L20” is the level it would be.<br>
       <b>MAYBE 98%</b> – matches a near-perfect one (one stat at 14).<br>
-      <b>NOT PERFECT</b> – this CP cannot be a perfect one.</div>
+      <b>NOT PERFECT</b> – this CP cannot be a perfect one.<br>
+      For raid legendaries there is no “maybe”: they are always level 20 or 25, so the pill says <b>PERFECT 100%</b>, <b>98%</b> or <b>NOT PERFECT</b> outright.</div>
     <div><b style="color:#c084fc;">3. AFTER CATCH / REASON</b> – what to do with it and why:<br>
       <b>LUCKY TRADE</b> – worth trading for a lucky (half-price power-ups). <b>XL CANDY</b> – trade or keep for XL candy. <b>EVOLVE TO …</b> – weak now, but its evolution is valuable and raising one is the only way to get it. <b>FREE EVOLVE AFTER TRADE</b> – trade this one and its next evolution costs 0 candy. <b>EVOLVE TO …, THEN TRADE</b> – trading it now does nothing; evolve it one step first (Abra → Kadabra), then trade. <b>PVP IVs</b> – trade to re-roll for battle-league stats. <b>TRANSFER</b> / <b>+1 CANDY</b> – send it to the professor.</div>
   </div>
@@ -728,8 +737,8 @@
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
   <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.2 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.2</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.3 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.3</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -742,7 +751,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.2</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.3</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -1278,12 +1287,88 @@ const KEEP_RANK = 200; // a fully evolved Pokémon ranked this high in raids or 
 const baseSpecies = name => name.replace(/\s*\(.*\)$/, '');
 const bestRank = p => Math.min(p.pvp_n || 9999, p.pve_n || 9999);
 
+// The dataset's is_leg flag is false for every species, so legendary / mythical / ultra beast
+// status comes from this list (matched on the species name without its form suffix).
+const LEGENDARY_SPECIES = new Set(['Articuno', 'Zapdos', 'Moltres', 'Mewtwo', 'Mew', 'Raikou', 'Entei', 'Suicune',
+  'Lugia', 'Ho-Oh', 'Celebi', 'Regirock', 'Regice', 'Registeel', 'Latias', 'Latios', 'Kyogre', 'Groudon', 'Rayquaza',
+  'Jirachi', 'Deoxys', 'Uxie', 'Mesprit', 'Azelf', 'Dialga', 'Palkia', 'Heatran', 'Regigigas', 'Giratina', 'Cresselia',
+  'Phione', 'Manaphy', 'Darkrai', 'Shaymin', 'Arceus', 'Victini', 'Cobalion', 'Terrakion', 'Virizion', 'Tornadus',
+  'Thundurus', 'Reshiram', 'Zekrom', 'Landorus', 'Kyurem', 'Keldeo', 'Meloetta', 'Genesect', 'Xerneas', 'Yveltal',
+  'Zygarde', 'Diancie', 'Hoopa', 'Volcanion', 'Tapu Koko', 'Tapu Lele', 'Tapu Bulu', 'Tapu Fini', 'Solgaleo', 'Lunala',
+  'Nihilego', 'Buzzwole', 'Pheromosa', 'Xurkitree', 'Celesteela', 'Kartana', 'Guzzlord', 'Necrozma', 'Magearna',
+  'Marshadow', 'Naganadel', 'Stakataka', 'Blacephalon', 'Zeraora', 'Zacian', 'Zamazenta', 'Eternatus', 'Urshifu',
+  'Zarude', 'Regieleki', 'Regidrago', 'Glastrier', 'Spectrier', 'Calyrex', 'Enamorus', 'Wo-Chien', 'Chien-Pao',
+  'Ting-Lu', 'Chi-Yu', 'Koraidon', 'Miraidon', 'Walking Wake', 'Iron Leaves', 'Okidogi', 'Munkidori', 'Fezandipiti',
+  'Ogerpon', 'Terapagos', 'Pecharunt']);
+// Daily Incense legendaries: about a 0.3% catch rate and they flee after one throw.
+const ROAMING_LEGENDARIES = new Set(['Articuno (Galar)', 'Zapdos (Galar)', 'Moltres (Galar)']);
+
+// ESTIMATE. The dataset has no base catch rates, so this follows the game's usual pattern:
+// first stages are easy, final stages hard, legendaries hardest. Swap in real game-master
+// numbers here if they are ever added to POKEMON_DATA.
+function estimateBaseCatchRate(p) {
+  if (p.isRoaming) return 0.003;
+  if (p.isLegendary) return 0.02;
+  if (p.finals.length) return p.isEvolvedForm ? 0.14 : 0.4;       // can still evolve: middle / first stage
+  if (p.isEvolvedForm) return (p.max_cp || 0) >= 3000 ? 0.05 : 0.1; // fully evolved
+  const cp = p.max_cp || 0;                                          // never evolves
+  return cp >= 3000 ? 0.1 : cp >= 2000 ? 0.2 : 0.3;
+}
+
+// Chance that one plain Poké Ball throw (no berry, no curve) catches it. The higher its level,
+// the harder it is; level is read off how close the CP is to the species' level-50 maximum.
+function pokeBallCatchChance(p, cpVal) {
+  const share = (cpVal && p.max_cp) ? Math.min(1, cpVal / p.max_cp) : 0.5;
+  const cpm = Math.max(0.1, 0.84 * Math.sqrt(share));
+  return Math.min(1, estimateBaseCatchRate(p) / (2 * cpm));
+}
+
+// The encounter screen just says "Zapdos" for both the raid bird and the roaming Galarian one.
+// Raid catches sit in a narrow CP band under the level 20 / 25 perfect CP, so a CP outside those
+// bands can only be the roaming bird. Inside a band it could be either (unclear = true).
+function resolveRoamingBird(p, cpVal) {
+  const galarian = POKEMON_DATA.find(q => q.name === `${p.name} (Galar)` && q.isRoaming);
+  if (!galarian || !cpVal || !p.cps) return { pokemon: p, unclear: false };
+  const inRaidBand = [20, 25].some(l => cpVal <= p.cps[l - 1] && cpVal >= 0.92 * p.cps[l - 1]);
+  return inRaidBand ? { pokemon: p, unclear: true } : { pokemon: galarian, unclear: false };
+}
+
+function getBallAdvice(p, cpVal, matchInfo) {
+  if (p.isRoaming) return { text: 'MASTER BALL NOW – IT WILL RUN', color: '#f87171' };
+  if (scanRoamingUnclearFor === p.name && !(matchInfo && matchInfo.type === '45')) {
+    return { text: 'IN A RAID: SAVE MASTER BALL. WILD GALARIAN: USE IT NOW', color: '#fbbf24' };
+  }
+  if (p.isLegendary) {
+    return (matchInfo && matchInfo.type === '45')
+      ? { text: 'MASTER BALL ONLY IF ON YOUR LAST BALLS', color: '#fbbf24' }
+      : { text: 'SAVE YOUR MASTER BALL', color: '#94a3b8' };
+  }
+  // A possible perfect is not worth losing to a cheap ball.
+  if (matchInfo) return { text: 'ULTRA BALL', color: '#fbbf24' };
+  const chance = pokeBallCatchChance(p, cpVal);
+  if (chance >= 0.30) return { text: 'POKÉ BALL (EASY)', color: '#cbd5e1' };
+  if (chance >= 0.15) return { text: 'GREAT BALL (MEDIUM)', color: '#38bdf8' };
+  return { text: 'ULTRA BALL (HARD)', color: '#fbbf24' };
+}
+
 function annotateFamilyGuidance() {
   const key = n => n.toLowerCase().replace(/\b(forme?|breed|variety)\b/g, '').replace(/[^a-z0-9]/g, '');
   const index = new Map(POKEMON_DATA.map(p => [key(p.name), p]));
 
   for (const p of POKEMON_DATA) {
     p.finals = (p.evo || '').split(' / ').map(n => index.get(key(n))).filter(f => f && f !== p);
+    p.isLegendary = LEGENDARY_SPECIES.has(baseSpecies(p.name)) || ROAMING_LEGENDARIES.has(p.name);
+    p.isRoaming = ROAMING_LEGENDARIES.has(p.name);
+    p.is_leg = p.isLegendary;
+  }
+  // Evolved = something else in the data evolves into it, or it sits above a lower family member.
+  for (const p of POKEMON_DATA) {
+    for (const f of p.finals) f.isEvolvedForm = true;
+  }
+  for (const p of POKEMON_DATA) {
+    if (p.finals.length && POKEMON_DATA.some(q => q !== p && q.evo === p.evo && (q.max_cp || 0) < (p.max_cp || 0))) {
+      p.isEvolvedForm = true;
+    }
   }
   for (const p of POKEMON_DATA) {
     p.plan = null;
@@ -1391,6 +1476,8 @@ const isNativeApp = !!(window.AndroidBridge && window.AndroidBridge.minimizeToPi
 let currentDock = localStorage.getItem('pogo_hud_dock') || 'right';
 let activeHudPokemon = null;
 let activeHudMatch = null;
+let scanRoamingUnclearFor = null; // species name when the last catch scan could be a raid bird or a roaming Galarian one
+let hudBall = null; // { text, color } ball advice for the catch screen, null elsewhere
 let scanMatchAmbiguous = false; // last scan identified the family but not which member
 let currentDetailPokemon = null;
 let currentDetailTab = '45';
@@ -1426,64 +1513,30 @@ function flipHudSide() {
   applyHudDock(nextDock);
 }
 
+// cps / c44_* hold the CP at every level (index 0 = level 1) for perfect IVs and for the three
+// one-point-short spreads.
+const IV_TABLES = [
+  { key: 'cps',   type: '45', stat: '15/15/15',          label: '100% IV Hundo',   missing: null },
+  { key: 'c44_a', type: '44', stat: '14/15/15 (-1 Atk)', label: '98% IV (-1 Atk)', missing: 'atk' },
+  { key: 'c44_d', type: '44', stat: '15/14/15 (-1 Def)', label: '98% IV (-1 Def)', missing: 'def' },
+  { key: 'c44_s', type: '44', stat: '15/15/14 (-1 Sta)', label: '98% IV (-1 Sta)', missing: 'sta' }
+];
+// Legendaries are only ever caught at fixed levels: raids (20, or 25 weather boosted) and
+// research rewards (15). Checking just those turns "maybe" into a firm answer.
+const RAID_CATCH_LEVELS = [20, 25, 15];
+
 function evaluateCpMatch(p, cpVal) {
   if (!cpVal || !p) return null;
-  // Priority 1: 45 Hundo (15/15/15 - 100% IV)
-  if (p.cps) {
-    const idx = p.cps.indexOf(cpVal);
-    if (idx !== -1) {
-      const lvl = idx + 1;
-      return {
-        type: '45',
-        level: lvl,
-        stat: '15/15/15',
-        label: '100% IV Hundo',
-        isL50: lvl === 50,
-        isHigh: lvl >= 40
-      };
-    }
-  }
-  // Priority 2: 44 Priority (14/15/15, 15/14/15, 15/15/14 - 98% IV)
-  if (p.c44_a) {
-    const idx = p.c44_a.indexOf(cpVal);
-    if (idx !== -1) {
-      const lvl = idx + 1;
-      return {
-        type: '44',
-        level: lvl,
-        stat: '14/15/15 (-1 Atk)',
-        label: '98% IV (-1 Atk)',
-        isL50: lvl === 50,
-        isHigh: lvl >= 40
-      };
-    }
-  }
-  if (p.c44_d) {
-    const idx = p.c44_d.indexOf(cpVal);
-    if (idx !== -1) {
-      const lvl = idx + 1;
-      return {
-        type: '44',
-        level: lvl,
-        stat: '15/14/15 (-1 Def)',
-        label: '98% IV (-1 Def)',
-        isL50: lvl === 50,
-        isHigh: lvl >= 40
-      };
-    }
-  }
-  if (p.c44_s) {
-    const idx = p.c44_s.indexOf(cpVal);
-    if (idx !== -1) {
-      const lvl = idx + 1;
-      return {
-        type: '44',
-        level: lvl,
-        stat: '15/15/14 (-1 Sta)',
-        label: '98% IV (-1 Sta)',
-        isL50: lvl === 50,
-        isHigh: lvl >= 40
-      };
+  const fixedLevels = p.isLegendary && evaluationMode === 'catch';
+  for (const t of IV_TABLES) {
+    const table = p[t.key];
+    if (!table) continue;
+    const lvl = fixedLevels
+      ? RAID_CATCH_LEVELS.find(l => table[l - 1] === cpVal)
+      : table.indexOf(cpVal) + 1;
+    if (lvl) {
+      return { type: t.type, level: lvl, stat: t.stat, label: t.label, missing: t.missing,
+        isL50: lvl === 50, isHigh: lvl >= 40, certain: fixedLevels };
     }
   }
   return null;
@@ -1574,6 +1627,7 @@ function updateVerticalHud(p, matchInfo) {
 }
 
 function renderHudSlots(p, matchInfo) {
+  hudBall = (p && evaluationMode === 'catch') ? getBallAdvice(p, cpFilterVal, matchInfo) : null;
 
   const pill = document.getElementById('verticalHudPill');
   const bIcon = document.getElementById('hudBerryIcon');
@@ -1663,7 +1717,10 @@ function renderHudSlots(p, matchInfo) {
   // Slot 1: Berry Directive (anything worth raising is worth the extra candy)
   if (bIcon && bLabel) {
     bLabel.style.color = '';
-    if (p.berry === 'Pinap Berry' || p.plan === 'grow') {
+    if (p.isLegendary) {
+      bIcon.innerText = '🥇';
+      bLabel.innerText = 'GOLDEN RAZZ';
+    } else if (p.berry === 'Pinap Berry' || p.plan === 'grow') {
       bIcon.innerText = '🍍';
       bLabel.innerText = 'PINAP';
     } else if (p.berry === 'Silver Pinap Berry') {
@@ -1681,7 +1738,12 @@ function renderHudSlots(p, matchInfo) {
   // Slot 2: Catch Priority
   if (cIcon && cLabel) {
     cLabel.style.color = '';
-    if (matchInfo) {
+    if (matchInfo && matchInfo.certain) {
+      // Fixed-level legendary: the CP pins the IVs down, so no "maybe".
+      cIcon.innerText = matchInfo.type === '45' ? '👑' : '⭐';
+      cLabel.innerText = matchInfo.type === '45' ? 'PERFECT 100%'
+        : (matchInfo.missing === 'atk' ? '98%' : '98% – AS GOOD AS PERFECT IN RAIDS');
+    } else if (matchInfo) {
       if (matchInfo.type === '45') {
         if (matchInfo.isL50) {
           cIcon.innerText = '🟣';
@@ -2431,6 +2493,14 @@ function syncMiniHudSlots() {
     mALabel.style.color = aColor || '#c084fc';
   }
 
+  const ballSlot = document.getElementById('miniBallSlot');
+  const ballLabel = document.getElementById('miniBallLabel');
+  if (ballSlot && ballLabel) {
+    ballSlot.style.display = hudBall ? 'flex' : 'none';
+    ballLabel.innerText = hudBall ? hudBall.text : '';
+    ballLabel.style.color = hudBall ? hudBall.color : '';
+  }
+
   const badge = document.getElementById('miniModeBadge');
   if (badge) {
     badge.innerText = evaluationMode.toUpperCase();
@@ -2468,15 +2538,15 @@ function pushNativePill() {
     target = [name, cp ? `${cp} CP` : ''].filter(Boolean).join('\n');
   }
   if (evaluationMode === 'blank') {
-    AndroidBridge.updatePill('STANDBY', '', '', 'NOTHING TO READ', '', 'TAP SCAN ON A POKÉMON', '', '');
+    AndroidBridge.updatePill('STANDBY', '', JSON.stringify([['', 'NOTHING TO READ', ''], ['', 'TAP SCAN ON A POKÉMON', '']]));
     return;
   }
-  AndroidBridge.updatePill(
-    evaluationMode, target,
-    captions[0], txt('hudBerryLabel'),
-    captions[1], txt('hudCatchLabel'),
-    captions[2], txt('hudActionLabel')
-  );
+  // One [caption, value, colour] row per answer, in the order they are needed mid-encounter.
+  const slot = (caption, id) => [caption, txt(id), document.getElementById(id)?.style.color || ''];
+  const slots = [slot(captions[0], 'hudBerryLabel')];
+  if (hudBall) slots.push(['BALL', hudBall.text, hudBall.color]);
+  slots.push(slot(captions[1], 'hudCatchLabel'), slot(captions[2], 'hudActionLabel'));
+  AndroidBridge.updatePill(evaluationMode, target, JSON.stringify(slots));
 }
 
 // Pre-initialize PiP stream and video element on page load so readyState is 4 (HAVE_ENOUGH_DATA)
@@ -3120,6 +3190,12 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
 // Applies one scan outcome to the CP inspector, HUD slots, status lines and toast.
 function applyScanResult(mode, pokemon, cp, isSilent = false, ambiguous = false) {
   scanMatchAmbiguous = ambiguous;
+  scanRoamingUnclearFor = null;
+  if (mode === 'catch' && pokemon) {
+    const resolved = resolveRoamingBird(pokemon, cp);
+    pokemon = resolved.pokemon;
+    scanRoamingUnclearFor = resolved.unclear ? pokemon.name : null;
+  }
   let summary;
   let color;
 

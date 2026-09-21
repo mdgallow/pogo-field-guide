@@ -3,7 +3,7 @@
      layout_width here is ignored because the view is inflated without a parent. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/pillRoot"
-    android:layout_width="72dp"
+    android:layout_width="80dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center_horizontal"
@@ -59,38 +59,12 @@
         android:focusable="true"
         android:layout_marginBottom="3dp" />
 
-    <!-- Answer 1: BERRY (catch) / VERDICT (storage) -->
-    <TextView
-        android:id="@+id/pillSlot1Caption"
-        style="@style/PillCaption" />
-    <TextView
-        android:id="@+id/pillSlot1Value"
-        style="@style/PillValue"
-        android:text="READY" />
-
-    <View style="@style/PillDivider" />
-
-    <!-- Answer 2: IV CHECK -->
-    <TextView
-        android:id="@+id/pillSlot2Caption"
-        style="@style/PillCaption" />
-    <TextView
-        android:id="@+id/pillSlot2Value"
-        style="@style/PillValue"
-        android:text="TAP SCAN" />
-
-    <View style="@style/PillDivider" />
-
-    <!-- Answer 3: AFTER CATCH (catch) / REASON (storage) -->
-    <TextView
-        android:id="@+id/pillSlot3Caption"
-        style="@style/PillCaption" />
-    <TextView
-        android:id="@+id/pillSlot3Value"
-        style="@style/PillValue"
-        android:visibility="gone" />
-
-    <View style="@style/PillDivider" />
+    <!-- Answers (caption + value rows) are added here from pill_slot.xml at runtime -->
+    <LinearLayout
+        android:id="@+id/pillSlots"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
 
     <!-- OPEN the full app  |  close the pill -->
     <LinearLayout

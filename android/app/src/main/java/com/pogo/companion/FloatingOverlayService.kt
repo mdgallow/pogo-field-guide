@@ -33,6 +33,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import androidx.core.content.IntentCompat
@@ -78,7 +79,7 @@ class FloatingOverlayService : Service() {
     private val scanTimeout = Runnable {
         if (scanRequested.compareAndSet(true, false)) {
             Log.w(TAG, "No frame arrived for scan")
-            finishScan(PillState("STANDBY", "", "", "NO PICTURE", "", "TAP SCAN AGAIN", "", ""))
+            finishScan(PillState.message("STANDBY", "NO PICTURE", "TAP SCAN AGAIN"))
         }
     }
 
@@ -92,7 +93,7 @@ class FloatingOverlayService : Service() {
         override fun onStop() {
             // System or user revoked capture (e.g. screen lock on Android 14+).
             releaseCapture()
-            finishScan(PillState("PAUSED", "", "", "SCREEN ACCESS ENDED", "", "TAP SCAN TO RESTART", "", ""))
+            finishScan(PillState.message("PAUSED", "SCREEN ACCESS ENDED", "TAP SCAN TO RESTART"))
         }
     }
 
@@ -107,8 +108,9 @@ class FloatingOverlayService : Service() {
 
         private const val PREFS = "pogo_overlay"
         private const val PREF_PILL_Y = "pill_y"
-        private const val PILL_WIDTH_DP = 72
+        private const val PILL_WIDTH_DP = 80
         private const val CAPTION_COLOR = 0xFF94A3B8.toInt()
+        private const val DEFAULT_VALUE_COLOR = 0xFFE2E8F0.toInt()
         private const val MAX_CAPTURE_WIDTH = 1080
         private const val SCAN_TIMEOUT_MS = 1500L
         private const val EVAL_TIMEOUT_MS = 4000L
@@ -237,6 +239,7 @@ class FloatingOverlayService : Service() {
         attachDragOrTap(view.findViewById(R.id.pillCloseBtn)) { stopSelf() }
 
         windowManager.addView(view, params)
+        finishScan(PillState.message("STANDBY", "TAP SCAN ON A POKÉMON"))
     }
 
     private fun attachDragOrTap(view: View, onTap: (() -> Unit)?) {
@@ -463,14 +466,14 @@ class FloatingOverlayService : Service() {
             finishScan(
                 PillState(
                     if (isStorage) "STORAGE" else "CATCH", "CP $cp",
-                    "", "APP WAS CLOSED", "", "TAP OPEN, THEN MINIMIZE AGAIN", "", ""
+                    listOf(PillSlot("", "APP WAS CLOSED"), PillSlot("", "TAP OPEN, THEN MINIMIZE AGAIN"))
                 )
             )
         }
     }
 
     private fun showStandby() {
-        finishScan(PillState("STANDBY", "", "", "NOTHING TO READ", "", "TAP SCAN ON A POKÉMON", "", ""))
+        finishScan(PillState.message("STANDBY", "NOTHING TO READ", "TAP SCAN ON A POKÉMON"))
     }
 
     /** Ends any pending scan and renders [state]. Always runs on the main thread. */
@@ -482,18 +485,21 @@ class FloatingOverlayService : Service() {
         mainHandler.removeCallbacks(evalTimeout)
         val v = pillView ?: return
         val mode = state.mode.uppercase()
-        val isStorage = mode == "STORAGE"
 
         v.findViewById<TextView>(R.id.pillScanBtn)?.text = "SCAN"
         v.findViewById<TextView>(R.id.pillModeBadge)?.text = mode
         setTextOrHide(v.findViewById(R.id.pillTargetLabel), state.target, 0xFFFFFFFF.toInt())
 
-        setTextOrHide(v.findViewById(R.id.pillSlot1Caption), state.caption1, CAPTION_COLOR)
-        setTextOrHide(v.findViewById(R.id.pillSlot1Value), state.value1, if (isStorage) 0xFFF87171.toInt() else 0xFFFBBF24.toInt())
-        setTextOrHide(v.findViewById(R.id.pillSlot2Caption), state.caption2, CAPTION_COLOR)
-        setTextOrHide(v.findViewById(R.id.pillSlot2Value), state.value2, 0xFF34D399.toInt())
-        setTextOrHide(v.findViewById(R.id.pillSlot3Caption), state.caption3, CAPTION_COLOR)
-        setTextOrHide(v.findViewById(R.id.pillSlot3Value), state.value3, 0xFFC084FC.toInt())
+        val inflater = LayoutInflater.from(this)
+        val container = v.findViewById<LinearLayout>(R.id.pillSlots)
+        container.removeAllViews()
+        for (slot in state.slots) {
+            if (slot.value.isBlank()) continue
+            val row = inflater.inflate(R.layout.pill_slot, container, false)
+            setTextOrHide(row.findViewById(R.id.pillSlotCaption), slot.caption, CAPTION_COLOR)
+            setTextOrHide(row.findViewById(R.id.pillSlotValue), slot.value, slot.color ?: DEFAULT_VALUE_COLOR)
+            container.addView(row)
+        }
     }
 
     /** Empty lines collapse so the pill is never taller than what it has to say. */

@@ -3,6 +3,7 @@ package com.pogo.companion
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
@@ -19,6 +20,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import org.json.JSONArray
 
 /**
  * Full Pokédex dashboard (WebView). Minimizing hands the screen over to
@@ -180,17 +182,29 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread { this@MainActivity.minimizeToPill() }
         }
 
-        /** Called by the page after every evaluation so the pill mirrors the in-app HUD slots. */
+        /**
+         * Called by the page after every evaluation so the pill mirrors the in-app HUD.
+         * [slotsJson] is an array of [caption, value, cssColour] rows.
+         */
         @JavascriptInterface
-        fun updatePill(
-            mode: String, target: String,
-            caption1: String, value1: String,
-            caption2: String, value2: String,
-            caption3: String, value3: String
-        ) {
-            val state = PillState(mode, target, caption1, value1, caption2, value2, caption3, value3)
-            runOnUiThread { OverlayBus.pillUpdater?.invoke(state) }
+        fun updatePill(mode: String, target: String, slotsJson: String) {
+            val rows = JSONArray(slotsJson)
+            val slots = (0 until rows.length()).map { i ->
+                val row = rows.getJSONArray(i)
+                PillSlot(row.optString(0), row.optString(1), parseCssColor(row.optString(2)))
+            }
+            runOnUiThread { OverlayBus.pillUpdater?.invoke(PillState(mode, target, slots)) }
         }
+    }
+
+    /** Accepts the two forms the page produces: "#rrggbb" and "rgb(r, g, b)". */
+    private fun parseCssColor(css: String): Int? {
+        if (css.startsWith("#")) {
+            return try { Color.parseColor(css) } catch (_: IllegalArgumentException) { null }
+        }
+        val rgb = Regex("""rgba?\((\d+),\s*(\d+),\s*(\d+)""").find(css) ?: return null
+        val (r, g, b) = rgb.destructured
+        return Color.rgb(r.toInt(), g.toInt(), b.toInt())
     }
 
     @Deprecated("Deprecated in Java")
