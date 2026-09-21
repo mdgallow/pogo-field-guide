@@ -718,9 +718,9 @@
   <summary style="cursor: pointer; font-weight: 800; color: #38bdf8; list-style-position: inside;">How to read the pill <span style="color:#64748b; font-weight:600;">(tap to open)</span></summary>
   <div style="margin-top: 8px;">The top of the pill shows which screen it saw (<b>CATCH</b> or <b>STORAGE</b>), the Pokémon it read, and its CP. Below that are three answers:</div>
   <div style="margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px;">
-    <div><b style="color:#fbbf24;">1. BERRY</b> (catch screen) – which berry to throw: Pinap, Silver Pinap, Golden Razz, or No Berry.<br>
+    <div><b style="color:#fbbf24;">1. BERRY</b> (catch screen) – which berry to throw: Pinap, Silver Pinap, Razz, Golden Razz, or No Berry. A Pinap doubles candy but does nothing for the catch, so when the Pokémon is hard to catch at this CP (every starter is, for example) the pill says <b>RAZZ BERRY (TOO HARD FOR PINAP)</b> instead of letting you burn balls.<br>
       <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b>, <b>TRADE</b>, <b>KEEP BEST</b> (keep your best one to evolve, transfer the rest) or <b>CHECK FIRST</b> (the CP might be perfect: appraise before deleting).</div>
-    <div><b style="color:#38bdf8;">BALL</b> (catch screen) – which ball to throw, from how hard it is to catch at this CP: <b>POKÉ BALL (EASY)</b>, <b>GREAT BALL (MEDIUM)</b>, <b>ULTRA BALL (HARD)</b>. A possible perfect always says Ultra Ball.<br>
+    <div><b style="color:#38bdf8;">BALL</b> (catch screen) – which ball to throw, from the game’s real catch rate for that species and how high its CP is: <b>POKÉ BALL (EASY)</b>, <b>GREAT BALL (MEDIUM)</b>, <b>ULTRA BALL (HARD)</b>. A possible perfect always says Ultra Ball.<br>
       Legendaries: <b>SAVE YOUR MASTER BALL</b> unless it is <b>PERFECT 100%</b> and you are on your last balls. A 98% is within 1% of perfect and not worth it. Roaming Galarian birds are the exception: <b>MASTER BALL NOW</b>, they run after one throw.</div>
     <div><b style="color:#34d399;">2. IV CHECK</b> – does this exact CP line up with perfect stats?<br>
       <b>MAYBE 100%</b> – the CP matches a perfect (15/15/15) Pokémon; appraise it to be sure. “L20” is the level it would be.<br>
@@ -737,8 +737,8 @@
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
   <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.3 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.3</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.4 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.4</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -751,7 +751,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.3</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.4</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -1303,24 +1303,60 @@ const LEGENDARY_SPECIES = new Set(['Articuno', 'Zapdos', 'Moltres', 'Mewtwo', 'M
 // Daily Incense legendaries: about a 0.3% catch rate and they flee after one throw.
 const ROAMING_LEGENDARIES = new Set(['Articuno (Galar)', 'Zapdos (Galar)', 'Moltres (Galar)']);
 
-// ESTIMATE. The dataset has no base catch rates, so this follows the game's usual pattern:
-// first stages are easy, final stages hard, legendaries hardest. Swap in real game-master
-// numbers here if they are ever added to POKEMON_DATA.
-function estimateBaseCatchRate(p) {
+// Real base catch rates from the Pokémon GO game master (May 2022 snapshot, the last public one
+// to list them; Niantic has since moved the field server-side). Keyed by lower-case species name
+// with punctuation removed. Note how uneven they are: Pidgey 0.5, Magikarp 0.7, but every starter
+// is 0.2 / 0.1 / 0.05 by stage, so a starter is 2.5x harder than a common at the same CP.
+const BASE_CATCH_RATES = {"abomasnow":0.125,"abra":0.5,"absol":0.5,"accelgor":0.15,"aegislash":0.2,"aerodactyl":0.2,"aggron":0.125,"aipom":0.2,"alakazam":0.1,"alcremie":0.2,"alomomola":0.2,"altaria":0.2,"amaura":0.2,"ambipom":0.2,"amoonguss":0.125,"ampharos":0.125,"anorith":0.5,"appletun":0.1,"applin":0.4,"araquanid":0.2,"arbok":0.2,"arcanine":0.1,"arceus":0.02,"archen":0.3,"archeops":0.1,"arctovish":0.2,"arctozolt":0.2,"ariados":0.15,"armaldo":0.2,"aromatisse":0.2,"aron":0.5,"arrokuda":0.5,"articuno":0.03,"audino":0.05,"aurorus":0.2,"avalugg":0.2,"axew":0.4,"azelf":0.02,"azumarill":0.15,"azurill":0.1,"bagon":0.4,"baltoy":0.5,"banette":0.2,"barbaracle":0.2,"barboach":0.5,"barraskewda":0.2,"basculin":0.2,"bastiodon":0.2,"bayleef":0.125,"beartic":0.15,"beautifly":0.125,"beedrill":0.125,"beheeyem":0.15,"beldum":0.4,"bellossom":0.05,"bellsprout":0.5,"bergmite":0.2,"bewear":0.2,"bibarel":0.2,"bidoof":0.5,"binacle":0.2,"bisharp":0.15,"blacephalon":0.02,"blastoise":0.05,"blaziken":0.05,"blipbug":0.5,"blissey":0.05,"blitzle":0.3,"boldore":0.25,"boltund":0.2,"bonsly":0.1,"bouffalant":0.2,"bounsweet":0.5,"braixen":0.1,"braviary":0.15,"breloom":0.2,"brionne":0.1,"bronzong":0.2,"bronzor":0.5,"bruxish":0.2,"budew":0.1,"buizel":0.5,"bulbasaur":0.2,"buneary":0.5,"bunnelby":0.5,"burmy":0.5,"butterfree":0.125,"buzzwole":0.02,"cacnea":0.5,"cacturne":0.2,"calyrex":0.02,"camerupt":0.2,"carbink":0.2,"carkol":0.25,"carnivine":0.9,"carracosta":0.1,"carvanha":0.5,"cascoon":0.25,"castform":0.3,"caterpie":0.5,"celebi":100.0,"celesteela":0.02,"centiskorch":0.2,"chandelure":0.05,"chansey":0.2,"charizard":0.05,"charjabug":0.25,"charmander":0.2,"charmeleon":0.1,"chatot":0.3,"cherrim":0.1,"cherubi":0.5,"chesnaught":0.05,"chespin":0.2,"chewtle":0.5,"chikorita":0.2,"chimchar":0.2,"chimecho":0.3,"chinchou":0.4,"chingling":0.1,"cinccino":0.1,"cinderace":0.05,"clamperl":0.5,"clauncher":0.2,"clawitzer":0.2,"claydol":0.2,"clefable":0.1,"clefairy":0.3,"clobbopus":0.5,"cloyster":0.2,"coalossal":0.125,"cobalion":0.02,"cofagrigus":0.1,"combee":0.15,"combusken":0.1,"comfey":0.2,"conkeldurr":0.125,"copperajah":0.2,"corphish":0.5,"corsola":0.3,"corviknight":0.125,"corvisquire":0.2,"cosmoem":0.02,"cosmog":0.02,"cottonee":0.3,"crabominable":0.2,"crabrawler":0.2,"cradily":0.2,"cramorant":0.2,"cranidos":0.5,"crawdaunt":0.2,"cresselia":0.02,"croagunk":0.4,"crobat":0.1,"croconaw":0.125,"crustle":0.1,"cryogonal":0.2,"cubchoo":0.3,"cubone":0.4,"cufant":0.5,"cursola":0.1,"cutiefly":0.5,"cyndaquil":0.2,"darkrai":0.02,"darmanitan":0.1,"dartrix":0.1,"darumaka":0.3,"decidueye":0.05,"dedenne":0.2,"deerling":0.3,"deino":0.4,"delcatty":0.2,"delibird":0.2,"delphox":0.05,"deoxys":0.02,"dewgong":0.2,"dewott":0.1,"dewpider":0.2,"dhelmise":0.2,"dialga":0.02,"diancie":0.02,"diggersby":0.2,"diglett":0.5,"ditto":0.2,"dodrio":0.2,"doduo":0.5,"donphan":0.125,"dottler":0.25,"doublade":0.2,"dracovish":0.2,"dracozolt":0.2,"dragalge":0.2,"dragapult":0.05,"dragonair":0.1,"dragonite":0.05,"drakloak":0.1,"drampa":0.2,"drapion":0.15,"dratini":0.4,"drednaw":0.2,"dreepy":0.4,"drifblim":0.2,"drifloon":0.4,"drilbur":0.5,"drizzile":0.1,"drowzee":0.5,"druddigon":0.2,"dubwool":0.2,"ducklett":0.5,"dugtrio":0.2,"dunsparce":0.3,"duosion":0.25,"duraludon":0.2,"durant":0.2,"dusclops":0.2,"dusknoir":0.1,"duskull":0.4,"dustox":0.125,"dwebble":0.3,"eelektrik":0.1,"eelektross":0.05,"eevee":0.4,"eiscue":0.2,"ekans":0.5,"eldegoss":0.2,"electabuzz":0.2,"electivire":0.15,"electrike":0.5,"electrode":0.2,"elgyem":0.3,"emboar":0.05,"emolga":0.2,"empoleon":0.05,"entei":0.02,"escavalier":0.125,"espeon":0.125,"espurr":0.4,"eternatus":0.02,"excadrill":0.2,"exeggcute":0.5,"exeggutor":0.2,"exploud":0.125,"falinks":0.2,"farfetchd":0.3,"fearow":0.2,"feebas":0.7,"fennekin":0.2,"feraligatr":0.05,"ferroseed":0.3,"ferrothorn":0.125,"finneon":0.5,"flaaffy":0.25,"flabebe":0.5,"flapple":0.1,"flareon":0.125,"fletchinder":0.25,"fletchling":0.5,"floatzel":0.2,"floette":0.25,"florges":0.125,"flygon":0.05,"fomantis":0.2,"foongus":0.3,"forretress":0.15,"fraxure":0.1,"frillish":0.3,"froakie":0.2,"frogadier":0.1,"froslass":0.2,"frosmoth":0.2,"furfrou":0.2,"furret":0.15,"gabite":0.1,"gallade":0.5,"galvantula":0.125,"garbodor":0.1,"garchomp":0.05,"gardevoir":0.05,"gastly":0.4,"gastrodon":0.2,"genesect":0.02,"gengar":0.1,"geodude":0.5,"gible":0.4,"gigalith":0.125,"girafarig":0.3,"giratina":0.02,"glaceon":0.125,"glalie":0.2,"glameow":0.4,"glastrier":0.02,"gligar":0.2,"gliscor":0.125,"gloom":0.3,"gogoat":0.2,"golbat":0.2,"goldeen":0.5,"golduck":0.2,"golem":0.125,"golett":0.3,"golisopod":0.2,"golurk":0.15,"goodra":0.05,"goomy":0.4,"gorebyss":0.2,"gossifleur":0.5,"gothita":0.5,"gothitelle":0.125,"gothorita":0.25,"gourgeist":0.125,"granbull":0.15,"grapploct":0.2,"graveler":0.25,"greedent":0.3,"greninja":0.05,"grimer":0.5,"grimmsnarl":0.125,"grookey":0.2,"grotle":0.1,"groudon":0.02,"grovyle":0.1,"growlithe":0.3,"grubbin":0.5,"grumpig":0.2,"gulpin":0.5,"gumshoos":0.2,"gurdurr":0.25,"guzzlord":0.02,"gyarados":0.1,"hakamoo":0.1,"happiny":0.1,"hariyama":0.2,"hatenna":0.5,"hatterene":0.125,"hattrem":0.25,"haunter":0.2,"hawlucha":0.2,"haxorus":0.05,"heatmor":0.2,"heatran":0.02,"heliolisk":0.2,"helioptile":0.2,"heracross":0.3,"herdier":0.25,"hippopotas":0.4,"hippowdon":0.15,"hitmonchan":0.2,"hitmonlee":0.2,"hitmontop":0.1,"honchkrow":0.1,"honedge":0.2,"hooh":0.02,"hoopa":1.0,"hoothoot":0.5,"hoppip":0.5,"horsea":0.5,"houndoom":0.15,"houndour":0.4,"huntail":0.2,"hydreigon":0.05,"hypno":0.2,"illumise":0.3,"impidimp":0.5,"incineroar":0.05,"indeedee":0.2,"infernape":0.05,"inkay":0.2,"inteleon":0.05,"ivysaur":0.1,"jangmoo":0.4,"jellicent":0.125,"jigglypuff":0.5,"jirachi":100.0,"jolteon":0.125,"joltik":0.3,"jumpluff":0.125,"jynx":0.3,"kabuto":0.4,"kabutops":0.15,"kadabra":0.25,"kakuna":0.25,"kangaskhan":0.2,"karrablast":0.3,"kartana":0.02,"kecleon":0.3,"keldeo":0.02,"kingdra":0.1,"kingler":0.2,"kirlia":0.1,"klang":0.1,"klefki":0.2,"klink":0.4,"klinklang":0.05,"koffing":0.5,"komala":0.2,"kommoo":0.05,"krabby":0.5,"kricketot":0.5,"kricketune":0.2,"krokorok":0.25,"krookodile":0.125,"kubfu":0.02,"kyogre":0.02,"kyurem":0.02,"lairon":0.25,"lampent":0.1,"landorus":0.02,"lanturn":0.15,"lapras":0.05,"larvesta":0.7,"larvitar":0.4,"latias":0.02,"latios":0.02,"leafeon":0.125,"leavanny":0.125,"ledian":0.15,"ledyba":0.5,"lickilicky":0.15,"lickitung":0.2,"liepard":0.2,"lileep":0.5,"lilligant":0.15,"lillipup":0.5,"linoone":0.2,"litleo":0.5,"litten":0.2,"litwick":0.4,"lombre":0.25,"lopunny":0.2,"lotad":0.5,"loudred":0.25,"lucario":0.1,"ludicolo":0.125,"lugia":0.02,"lumineon":0.2,"lunala":0.02,"lunatone":0.3,"lurantis":0.2,"luvdisc":0.3,"luxio":0.25,"luxray":0.125,"lycanroc":0.2,"machamp":0.1,"machoke":0.25,"machop":0.5,"magcargo":0.125,"magearna":0.02,"magikarp":0.7,"magmar":0.2,"magmortar":0.15,"magnemite":0.5,"magneton":0.2,"magnezone":0.125,"makuhita":0.5,"malamar":0.2,"mamoswine":0.05,"manaphy":0.02,"mandibuzz":0.15,"manectric":0.2,"mankey":0.5,"mantine":0.3,"mantyke":0.1,"maractus":0.2,"mareanie":0.2,"mareep":0.5,"marill":0.5,"marowak":0.15,"marshadow":0.02,"marshtomp":0.1,"masquerain":0.2,"mawile":0.5,"medicham":0.2,"meditite":0.5,"meganium":0.05,"melmetal":0.3,"meloetta":100.0,"meltan":0.3,"meowstic":0.2,"meowth":0.5,"mesprit":0.02,"metagross":0.05,"metang":0.1,"metapod":0.25,"mew":100.0,"mewtwo":0.02,"mienfoo":0.3,"mienshao":0.15,"mightyena":0.2,"milcery":0.5,"milotic":0.1,"miltank":0.2,"mimejr":0.1,"mimikyu":0.2,"minccino":0.3,"minior":0.2,"minun":0.3,"misdreavus":0.3,"mismagius":0.1,"moltres":0.03,"monferno":0.1,"morelull":0.2,"morgrem":0.25,"morpeko":0.2,"mothim":0.15,"mrmime":0.3,"mrrime":0.3,"mudbray":0.2,"mudkip":0.2,"mudsdale":0.2,"muk":0.2,"munchlax":0.1,"munna":0.5,"murkrow":0.2,"musharna":0.2,"naganadel":0.3,"natu":0.4,"necrozma":0.02,"nickit":0.5,"nidoking":0.125,"nidoqueen":0.125,"nidoranfemale":0.5,"nidoranmale":0.5,"nidorina":0.25,"nidorino":0.25,"nihilego":0.02,"nincada":0.2,"ninetales":0.1,"ninjask":0.1,"noctowl":0.15,"noibat":0.4,"noivern":0.15,"nosepass":0.2,"numel":0.5,"nuzleaf":0.25,"obstagoon":0.04,"octillery":0.15,"oddish":0.6,"omanyte":0.4,"omastar":0.15,"onix":0.2,"oranguru":0.2,"orbeetle":0.125,"oricorio":0.2,"oshawott":0.2,"pachirisu":0.3,"palkia":0.02,"palossand":0.2,"palpitoad":0.25,"pancham":0.3,"pangoro":0.1,"panpour":0.5,"pansage":0.5,"pansear":0.5,"paras":0.4,"parasect":0.2,"passimian":0.2,"patrat":0.5,"pawniard":0.3,"pelipper":0.2,"perrserker":0.1,"persian":0.2,"petilil":0.3,"phanpy":0.5,"phantump":0.3,"pheromosa":0.02,"phione":0.02,"pidgeot":0.125,"pidgeotto":0.25,"pidgey":0.5,"pidove":0.5,"pignite":0.1,"pikachu":0.2,"pikipek":0.5,"piloswine":0.125,"pincurchin":0.2,"pineco":0.4,"pinsir":0.3,"piplup":0.2,"plusle":0.3,"poipole":0.3,"politoed":0.1,"poliwag":0.5,"poliwhirl":0.25,"poliwrath":0.125,"polteageist":0.2,"ponyta":0.4,"poochyena":0.5,"popplio":0.2,"porygon":0.4,"porygon2":0.05,"porygonz":0.05,"primarina":0.05,"primeape":0.2,"prinplup":0.1,"probopass":0.1,"psyduck":0.5,"pumpkaboo":0.3,"pupitar":0.1,"purrloin":0.5,"purugly":0.15,"pyroar":0.2,"pyukumuku":0.2,"quagsire":0.15,"quilava":0.125,"quilladin":0.1,"qwilfish":0.3,"raboot":0.1,"raichu":0.1,"raikou":0.02,"ralts":0.4,"rampardos":0.2,"rapidash":0.15,"raticate":0.2,"rattata":0.5,"rayquaza":0.02,"regice":0.02,"regidrago":0.02,"regieleki":0.02,"regigigas":0.02,"regirock":0.02,"registeel":0.02,"relicanth":0.9,"remoraid":0.5,"reshiram":0.02,"reuniclus":0.125,"rhydon":0.05,"rhyhorn":0.5,"rhyperior":0.05,"ribombee":0.15,"rillaboom":0.05,"rockruff":0.2,"roggenrola":0.5,"rolycoly":0.5,"rookidee":0.5,"roselia":0.3,"roserade":0.15,"rotom":0.3,"rowlet":0.2,"rufflet":0.3,"runerigus":0.1,"sableye":0.2,"salamence":0.05,"salandit":0.2,"salazzle":0.2,"samurott":0.05,"sandaconda":0.2,"sandile":0.5,"sandshrew":0.5,"sandslash":0.2,"sandygast":0.2,"sawk":0.2,"sawsbuck":0.15,"scatterbug":0.5,"sceptile":0.05,"scizor":0.05,"scolipede":0.2,"scorbunny":0.2,"scrafty":0.1,"scraggy":0.3,"scyther":0.3,"seadra":0.2,"seaking":0.2,"sealeo":0.25,"seedot":0.5,"seel":0.5,"seismitoad":0.125,"sentret":0.5,"serperior":0.05,"servine":0.1,"seviper":0.3,"sewaddle":0.5,"sharpedo":0.2,"shaymin":100.0,"shedinja":0.05,"shelgon":0.1,"shellder":0.5,"shellos":0.5,"shelmet":0.3,"shieldon":0.5,"shiftry":0.125,"shiinotic":0.2,"shinx":0.5,"shroomish":0.5,"shuckle":0.3,"shuppet":0.4,"sigilyph":0.2,"silcoon":0.25,"silicobra":0.5,"silvally":0.3,"simipour":0.2,"simisage":0.2,"simisear":0.2,"sinistea":0.5,"sirfetchd":0.1,"sizzlipede":0.5,"skarmory":0.2,"skiddo":0.2,"skiploom":0.25,"skitty":0.5,"skorupi":0.4,"skrelp":0.2,"skuntank":0.2,"skwovet":0.6,"slaking":0.05,"slakoth":0.4,"sliggoo":0.1,"slowbro":0.2,"slowking":0.1,"slowpoke":0.5,"slugma":0.3,"slurpuff":0.2,"smeargle":0.25,"smoochum":0.25,"sneasel":0.2,"snivy":0.2,"snom":0.5,"snorlax":0.05,"snorunt":0.5,"snover":0.3,"snubbull":0.4,"sobble":0.2,"solgaleo":0.02,"solosis":0.5,"solrock":0.3,"spearow":0.5,"spectrier":0.02,"spewpa":0.25,"spheal":0.5,"spinarak":0.5,"spinda":0.3,"spiritomb":0.1,"spoink":0.5,"spritzee":0.2,"squirtle":0.2,"stakataka":0.02,"stantler":0.3,"staraptor":0.125,"staravia":0.25,"starly":0.5,"starmie":0.2,"staryu":0.5,"steelix":0.1,"steenee":0.25,"stonjourner":0.2,"stoutland":0.125,"stufful":0.5,"stunfisk":0.2,"stunky":0.5,"sudowoodo":0.125,"suicune":0.02,"sunflora":0.1,"sunkern":0.5,"surskit":0.5,"swablu":0.5,"swadloon":0.25,"swalot":0.2,"swampert":0.05,"swanna":0.4,"swellow":0.2,"swinub":0.3,"swirlix":0.2,"swoobat":0.2,"sylveon":0.125,"taillow":0.5,"talonflame":0.125,"tangela":0.4,"tangrowth":0.15,"tapubulu":0.02,"tapufini":0.02,"tapukoko":0.02,"tapulele":0.02,"tauros":0.3,"teddiursa":0.5,"tentacool":0.5,"tentacruel":0.2,"tepig":0.2,"terrakion":0.02,"thievul":0.2,"throh":0.2,"thundurus":0.02,"thwackey":0.1,"timburr":0.5,"tirtouga":0.3,"togedemaru":0.2,"togekiss":0.01,"togetic":0.2,"torchic":0.2,"torkoal":0.3,"tornadus":0.02,"torracat":0.1,"torterra":0.05,"totodile":0.2,"toucannon":0.125,"toxapex":0.2,"toxicroak":0.15,"toxtricity":0.1,"tranquill":0.25,"trapinch":0.4,"treecko":0.2,"trevenant":0.15,"tropius":0.3,"trubbish":0.3,"trumbeak":0.25,"tsareena":0.125,"turtonator":0.2,"turtwig":0.2,"tympole":0.5,"tynamo":0.4,"typenull":0.3,"typhlosion":0.05,"tyranitar":0.05,"tyrantrum":0.2,"tyrunt":0.2,"umbreon":0.125,"unfezant":0.125,"unown":0.3,"ursaring":0.15,"urshifu":0.02,"uxie":0.02,"vanillish":0.05,"vanillite":0.4,"vanilluxe":0.125,"vaporeon":0.125,"venipede":0.3,"venomoth":0.2,"venonat":0.5,"venusaur":0.05,"vespiquen":0.15,"vibrava":0.1,"victini":100.0,"victreebel":0.125,"vigoroth":0.1,"vikavolt":0.125,"vileplume":0.15,"virizion":0.02,"vivillon":0.125,"volbeat":0.3,"volcanion":0.02,"volcarona":0.1,"voltorb":0.5,"vullaby":0.3,"vulpix":0.3,"wailmer":0.5,"wailord":0.2,"walrein":0.125,"wartortle":0.1,"watchog":0.2,"weavile":0.15,"weedle":0.5,"weepinbell":0.25,"weezing":0.2,"whimsicott":0.15,"whirlipede":0.15,"whiscash":0.2,"whismur":0.5,"wigglytuff":0.2,"wimpod":0.5,"wingull":0.5,"wishiwashi":0.2,"wobbuffet":0.25,"woobat":0.5,"wooloo":0.5,"wooper":0.4,"wormadam":0.15,"wurmple":0.5,"wynaut":0.3,"xatu":0.15,"xerneas":0.02,"xurkitree":0.02,"yamask":0.3,"yamper":0.5,"yanma":0.3,"yanmega":0.175,"yungoos":0.5,"yveltal":0.02,"zacian":0.02,"zamazenta":0.02,"zangoose":0.3,"zapdos":0.03,"zarude":0.1,"zebstrika":0.1,"zekrom":0.02,"zeraora":0.02,"zigzagoon":0.5,"zoroark":0.1,"zorua":0.3,"zubat":0.5,"zweilous":0.1,"zygarde":0.02};
+
+function baseCatchRate(p) {
   if (p.isRoaming) return 0.003;
+  const name = baseSpecies(p.name).replace('♀', ' female').replace('♂', ' male')
+    .normalize('NFD').replace(/[^\x00-\x7f]/g, '');
+  // Some dataset names are raw ids with a form suffix (FARFETCHD_GALARIAN): drop parts until one hits.
+  const parts = name.split('_');
+  for (let n = parts.length; n > 0; n--) {
+    const rate = BASE_CATCH_RATES[parts.slice(0, n).join('').toLowerCase().replace(/[^a-z0-9]/g, '')];
+    if (rate) return rate;
+  }
+  return estimateBaseCatchRate(p);
+}
+
+// Fallback for the ~12% of species newer than the snapshot: the game's usual pattern by stage.
+function estimateBaseCatchRate(p) {
   if (p.isLegendary) return 0.02;
-  if (p.finals.length) return p.isEvolvedForm ? 0.14 : 0.4;       // can still evolve: middle / first stage
+  if (p.finals.length) return p.isEvolvedForm ? 0.1 : 0.4;          // can still evolve: middle / first stage
   if (p.isEvolvedForm) return (p.max_cp || 0) >= 3000 ? 0.05 : 0.1; // fully evolved
   const cp = p.max_cp || 0;                                          // never evolves
   return cp >= 3000 ? 0.1 : cp >= 2000 ? 0.2 : 0.3;
 }
 
-// Chance that one plain Poké Ball throw (no berry, no curve) catches it. The higher its level,
-// the harder it is; level is read off how close the CP is to the species' level-50 maximum.
-function pokeBallCatchChance(p, cpVal) {
+// The game's catch formula: chance = 1 - (1 - baseRate / (2 x CPM)) ^ (ball x berry x throw bonuses).
+// CPM rises with level; level is read off how close the CP is to the species' level-50 maximum.
+function catchChance(p, cpVal, multiplier = 1) {
   const share = (cpVal && p.max_cp) ? Math.min(1, cpVal / p.max_cp) : 0.5;
   const cpm = Math.max(0.1, 0.84 * Math.sqrt(share));
-  return Math.min(1, estimateBaseCatchRate(p) / (2 * cpm));
+  const perThrow = Math.min(1, baseCatchRate(p) / (2 * cpm));
+  return 1 - Math.pow(1 - perThrow, multiplier);
+}
+
+const BALLS = [
+  { text: 'POKÉ BALL (EASY)',    color: '#cbd5e1', multiplier: 1 },
+  { text: 'GREAT BALL (MEDIUM)', color: '#38bdf8', multiplier: 1.5 },
+  { text: 'ULTRA BALL (HARD)',   color: '#fbbf24', multiplier: 2 }
+];
+
+// Difficulty bucket from the plain Poké Ball chance at this CP.
+function pickBall(p, cpVal) {
+  const chance = catchChance(p, cpVal);
+  return chance >= 0.30 ? BALLS[0] : chance >= 0.15 ? BALLS[1] : BALLS[2];
+}
+
+// A Pinap gives no catch bonus, so on a hard catch it means more breakouts and more balls
+// burned. Only worth it when the recommended ball alone still lands often enough.
+const PINAP_MIN_CHANCE = 0.30;
+function pinapIsAffordable(p, cpVal) {
+  return catchChance(p, cpVal, pickBall(p, cpVal).multiplier) >= PINAP_MIN_CHANCE;
 }
 
 // The encounter screen just says "Zapdos" for both the raid bird and the roaming Galarian one.
@@ -1345,10 +1381,7 @@ function getBallAdvice(p, cpVal, matchInfo) {
   }
   // A possible perfect is not worth losing to a cheap ball.
   if (matchInfo) return { text: 'ULTRA BALL', color: '#fbbf24' };
-  const chance = pokeBallCatchChance(p, cpVal);
-  if (chance >= 0.30) return { text: 'POKÉ BALL (EASY)', color: '#cbd5e1' };
-  if (chance >= 0.15) return { text: 'GREAT BALL (MEDIUM)', color: '#38bdf8' };
-  return { text: 'ULTRA BALL (HARD)', color: '#fbbf24' };
+  return pickBall(p, cpVal);
 }
 
 function annotateFamilyGuidance() {
@@ -1720,6 +1753,14 @@ function renderHudSlots(p, matchInfo) {
     if (p.isLegendary) {
       bIcon.innerText = '🥇';
       bLabel.innerText = 'GOLDEN RAZZ';
+    } else if (matchInfo) {
+      // Might be perfect: landing it matters more than the candy.
+      bIcon.innerText = '🍓';
+      bLabel.innerText = 'RAZZ BERRY';
+    } else if ((p.berry === 'Pinap Berry' || p.berry === 'Silver Pinap Berry' || p.plan === 'grow')
+               && !pinapIsAffordable(p, cpFilterVal)) {
+      bIcon.innerText = '🍓';
+      bLabel.innerText = 'RAZZ BERRY (TOO HARD FOR PINAP)';
     } else if (p.berry === 'Pinap Berry' || p.plan === 'grow') {
       bIcon.innerText = '🍍';
       bLabel.innerText = 'PINAP';
