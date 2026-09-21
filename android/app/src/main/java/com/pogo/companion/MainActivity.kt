@@ -3,86 +3,57 @@ package com.pogo.companion
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.PixelFormat
-import android.hardware.display.DisplayManager
-import android.hardware.display.VirtualDisplay
-import android.media.Image
-import android.media.ImageReader
-import android.media.projection.MediaProjection
+import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
-import android.util.DisplayMetrics
-import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
+/**
+ * Full Pokédex dashboard (WebView). Minimizing hands the screen over to
+ * FloatingOverlayService; this activity then stays alive in the background only
+ * to evaluate the service's OCR results against the Pokédex data in the WebView.
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
-    private lateinit var btnLaunchOverlay: Button
-
-    private var mediaProjectionManager: MediaProjectionManager? = null
-    private var mediaProjection: MediaProjection? = null
-    private var virtualDisplay: VirtualDisplay? = null
-    private var imageReader: ImageReader? = null
-
-    private var screenWidth = 1080
-    private var screenHeight = 2340
-    private var screenDensity = 400
-
-    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-    private val handler = Handler(Looper.getMainLooper())
 
     companion object {
         private const val REQUEST_OVERLAY_PERMISSION = 101
         private const val REQUEST_MEDIA_PROJECTION = 102
+        private const val PREFS = "pogo_overlay"
+        private const val PREF_CAPTURE_EXPLAINED = "capture_explained"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val metrics = DisplayMetrics()
-        windowManager.defaultDisplay.getRealMetrics(metrics)
-        screenWidth = metrics.widthPixels
-        screenHeight = metrics.heightPixels
-        screenDensity = metrics.densityDpi
-
-        mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-
-        setupViews()
-        checkOverlayPermission()
-    }
-
-    private fun setupViews() {
-        btnLaunchOverlay = findViewById(R.id.btnLaunchOverlay)
-        webView = findViewById(R.id.pokedexWebView)
-
-        btnLaunchOverlay.setOnClickListener {
-            if (checkOverlayPermission()) {
-                startOverlayAndCollapse()
-            }
-        }
+        val versionName = packageManager.getPackageInfo(packageName, 0).versionName
+        findViewById<TextView>(R.id.appTitle).text = "${getString(R.string.app_name)} v$versionName"
+        findViewById<Button>(R.id.btnLaunchOverlay).setOnClickListener { minimizeToPill() }
 
         setupWebView()
+        OverlayBus.ocrEvaluator = { payloadJson ->
+            webView.evaluateJavascript("window.assessNativeOcr && window.assessNativeOcr($payloadJson);", null)
+        }
+
+        handleIntent(intent)
     }
 
     private fun setupWebView() {
+        webView = findViewById(R.id.pokedexWebView)
         val s = webView.settings
         s.javaScriptEnabled = true
         s.domStorageEnabled = true
@@ -91,6 +62,8 @@ class MainActivity : AppCompatActivity() {
         s.databaseEnabled = true
         s.cacheMode = WebSettings.LOAD_DEFAULT
 
+        // Scans are evaluated here while the activity is in the background.
+        webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false)
         webView.webViewClient = WebViewClient()
         webView.webChromeClient = WebChromeClient()
 
@@ -98,236 +71,142 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl("file:///android_asset/index.html")
     }
 
-    private fun checkOverlayPermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                Toast.makeText(this, "Please enable 'Display over other apps' to float the pill", Toast.LENGTH_LONG).show()
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName")
-                )
-                startActivityForResult(intent, REQUEST_OVERLAY_PERMISSION)
-                return false
-            }
-        }
-        return true
-    }
-
-    private fun startOverlayAndCollapse() {
-        // Start foreground floating pill service
-        val serviceIntent = Intent(this, FloatingOverlayService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent)
-        } else {
-            startService(serviceIntent)
-        }
-
-        // Request Screen Capture permission if not granted yet
-        if (mediaProjection == null) {
-            mediaProjectionManager?.let {
-                startActivityForResult(it.createScreenCaptureIntent(), REQUEST_MEDIA_PROJECTION)
-            }
-        } else {
-            // Move app to background so Pokémon GO is directly visible!
-            moveTaskToBack(true)
-            Toast.makeText(this, "📱 Floating Pill Active on screen edge!", Toast.LENGTH_SHORT).show()
-        }
-    }
-
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent?.action == FloatingOverlayService.ACTION_TRIGGER_SCAN) {
-            performScreenScan()
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.action == FloatingOverlayService.ACTION_REQUEST_PROJECTION) {
+            requestScreenCapture()
         }
     }
 
-    private fun performScreenScan() {
-        if (mediaProjection == null) {
-            mediaProjectionManager?.let {
-                startActivityForResult(it.createScreenCaptureIntent(), REQUEST_MEDIA_PROJECTION)
-            }
+    // The pill only exists while the app is minimized.
+    override fun onResume() {
+        super.onResume()
+        OverlayBus.pillVisibility?.invoke(false)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        OverlayBus.pillVisibility?.invoke(true)
+    }
+
+    // ---------------------------------------------------------------- minimize flow
+
+    /** Overlay permission → capture consent → start service → hide the app behind the pill. */
+    private fun minimizeToPill() {
+        if (!hasOverlayPermission()) return
+
+        if (FloatingOverlayService.isRunning && FloatingOverlayService.isCapturing) {
+            moveTaskToBack(true)
+        } else {
+            requestScreenCapture()
+        }
+    }
+
+    private fun hasOverlayPermission(): Boolean {
+        if (Settings.canDrawOverlays(this)) return true
+        Toast.makeText(this, getString(R.string.overlay_permission_desc), Toast.LENGTH_LONG).show()
+        startActivityForResult(
+            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")),
+            REQUEST_OVERLAY_PERMISSION
+        )
+        return false
+    }
+
+    /**
+     * Android's own "start capturing?" dialog can't be skipped or pre-approved, so it is kept to
+     * one tap per play session: the service keeps the grant alive until the pill is closed.
+     */
+    private fun requestScreenCapture() {
+        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+        if (!prefs.getBoolean(PREF_CAPTURE_EXPLAINED, false)) {
+            // First time only: say what the system dialog is for before it appears.
+            AlertDialog.Builder(this)
+                .setTitle(R.string.capture_explainer_title)
+                .setMessage(R.string.capture_explainer_message)
+                .setCancelable(false)
+                .setPositiveButton(R.string.capture_explainer_ok) { _, _ ->
+                    prefs.edit().putBoolean(PREF_CAPTURE_EXPLAINED, true).apply()
+                    requestScreenCapture()
+                }
+                .show()
             return
         }
 
-        setupImageReader()
-        // Wait 150ms for frame buffer
-        handler.postDelayed({
-            captureAndEvaluateFrame()
-        }, 150)
-    }
-
-    private fun setupImageReader() {
-        if (imageReader != null) return
-
-        imageReader = ImageReader.newInstance(screenWidth, screenHeight, PixelFormat.RGBA_8888, 2)
-        virtualDisplay = mediaProjection?.createVirtualDisplay(
-            "PoGoScreenCapture",
-            screenWidth, screenHeight, screenDensity,
-            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-            imageReader?.surface, null, null
-        )
-    }
-
-    private fun captureAndEvaluateFrame() {
-        val reader = imageReader ?: return
-        var image: Image? = null
-        try {
-            image = reader.acquireLatestImage()
-            if (image != null) {
-                val planes = image.planes
-                val buffer = planes[0].buffer
-                val pixelStride = planes[0].pixelStride
-                val rowStride = planes[0].rowStride
-                val rowPadding = rowStride - pixelStride * screenWidth
-
-                val bitmap = Bitmap.createBitmap(
-                    screenWidth + rowPadding / pixelStride,
-                    screenHeight,
-                    Bitmap.Config.ARGB_8888
-                )
-                bitmap.copyPixelsFromBuffer(buffer)
-
-                // Clean cropped bitmap to true screen size
-                val cleanBitmap = if (rowPadding == 0) bitmap else Bitmap.createBitmap(bitmap, 0, 0, screenWidth, screenHeight)
-
-                runOcrOnBitmap(cleanBitmap)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            image?.close()
-            // Keep app in background so Pokémon GO stays visible
-            moveTaskToBack(true)
-        }
-    }
-
-    private fun runOcrOnBitmap(bitmap: Bitmap) {
-        val inputImage = InputImage.fromBitmap(bitmap, 0)
-        recognizer.process(inputImage)
-            .addOnSuccessListener { visionText ->
-                val fullText = visionText.text
-                evaluateDetectedText(fullText, bitmap)
-            }
-            .addOnFailureListener {
-                updateOverlayHUD("STANDBY", "⚪", "IDLE", "⚪", "STANDBY", "⚪", "READY")
-            }
-    }
-
-    private fun evaluateDetectedText(ocrText: String, bitmap: Bitmap) {
-        // 1. Check for CP in text
-        val cpMatch = Regex("""(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})""", RegexOption.IGNORE_CASE).find(ocrText)
-        val cpVal = cpMatch?.groupValues?.get(1)?.toIntOrNull()
-
-        // 2. Check for Left-Side Card Luminance to dynamically distinguish Storage vs Catch
-        val isStorageCard = checkLeftCardLuminance(bitmap)
-
-        if (isStorageCard) {
-            // BRANCH 2: Storage Box
-            val isDel = (cpVal ?: 0) < 1500
-            val act = if (isDel) "DELETE" else "KEEP"
-            val rating = "0-2★ JUNK"
-            val candy = "+1 CANDY"
-            updateOverlayHUD("STORAGE", "🗑️", act, "⭐", rating, "🍬", candy)
-        } else if (cpVal != null && cpVal > 10) {
-            // BRANCH 1: Catch Window
-            val berry = if (cpVal > 800) "RAZZ" else "PINAP"
-            val icon = if (cpVal > 800) "🍓" else "🍍"
-            val ceiling = "L50 $cpVal"
-            val action = if (cpVal > 1000) "KEEP" else "XFER"
-            updateOverlayHUD("CATCH", icon, berry, "🎯", ceiling, "🗑️", action)
+        val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        val captureIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Skips the "single app / entire screen" chooser; the pill needs the whole screen.
+            manager.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
         } else {
-            // BRANCH 3: Standby
-            updateOverlayHUD("STANDBY", "⚪", "IDLE", "⚪", "STANDBY", "⚪", "READY")
+            manager.createScreenCaptureIntent()
         }
-    }
-
-    private fun checkLeftCardLuminance(bitmap: Bitmap): Boolean {
-        try {
-            val testPoints = arrayOf(
-                Pair(0.15f, 0.65f), Pair(0.25f, 0.65f),
-                Pair(0.15f, 0.72f), Pair(0.25f, 0.72f)
-            )
-            var whiteCount = 0
-            for ((rx, ry) in testPoints) {
-                val px = (bitmap.width * rx).toInt()
-                val py = (bitmap.height * ry).toInt()
-                val color = bitmap.getPixel(px, py)
-                val r = (color shr 16) and 0xFF
-                val g = (color shr 8) and 0xFF
-                val b = color and 0xFF
-                if (r > 205 && g > 205 && b > 205) whiteCount++
-            }
-            return whiteCount >= 2
-        } catch (_: Exception) {
-            return false
-        }
-    }
-
-    private fun updateOverlayHUD(
-        mode: String,
-        berryIcon: String, berryLabel: String,
-        catchIcon: String, catchLabel: String,
-        actionIcon: String, actionLabel: String
-    ) {
-        val intent = Intent(this, FloatingOverlayService::class.java).apply {
-            action = FloatingOverlayService.ACTION_UPDATE_HUD
-            putExtra("mode", mode)
-            putExtra("berryIcon", berryIcon)
-            putExtra("berryLabel", berryLabel)
-            putExtra("catchIcon", catchIcon)
-            putExtra("catchLabel", catchLabel)
-            putExtra("actionIcon", actionIcon)
-            putExtra("actionLabel", actionLabel)
-        }
-        startService(intent)
+        startActivityForResult(captureIntent, REQUEST_MEDIA_PROJECTION)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_OVERLAY_PERMISSION) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
-                startOverlayAndCollapse()
-            }
-        } else if (requestCode == REQUEST_MEDIA_PROJECTION) {
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
-                setupImageReader()
+        when (requestCode) {
+            REQUEST_OVERLAY_PERMISSION -> if (Settings.canDrawOverlays(this)) minimizeToPill()
+            REQUEST_MEDIA_PROJECTION -> {
+                if (resultCode != Activity.RESULT_OK || data == null) {
+                    Toast.makeText(this, "Screen capture is needed for 1-tap scanning", Toast.LENGTH_LONG).show()
+                    return
+                }
+                // The consent token is single-use and must be consumed by the foreground
+                // service (Android 14+), so it is handed over instead of used here.
+                val serviceIntent = Intent(this, FloatingOverlayService::class.java).apply {
+                    action = FloatingOverlayService.ACTION_START
+                    putExtra(FloatingOverlayService.EXTRA_RESULT_CODE, resultCode)
+                    putExtra(FloatingOverlayService.EXTRA_RESULT_DATA, data)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
                 moveTaskToBack(true)
-                Toast.makeText(this, "✅ 1-Tap Screen Capture Ready!", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
+    // ---------------------------------------------------------------- JS bridge
 
     inner class WebAppBridge {
         @JavascriptInterface
-        fun collapseToOverlay() {
-            runOnUiThread {
-                moveTaskToBack(true)
-            }
+        fun minimizeToPill() {
+            runOnUiThread { this@MainActivity.minimizeToPill() }
         }
 
+        /** Called by the page after every evaluation so the pill mirrors the in-app HUD slots. */
         @JavascriptInterface
-        fun startOverlayService() {
-            runOnUiThread {
-                startOverlayAndCollapse()
-            }
+        fun updatePill(
+            mode: String, target: String,
+            berryIcon: String, berryLabel: String,
+            catchIcon: String, catchLabel: String,
+            actionIcon: String, actionLabel: String
+        ) {
+            val state = PillState(mode, target, berryIcon, berryLabel, catchIcon, catchLabel, actionIcon, actionLabel)
+            runOnUiThread { OverlayBus.pillUpdater?.invoke(state) }
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (FloatingOverlayService.isRunning) {
-            // Collapse to Pokémon GO instead of exiting app!
+            // Collapse back to the pill instead of exiting
             moveTaskToBack(true)
         } else {
+            @Suppress("DEPRECATION")
             super.onBackPressed()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        virtualDisplay?.release()
-        imageReader?.close()
-        mediaProjection?.stop()
-        recognizer.close()
+        OverlayBus.ocrEvaluator = null
+        webView.destroy()
     }
 }

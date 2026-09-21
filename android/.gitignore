@@ -8,3 +8,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Copied from the repo-root index.html at build time (syncWebAssets)
+/app/src/main/assets/index.html

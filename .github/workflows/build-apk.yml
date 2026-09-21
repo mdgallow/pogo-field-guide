@@ -1,0 +1,55 @@
+name: Build test APK (no deploy)
+
+# Branch builds for on-device testing. Unlike deploy-pages.yml this never touches the live
+# GitHub Pages site; it only produces a downloadable APK artifact.
+on:
+  push:
+    branches-ignore: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.4'
+
+      - name: Generate throwaway test keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore android/release-keystore.jks \
+            -alias pogo-release \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass pogo2026pass \
+            -keypass pogo2026pass \
+            -dname "CN=PoGo Companion, OU=Mobile, O=PoGo Field Guide, L=San Jose, ST=CA, C=US"
+
+      - name: Build Android Release APK
+        run: |
+          cd android
+          gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Verify the WebView page was bundled
+        run: unzip -l android/app/build/outputs/apk/release/app-release.apk | grep "assets/index.html"
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pogo-companion-apk
+          path: android/app/build/outputs/apk/release/app-release.apk

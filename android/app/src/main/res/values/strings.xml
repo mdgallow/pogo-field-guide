@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">PoGo Companion</string>
-    <string name="overlay_permission_title">Display Over Other Apps</string>
     <string name="overlay_permission_desc">To float the mini companion pill over Pokémon GO, please grant "Display over other apps" permission.</string>
-    <string name="launch_overlay">🚀 LAUNCH FLOATING PILL</string>
-    <string name="stop_overlay">🛑 STOP OVERLAY</string>
-    <string name="channel_name">PoGo Overlay Service</string>
+    <string name="launch_overlay">▶ MINIMIZE TO PILL</string>
+    <string name="capture_explainer_title">One quick thing</string>
+    <string name="capture_explainer_message">Next, Android will ask if PoGo Companion can see your screen. Tap “Start now”.\n\nThat lets the ⚡ SCAN button read the Pokémon name and CP. The screen is only read when you tap SCAN, it happens on this phone, and nothing is ever saved or sent anywhere.\n\nAndroid asks once each time you start the pill. Closing the pill stops it.</string>
+    <string name="capture_explainer_ok">GOT IT</string>
 </resources>

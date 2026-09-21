@@ -20,6 +20,13 @@ Visit: **[https://mdgallow.github.io/pogo-field-guide/](https://mdgallow.github.
 3. Tap **Install** to approve.
 4. The app is installed into your app drawer and home screen. Works 100% offline!
 
+## 🤖 Native Android APK (floating pill overlay)
+The APK wraps the same `index.html` in a WebView and adds what a browser can't do: a pill that floats over Pokémon GO.
+
+- **▶ MINIMIZE TO PILL** (or any Mini Mode / Scan button in the app) hides the app behind the pill. *Display over other apps* is granted once, ever. Android's own screen-capture dialog can't be pre-approved by any app or T&C, so it's held to one "Start now" tap per play session (the grant lives until the pill is closed; on Android 14+ the single-app chooser is skipped), with a plain-language explainer shown the first time only. The pill docks to the right edge, drags vertically, and only exists while the app is minimized — **⛶ EXPAND** brings the full app back and the pill disappears.
+- **⚡ SCAN** grabs the current frame from the screen mirror held by `FloatingOverlayService` (the app is never brought forward), runs ML Kit OCR on-device, drops any text under the pill itself, and sends the text lines to the WebView's `assessNativeOcr()`. That shares `classifyScan()` / `applyScanResult()` with the browser's Tesseract path, and the verdict returns to the pill through `AndroidBridge.updatePill()`.
+- `android/app/src/main/assets/index.html` is not committed; Gradle's `syncWebAssets` task copies the repo-root file on every build.
+
 ## ⚡ Features
 - **1,401 Pokémon Complete Dataset**: All Gen 1 to 9 Pokémon (#1 to #1025) plus all Alolan, Galarian, Hisuian, and Paldean regional forms.
 - **🎯 Catch Screen CP Inspector**: Type any wild CP on the catch screen to instantly check if it can be a Level 1–35 100% IV (Hundo).

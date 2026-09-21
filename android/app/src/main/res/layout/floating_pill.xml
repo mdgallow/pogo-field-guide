@@ -26,6 +26,20 @@
         android:paddingBottom="2dp"
         android:layout_marginBottom="4dp" />
 
+    <!-- Detected Pokémon + CP (hidden until a scan identifies something) -->
+    <TextView
+        android:id="@+id/pillTargetLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="8.5sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:visibility="gone"
+        android:layout_marginBottom="4dp" />
+
     <!-- ⚡ 1-Tap SCAN Hero Button -->
     <LinearLayout
         android:id="@+id/pillScanBtn"

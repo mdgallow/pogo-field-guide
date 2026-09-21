@@ -436,6 +436,11 @@
   .vertical-hud-pill:hover {
     transform: translateY(-50%) scale(1.05);
   }
+  /* The pill only exists while minimized (mini HUD, PiP window, native Android overlay).
+     In the full app this element stays hidden and only holds the slot state those views mirror. */
+  #verticalHudPill {
+    display: none;
+  }
   .hud-right {
     right: 12px;
   }
@@ -704,10 +709,10 @@
 
 <!-- 🚀 Prominent Download Standalone Android APK & Web Launch Bars -->
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
-  <a href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
+  <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.0.0 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.0.0</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.0 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.0</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -720,7 +725,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.0.0</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.0</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -1257,6 +1262,8 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
+// True inside the Android APK's WebView: minimizing and scanning are handled by the native overlay pill.
+const isNativeApp = !!(window.AndroidBridge && window.AndroidBridge.minimizeToPill);
 let currentDock = localStorage.getItem('pogo_hud_dock') || 'right';
 let activeHudPokemon = null;
 let activeHudMatch = null;
@@ -1433,6 +1440,15 @@ function setEvaluationMode(mode) {
 function updateVerticalHud(p, matchInfo) {
   activeHudPokemon = p;
   activeHudMatch = matchInfo;
+  renderHudSlots(p, matchInfo);
+  syncMiniHudSlots();
+  const popover = document.getElementById('hudPopover');
+  if (popover && popover.style.display !== 'none') {
+    updateHudPopover();
+  }
+}
+
+function renderHudSlots(p, matchInfo) {
 
   const pill = document.getElementById('verticalHudPill');
   const bIcon = document.getElementById('hudBerryIcon');
@@ -1455,10 +1471,6 @@ function updateVerticalHud(p, matchInfo) {
     if (cLabel) { cLabel.innerText = 'STANDBY'; cLabel.style.color = '#94a3b8'; }
     if (aIcon) aIcon.innerText = '⚪';
     if (aLabel) { aLabel.innerText = 'READY'; aLabel.style.color = '#94a3b8'; }
-    syncMiniHudSlots();
-    if (document.getElementById('hudPopover') && document.getElementById('hudPopover').style.display !== 'none') {
-      updateHudPopover();
-    }
     return;
   }
 
@@ -1471,9 +1483,6 @@ function updateVerticalHud(p, matchInfo) {
       if (cLabel) { cLabel.innerText = 'ASSESS'; cLabel.style.color = ''; }
       if (aIcon) aIcon.innerText = '🍬';
       if (aLabel) { aLabel.innerText = '+1 CANDY'; aLabel.style.color = ''; }
-      if (document.getElementById('hudPopover').style.display !== 'none') {
-        updateHudPopover();
-      }
       return;
     }
 
@@ -1549,10 +1558,6 @@ function updateVerticalHud(p, matchInfo) {
       }
     }
 
-    syncMiniHudSlots();
-    if (document.getElementById('hudPopover') && document.getElementById('hudPopover').style.display !== 'none') {
-      updateHudPopover();
-    }
     return;
   }
 
@@ -1627,12 +1632,6 @@ function updateVerticalHud(p, matchInfo) {
       aLabel.innerText = 'XFER';
     }
   }
-
-  const popover = document.getElementById('hudPopover');
-  if (popover && popover.style.display !== 'none') {
-    updateHudPopover();
-  }
-  syncMiniHudSlots();
 }
 
 function updateHudPopover() {
@@ -2264,6 +2263,10 @@ function showSamsungPopUpFallback(err) {
 }
 
 function launchMiniFloatingOverlay() {
+  if (isNativeApp) {
+    AndroidBridge.minimizeToPill();
+    return;
+  }
   toggleMiniMode(true);
   try {
     if (window.resizeTo) {
@@ -2273,7 +2276,7 @@ function launchMiniFloatingOverlay() {
   showScanToast('📱 Mini HUD Active! Sized directly to pill', '#38bdf8');
   if (typeof documentPictureInPicture !== 'undefined' && documentPictureInPicture.requestWindow) {
     try {
-      launchPiPHud();
+      launchPipHud();
     } catch (e) {
       console.warn('PiP note:', e);
     }
@@ -2282,6 +2285,10 @@ function launchMiniFloatingOverlay() {
 
 function toggleMiniMode(forceState) {
   const isMini = (forceState !== undefined) ? forceState : !document.body.classList.contains('mini-hud-mode');
+  if (isMini && isNativeApp) {
+    AndroidBridge.minimizeToPill();
+    return;
+  }
   if (isMini) {
     document.body.classList.add('mini-hud-mode');
     localStorage.setItem('pogo_mini_hud_mode', 'true');
@@ -2363,6 +2370,25 @@ function syncMiniHudSlots() {
       badge.style.color = '#38bdf8';
     }
   }
+
+  pushNativePill();
+}
+
+// Mirrors the HUD slots onto the native Android overlay pill (no-op in the browser / PWA).
+function pushNativePill() {
+  if (!isNativeApp) return;
+  const txt = id => document.getElementById(id)?.innerText || '';
+  let target = '';
+  if (evaluationMode !== 'blank') {
+    const cp = document.getElementById('catchCpInput')?.value;
+    target = [activeHudPokemon ? activeHudPokemon.name : '', cp ? `${cp} CP` : ''].filter(Boolean).join('\n');
+  }
+  AndroidBridge.updatePill(
+    evaluationMode === 'blank' ? 'STANDBY' : evaluationMode, target,
+    txt('hudBerryIcon'), txt('hudBerryLabel'),
+    txt('hudCatchIcon'), txt('hudCatchLabel'),
+    txt('hudActionIcon'), txt('hudActionLabel')
+  );
 }
 
 // Pre-initialize PiP stream and video element on page load so readyState is 4 (HAVE_ENOUGH_DATA)
@@ -2443,6 +2469,7 @@ async function launchPipHud() {
         pipWin.document.head.appendChild(s.cloneNode(true));
       });
       const pill = document.getElementById('verticalHudPill').cloneNode(true);
+      pill.id = 'pipHudPill';
       pill.style.position = 'static';
       pill.style.transform = 'none';
       pill.style.margin = '16px auto';
@@ -2725,12 +2752,6 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-function handleScreenshotUpload(e) {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-  processImageFile(file);
-}
-
 window.addEventListener('paste', e => {
   const items = (e.clipboardData || e.originalEvent.clipboardData).items;
   for (const item of items) {
@@ -2948,6 +2969,118 @@ function showScanToast(msg, borderColor = '#38bdf8') {
   }, 4000);
 }
 
+// Screen regions (fractions of the frame) that hold the text each screen type is identified by.
+// All of them stop short of the right edge, where a docked pill / pop-up window may sit.
+const SCAN_REGIONS = {
+  storageCp:    { x: 0.22, y: 0.035, w: 0.56, h: 0.095, whiteText: true },
+  storageName:  { x: 0.16, y: 0.36,  w: 0.68, h: 0.13,  whiteText: false },
+  catchCapsule: { x: 0.06, y: 0.22,  w: 0.78, h: 0.20,  whiteText: true },
+  topHalf:      { x: 0.05, y: 0.05,  w: 0.90, h: 0.45,  whiteText: true }
+};
+
+function parseCp(text) {
+  const t = text || '';
+  const m = t.match(/(?:CP|CO|CR|GR|OP)\s*(\d{2,5})/i) || t.match(/(\d{2,5})/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+// Decides which screen a frame shows (storage / catch / blank) and what is on it.
+// readRegion(region) returns that region's OCR text: Tesseract crops in the browser,
+// ML Kit lines from the native overlay in the APK.
+async function classifyScan(isLikelyStorageScreen, readRegion) {
+  let cp = null;
+
+  if (isLikelyStorageScreen) {
+    cp = parseCp(await readRegion(SCAN_REGIONS.storageCp));
+    const pokemon = matchPokemonAdvanced(await readRegion(SCAN_REGIONS.storageName), cp);
+    if (pokemon || cp) return { mode: 'storage', pokemon, cp };
+  }
+
+  const capsuleText = await readRegion(SCAN_REGIONS.catchCapsule);
+  cp = parseCp(capsuleText) || cp;
+  const capsulePokemon = matchPokemonAdvanced(capsuleText, cp);
+  if (capsulePokemon || (cp && cp > 10)) return { mode: 'catch', pokemon: capsulePokemon, cp };
+
+  const topText = await readRegion(SCAN_REGIONS.topHalf);
+  cp = cp || parseCp(topText);
+  const topPokemon = matchPokemonAdvanced(topText, cp);
+  if (topPokemon) return { mode: isLikelyStorageScreen ? 'storage' : 'catch', pokemon: topPokemon, cp };
+
+  // Map, gym, raid, shop, home...
+  return { mode: 'blank', pokemon: null, cp: null };
+}
+
+// Applies one scan outcome to the CP inspector, HUD slots, status lines and toast.
+function applyScanResult(mode, pokemon, cp, isSilent = false) {
+  let summary;
+  let color;
+
+  if (mode === 'blank') {
+    setEvaluationMode('blank');
+    updateVerticalHud(null, null);
+    summary = '⚪ Screen not recognized — Standby mode';
+    color = '#64748b';
+  } else {
+    setEvaluationMode(mode);
+    const cpInp = document.getElementById('catchCpInput');
+    if (cp && cpInp) {
+      cpInp.value = cp;
+      checkCaughtCp();
+    }
+    if (pokemon) {
+      updateVerticalHud(pokemon, cp ? evaluateCpMatch(pokemon, cp) : null);
+    }
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+    const cpText = cp ? `${cp} CP` : 'CP';
+    if (mode === 'storage') {
+      const pName = pokemon ? pokemon.name : 'Box Pokémon';
+      const isDel = pokemon ? pokemon.act.includes('Transfer') : true;
+      summary = isDel
+        ? `📦 Storage: ${pName} (${cpText}) ➔ 🗑️ DELETE (Transfer for +1 Candy)`
+        : `📦 Storage: ${pName} (${cpText}) ➔ ⭐ KEEP / TRADE!`;
+      color = '#fbbf24';
+    } else {
+      const pName = pokemon ? pokemon.name : 'Wild Spawn';
+      const berryRec = (pokemon && pokemon.berry && pokemon.berry !== 'None') ? pokemon.berry : 'Pinap Berry';
+      summary = `⚡ Catch: ${pName} (${cpText}) ➔ Berry: ${berryRec}`;
+      color = '#38bdf8';
+    }
+  }
+
+  const statusHtml = mode === 'blank' ? summary : `✅ <b>${summary}</b>`;
+  ['ocrStatusMsg', 'triggerStatusMsg'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = statusHtml;
+  });
+  showScanToast(summary, color);
+  if (!isSilent) closeScannerModal();
+  syncMiniHudSlots();
+  return { mode, pokemon, cp };
+}
+
+// Entry point for the native Android overlay: it screenshots + OCRs the game itself and hands
+// over the text lines ({t, x, y, w, h} as frame fractions); the verdict goes back via pushNativePill().
+window.assessNativeOcr = async function (payload) {
+  try {
+    const lines = (payload && payload.lines) || [];
+    const readRegion = r => lines
+      .filter(l => {
+        const cx = l.x + l.w / 2;
+        const cy = l.y + l.h / 2;
+        return cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h;
+      })
+      .sort((a, b) => a.y - b.y || a.x - b.x)
+      .map(l => l.t)
+      .join('\n');
+    const res = await classifyScan(!!payload.storage, readRegion);
+    applyScanResult(res.mode, res.pokemon, res.cp, true);
+  } catch (err) {
+    console.error('Native scan assessment error:', err);
+    applyScanResult('blank', null, null, true);
+  }
+};
+
 async function assessCanvasImage(canvas, isSilent = false) {
   isCurrentlyScanning = true;
   const scanBtn = document.getElementById('hudScanSlot') || document.getElementById('hudScanBtn');
@@ -2989,121 +3122,12 @@ async function assessCanvasImage(canvas, isSilent = false) {
       return;
     }
     
-    let detectedCp = null;
-    let detectedSpeciesName = null;
-    let matchedPokemon = null;
-
-    // --- Dynamic Branch 2: Storage Screen Candidate ---
-    if (isLikelyStorageScreen) {
-      // Crop CP Arc: y: 3.5%-13%, x: 22%-78%
-      const cpCrop = createBinarizedCanvas(canvas, W * 0.22, H * 0.035, W * 0.56, H * 0.095, true);
-      const cpRes = await worker.recognize(cpCrop);
-      const cpMatch = (cpRes.data.text || '').match(/(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})/i);
-      if (cpMatch) detectedCp = parseInt(cpMatch[1], 10);
-      
-      // Crop Pokémon Name: y: 36%-49%, x: 16%-84%
-      const nameCrop = createBinarizedCanvas(canvas, W * 0.16, H * 0.36, W * 0.68, H * 0.13, false);
-      const nameRes = await worker.recognize(nameCrop);
-      const rawNameText = nameRes.data.text || '';
-      matchedPokemon = matchPokemonAdvanced(rawNameText, detectedCp);
-      if (matchedPokemon) detectedSpeciesName = matchedPokemon.name;
-
-      if (matchedPokemon || detectedCp) {
-        // Confirmed BRANCH 2: STORAGE
-        setEvaluationMode('storage');
-        const cpInp = document.getElementById('catchCpInput');
-        if (detectedCp && cpInp) {
-          cpInp.value = detectedCp;
-          checkCaughtCp();
-        }
-        if (matchedPokemon) {
-          activeHudPokemon = matchedPokemon;
-          const match = detectedCp ? evaluateCpMatch(matchedPokemon, detectedCp) : null;
-          updateVerticalHud(matchedPokemon, match);
-        }
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        const pName = matchedPokemon ? matchedPokemon.name : (detectedSpeciesName || 'Box Pokémon');
-        const cpText = detectedCp ? `${detectedCp} CP` : 'CP';
-        const isDel = matchedPokemon ? matchedPokemon.act.includes('Transfer') : true;
-        const sumText = isDel
-          ? `📦 Storage: ${pName} (${cpText}) ➔ 🗑️ DELETE (Transfer for +1 Candy)`
-          : `📦 Storage: ${pName} (${cpText}) ➔ ⭐ KEEP / TRADE!`;
-        if (msg) msg.innerHTML = `✅ <b>${sumText}</b>`;
-        if (triggerStatusMsg) triggerStatusMsg.innerHTML = `✅ <b>${sumText}</b>`;
-        showScanToast(sumText, '#fbbf24');
-        if (!isSilent) closeScannerModal();
-        return { mode: 'storage', pokemon: matchedPokemon, cp: detectedCp };
-      }
-    }
-
-    // --- Dynamic Branch 1: Catch Screen (Encounter Capsule) ---
-    // Encounter Capsule: y: 22%-42%, x: 6%-84% (leaves right-edge dead space clear for docked HUD overlay)
-    const capsuleCrop = createBinarizedCanvas(canvas, W * 0.06, H * 0.22, W * 0.78, H * 0.20, true);
-    const capRes = await worker.recognize(capsuleCrop);
-    const rawText = capRes.data.text || '';
-    
-    const cpMatch = rawText.match(/(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})/i);
-    if (cpMatch) detectedCp = parseInt(cpMatch[1], 10);
-    
-    matchedPokemon = matchPokemonAdvanced(rawText, detectedCp);
-    if (matchedPokemon) detectedSpeciesName = matchedPokemon.name;
-
-    if (matchedPokemon || (detectedCp && detectedCp > 10)) {
-      // Confirmed BRANCH 1: CATCH WINDOW
-      setEvaluationMode('catch');
-      const cpInp = document.getElementById('catchCpInput');
-      if (detectedCp && cpInp) {
-        cpInp.value = detectedCp;
-        checkCaughtCp();
-      }
-      if (matchedPokemon) {
-        activeHudPokemon = matchedPokemon;
-        const match = detectedCp ? evaluateCpMatch(matchedPokemon, detectedCp) : null;
-        updateVerticalHud(matchedPokemon, match);
-      }
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-      const pName = matchedPokemon ? matchedPokemon.name : (detectedSpeciesName || 'Wild Spawn');
-      const cpText = detectedCp ? `${detectedCp} CP` : 'CP';
-      const berryRec = (matchedPokemon && matchedPokemon.berry && matchedPokemon.berry !== 'None') ? matchedPokemon.berry : 'Pinap Berry';
-      const sumText = `⚡ Catch: ${pName} (${cpText}) ➔ Berry: ${berryRec}`;
-      if (msg) msg.innerHTML = `✅ <b>${sumText}</b>`;
-      if (triggerStatusMsg) triggerStatusMsg.innerHTML = `✅ <b>${sumText}</b>`;
-      showScanToast(sumText, '#38bdf8');
-      if (!isSilent) closeScannerModal();
-      return { mode: 'catch', pokemon: matchedPokemon, cp: detectedCp };
-    }
-
-    // --- Dynamic Fallback: Top-Half Broad Scan ---
-    const topCrop = createBinarizedCanvas(canvas, W * 0.05, H * 0.05, W * 0.90, H * 0.45, true);
-    const topRes = await worker.recognize(topCrop);
-    const topText = topRes.data.text || '';
-    const topCpMatch = topText.match(/(?:CP|CO|CR|GR|OP)?\s*(\d{2,5})/i);
-    if (!detectedCp && topCpMatch) detectedCp = parseInt(topCpMatch[1], 10);
-    const topPokemon = matchPokemonAdvanced(topText, detectedCp);
-
-    if (topPokemon) {
-      const mode = isLikelyStorageScreen ? 'storage' : 'catch';
-      setEvaluationMode(mode);
-      activeHudPokemon = topPokemon;
-      const match = detectedCp ? evaluateCpMatch(topPokemon, detectedCp) : null;
-      updateVerticalHud(topPokemon, match);
-      const sumText = `⚡ Scanned: ${topPokemon.name} (${detectedCp ? detectedCp + ' CP' : 'CP'})`;
-      showScanToast(sumText, '#38bdf8');
-      if (!isSilent) closeScannerModal();
-      return { mode, pokemon: topPokemon, cp: detectedCp };
-    }
-
-    // --- Dynamic Branch 3: Blank / Standby (Map, Gym, Raid, Shop, Home) ---
-    setEvaluationMode('blank');
-    activeHudPokemon = null;
-    activeHudMatch = null;
-    updateVerticalHud(null, null);
-    const blankMsg = '⚪ Screen not recognized — Standby mode';
-    if (msg) msg.innerHTML = `⚪ ${blankMsg}`;
-    if (triggerStatusMsg) triggerStatusMsg.innerHTML = `⚪ ${blankMsg}`;
-    showScanToast(blankMsg, '#64748b');
-    if (!isSilent) closeScannerModal();
-    return { mode: 'blank', pokemon: null, cp: null };
+    const readRegion = async r => {
+      const crop = createBinarizedCanvas(canvas, W * r.x, H * r.y, W * r.w, H * r.h, r.whiteText);
+      return (await worker.recognize(crop)).data.text || '';
+    };
+    const res = await classifyScan(isLikelyStorageScreen, readRegion);
+    return applyScanResult(res.mode, res.pokemon, res.cp, isSilent);
 
   } catch (err) {
     console.error('Scan assessment error:', err);
@@ -3117,6 +3141,11 @@ async function assessCanvasImage(canvas, isSilent = false) {
 }
 
 async function performOneTapAssessment() {
+  if (isNativeApp) {
+    // Scanning happens from the overlay pill, on top of Pokémon GO — not from inside the app.
+    AndroidBridge.minimizeToPill();
+    return;
+  }
   if (navigator.vibrate) navigator.vibrate([40]);
   setupMediaSession();
   setScanButtonScanning(true);
@@ -3269,6 +3298,8 @@ function handleScreenshotUpload(e) {
 
 function processImageFile(file) {
   setScanButtonScanning(true);
+  const msg = document.getElementById('ocrStatusMsg');
+  if (msg) msg.innerText = 'Analyzing screenshot pixels...';
   const reader = new FileReader();
   reader.onload = (event) => {
     const img = new Image();
@@ -3291,25 +3322,6 @@ function processImageFile(file) {
   reader.onerror = () => {
     setScanButtonScanning(false);
     showScanToast('Failed to read file', '#ef4444');
-  };
-  reader.readAsDataURL(file);
-}
-
-function processImageFile(file) {
-  const msg = document.getElementById('ocrStatusMsg');
-  if (msg) msg.innerText = 'Analyzing screenshot pixels...';
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const img = new Image();
-    img.onload = () => {
-      const testCanvas = document.createElement('canvas');
-      testCanvas.width = img.width;
-      testCanvas.height = img.height;
-      const tctx = testCanvas.getContext('2d');
-      tctx.drawImage(img, 0, 0);
-      assessCanvasImage(testCanvas);
-    };
-    img.src = event.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -3481,7 +3493,11 @@ initTypePills();
 applyFilters();
 syncMiniHudSlots();
 initPipStream();
-if (localStorage.getItem('pogo_mini_hud_mode') === 'true') {
+if (isNativeApp) {
+  localStorage.removeItem('pogo_mini_hud_mode');
+  const apkLink = document.getElementById('apkDownloadLink');
+  if (apkLink) apkLink.style.display = 'none';
+} else if (localStorage.getItem('pogo_mini_hud_mode') === 'true') {
   toggleMiniMode(true);
 }
 

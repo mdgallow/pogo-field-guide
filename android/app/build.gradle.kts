@@ -11,8 +11,8 @@ android {
         applicationId = "com.pogo.companion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "2.0.0"
+        versionCode = 3
+        versionName = "2.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,6 +56,14 @@ android {
         viewBinding = true
     }
 }
+
+// The WebView UI is the repo-root index.html (also served as the PWA); bundle the current copy
+// on every build instead of committing a second one under assets/.
+val syncWebAssets by tasks.registering(Copy::class) {
+    from(rootProject.file("../index.html"))
+    into(layout.projectDirectory.dir("src/main/assets"))
+}
+tasks.named("preBuild") { dependsOn(syncWebAssets) }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
