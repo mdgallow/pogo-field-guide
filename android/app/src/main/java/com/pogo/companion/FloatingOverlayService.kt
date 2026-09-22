@@ -78,13 +78,22 @@ class FloatingOverlayService : Service() {
     // AUTO_SAMPLE_MS, a look is a ~200-pixel fingerprint read straight from the capture buffer
     // (no bitmap copy), and OCR runs once per new, settled Pokémon. Stops itself when idle.
     @Volatile private var autoMode = false
-    private var autoStartedAt = 0L
-    private var autoLastChangeAt = 0L
     private var autoLastSampleAt = 0L
     private var autoLastSig: IntArray? = null
-    private var autoStableCount = 0
     private var autoLoggedSig: IntArray? = null
-    @Volatile private var autoPendingOcr = false
+    /** Set by the settle timer: the next frame that arrives is the one to read. */
+    @Volatile private var autoWantFrame = false
+
+    // The mirror only sends frames while the screen changes, so "settled" has to be a timer:
+    // when the fingerprint has not changed for AUTO_SETTLE_MS, nudge the pill's opacity, which
+    // forces one fresh frame, and read that.
+    private val autoSettle = Runnable {
+        if (!autoMode) return@Runnable
+        autoWantFrame = true
+        pillView?.let { it.alpha = if (it.alpha >= 1f) 0.99f else 1f }
+    }
+    private val autoIdleStop = Runnable { setAutoMode(false) }
+    private val autoMaxStop = Runnable { setAutoMode(false) }
     private val scanTimeout = Runnable {
         if (scanRequested.compareAndSet(true, false)) {
             Log.w(TAG, "No frame arrived for scan")
@@ -124,7 +133,8 @@ class FloatingOverlayService : Service() {
         private const val SCAN_TIMEOUT_MS = 1500L
         private const val PILL_HIDE_MS = 150L
         private const val EVAL_TIMEOUT_MS = 4000L
-        private const val AUTO_SAMPLE_MS = 700L
+        private const val AUTO_SAMPLE_MS = 250L
+        private const val AUTO_SETTLE_MS = 350L
         private const val AUTO_IDLE_STOP_MS = 30_000L
         private const val AUTO_MAX_MS = 10 * 60_000L
         private const val AUTO_SIG_DIFF = 12 // mean luminance change (0-255) that counts as a new screen
@@ -367,14 +377,18 @@ class FloatingOverlayService : Service() {
     private fun setAutoMode(on: Boolean) {
         if (on && mediaProjection == null) { requestScan(); return }
         autoMode = on
-        val now = System.currentTimeMillis()
-        autoStartedAt = now
-        autoLastChangeAt = now
         autoLastSig = null
         autoLoggedSig = null
-        autoStableCount = 0
-        autoPendingOcr = false
+        autoWantFrame = false
+        mainHandler.removeCallbacks(autoSettle)
+        mainHandler.removeCallbacks(autoIdleStop)
+        mainHandler.removeCallbacks(autoMaxStop)
+        if (on) {
+            mainHandler.postDelayed(autoIdleStop, AUTO_IDLE_STOP_MS)
+            mainHandler.postDelayed(autoMaxStop, AUTO_MAX_MS)
+        }
         mainHandler.post {
+            pillView?.let { if (it.alpha < 1f && !scanRequested.get()) it.alpha = 1f }
             pillView?.findViewById<TextView>(R.id.pillAutoBtn)?.apply {
                 text = if (on) "AUTO ON" else "AUTO"
                 setTextColor(if (on) 0xFF34D399.toInt() else 0xFF94A3B8.toInt())
@@ -389,12 +403,8 @@ class FloatingOverlayService : Service() {
      */
     private fun autoSample(image: Image) {
         val now = System.currentTimeMillis()
-        if (now - autoLastSampleAt < AUTO_SAMPLE_MS) return
+        if (!autoWantFrame && now - autoLastSampleAt < AUTO_SAMPLE_MS) return
         autoLastSampleAt = now
-        if (now - autoStartedAt > AUTO_MAX_MS || now - autoLastChangeAt > AUTO_IDLE_STOP_MS) {
-            setAutoMode(false)
-            return
-        }
 
         val plane = image.planes[0]
         val buf = plane.buffer
@@ -419,25 +429,27 @@ class FloatingOverlayService : Service() {
 
         val prev = autoLastSig
         autoLastSig = sig
-        if (prev == null || meanDiff(prev, sig) > AUTO_SIG_DIFF) {
-            // Screen is changing (mid-swipe): wait for it to settle.
-            autoStableCount = 0
-            autoLastChangeAt = now
-            autoPendingOcr = true
+        val changed = prev == null || meanDiff(prev, sig) > AUTO_SIG_DIFF
+        if (changed) {
+            // Screen is changing (mid-swipe): restart the settle and idle timers.
+            autoWantFrame = false
+            mainHandler.removeCallbacks(autoSettle)
+            mainHandler.postDelayed(autoSettle, AUTO_SETTLE_MS)
+            mainHandler.removeCallbacks(autoIdleStop)
+            mainHandler.postDelayed(autoIdleStop, AUTO_IDLE_STOP_MS)
             return
         }
-        autoStableCount++
+        if (!autoWantFrame) return
+        autoWantFrame = false
         val logged = autoLoggedSig
-        if (autoPendingOcr && autoStableCount >= 2 && (logged == null || meanDiff(logged, sig) > AUTO_SIG_DIFF)) {
-            autoPendingOcr = false
-            autoLoggedSig = sig
-            val frame = imageToBitmap(image)
-            if (looksLikeStorageCard(frame)) {
-                mainHandler.post { pillView?.findViewById<TextView>(R.id.pillScanBtn)?.text = "READING…" }
-                runOcr(frame, auto = true)
-            } else {
-                frame.recycle()
-            }
+        if (logged != null && meanDiff(logged, sig) <= AUTO_SIG_DIFF) return   // same Pokémon as last time
+        autoLoggedSig = sig
+        val frame = imageToBitmap(image)
+        if (looksLikeStorageCard(frame)) {
+            mainHandler.post { pillView?.findViewById<TextView>(R.id.pillScanBtn)?.text = "READING…" }
+            runOcr(frame, auto = true)
+        } else {
+            frame.recycle()
         }
     }
 
