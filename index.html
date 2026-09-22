@@ -739,8 +739,8 @@
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
   <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.3.6 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.3.6</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.3.7 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.3.7</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -753,7 +753,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.3.6</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.3.7</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -943,7 +943,7 @@
     <div style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
       Every Pokémon you scan in your storage is remembered on this device, recognised by its family and its exact height and weight, so renaming, powering up or favoriting it never confuses the pill. A favorited Pokémon is never marked DELETE, and neither is the strongest one you have scanned in a family. <span id="logCount" style="color:#38bdf8; font-weight:800;"></span>
     </div>
-    <div style="font-size:12px; margin-bottom:8px;">Keep the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> of each evolution family ; the rest are marked <b style="color:#f87171;">SURPLUS</b>. Great/Ultra League families also keep their best <input id="keepNPvpInput" type="number" min="1" max="20" value="3" onchange="setKeepNPvp(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by bulk (low attack, high defense and HP: the league build); a Pokémon is surplus only when it is outside both lists. Dynamax Pokémon are a separate pool (only they can enter Max Battles): keep the best <input id="keepNDmaxInput" type="number" min="1" max="20" value="3" onchange="setKeepNDynamax(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> Dynamax of each species. Luckies count as about 6 IV points better (half-price power-ups); a favorited surplus says <b style="color:#fbbf24;">FAVORITE?</b> instead of transfer; shinies are never surplus.</div>
+    <div style="font-size:12px; margin-bottom:8px;">Keep the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> of each evolution family , and only if they meet the floor (37+ IVs for the raid list, real bulk for the league list; 30+ for legendaries and Dynamax): a slot is earned, never filled to make up the number. The rest are marked <b style="color:#f87171;">SURPLUS</b>. Natural 44/45s are never surplus and never traded. Trades are limited per day, so surplus in rare or meta families says <b>TRADE PRIORITY HIGH</b> and common ones just transfer. Shinies are kept and encouraged to evolve. Great/Ultra League families also keep their best <input id="keepNPvpInput" type="number" min="1" max="20" value="3" onchange="setKeepNPvp(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by bulk (low attack, high defense and HP: the league build); a Pokémon is surplus only when it is outside both lists. Dynamax Pokémon are a separate pool (only they can enter Max Battles): keep the best <input id="keepNDmaxInput" type="number" min="1" max="20" value="3" onchange="setKeepNDynamax(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> Dynamax of each species. Luckies count as about 6 IV points better (half-price power-ups); a favorited surplus says <b style="color:#fbbf24;">FAVORITE?</b> instead of transfer; shinies are never surplus.</div>
     <div id="logSpecies"></div>
     <div id="logBody" style="max-height:40vh; overflow-y:auto;"></div>
     <details style="margin-top:8px; font-size:11px; color:var(--text-muted);"><summary style="cursor:pointer;">Last scan details (for troubleshooting)</summary><pre id="lastScanDebug" style="white-space:pre-wrap; background:#0f172a; padding:6px; border-radius:6px; max-height:30vh; overflow:auto;"></pre></details>
@@ -1562,6 +1562,21 @@ function entryScore(e, lane = 'raid') {
   return base * 100000 + evolved + cp;
 }
 
+// A slot is earned, not filled: below these floors a Pokémon is not a keeper even if the
+// count is short. Legendaries / Dynamax can't be farmed, so their floor is lower.
+function raidFloor(p) { return (p && (p.isLegendary || p.isRoaming)) ? 30 : 37; }   // 37 = 3★ / 82%
+function meetsRaidFloor(ivs, p, dynamax) { const t = ivs[0] + ivs[1] + ivs[2]; return t >= (dynamax ? 30 : raidFloor(p)); }
+function meetsPvpFloor(ivs) { return ivs[1] + ivs[2] >= 24 && ivs[0] <= 12; }        // real bulk, low attack
+
+// Trades are limited per day, so they should go where a re-roll / lucky has upside:
+// rare or meta families first. Natural 44 / 45 are never traded (protected elsewhere).
+function tradePriority(p) {
+  if (!p) return 'LOW';
+  const meta = p.act.includes('Lucky') || p.act.includes('XL') || p.isLegendary ||
+    p.finals.some(f => (f.pve_n || 9999) <= 100 || (f.pvp_n || 9999) <= 100) || (p.pve_n || 9999) <= 100 || (p.pvp_n || 9999) <= 100;
+  return meta ? 'HIGH' : 'LOW';
+}
+
 // A family has a PVP lane when any stage is a league pick (dataset tag or a top-100 PvP rank).
 function pvpRelevant(p) {
   return !!p && POKEMON_DATA.some(q => q.familyRoot === p.familyRoot && (q.act.includes('PvP') || (q.pvp_n || 9999) <= 100));
@@ -1619,9 +1634,12 @@ function applyLogContext(g, p) {
   const np = keepNPvp();
   const lucky = c.marks.includes('lucky');
   const ranked = c.rank && c.ofSpecies >= 2 && c.appraised;
-  const inRaid = ranked && c.rank <= n;
-  const inPvp = ranked && c.pvpLane && c.rankPvp > 0 && c.rankPvp <= np;
-  const surplus = ranked && !inRaid && !inPvp;
+  const total = c.ivs ? c.ivs[0] + c.ivs[1] + c.ivs[2] : 0;
+  const natural44 = c.ivs && total >= 44 && !lucky;           // never traded, never surplus
+  const inRaid = ranked && c.rank <= n && meetsRaidFloor(c.ivs, p, c.dynamax);
+  const inPvp = ranked && c.pvpLane && c.rankPvp > 0 && c.rankPvp <= np && meetsPvpFloor(c.ivs);
+  const belowFloor = c.ivs && !meetsRaidFloor(c.ivs, p, c.dynamax) && !(c.pvpLane && meetsPvpFloor(c.ivs));
+  const surplus = c.appraised && !natural44 && ((ranked && !inRaid && !inPvp) || belowFloor);
   // The pill names only the lane that earned the slot; a surplus shows both, as the justification.
   const pool = `${c.dynamax ? 'DYNAMAX ' : ''}${c.poolLabel}`;
   const rankTag = !ranked ? ''
@@ -1630,10 +1648,10 @@ function applyLogContext(g, p) {
     : `#${c.rankPvp} PVP OF ${c.ofSpecies} ${pool}`;
   const pvpDecided = ranked && c.pvpLane && !inRaid && inPvp;
   scanLane = pvpDecided ? 'PVP' : '';
-  const total = c.ivs ? c.ivs[0] + c.ivs[1] + c.ivs[2] : 0;
+  const floorNote = belowFloor && !(ranked && !inRaid && !inPvp) ? ` – BELOW THE ${c.dynamax ? '30' : raidFloor(p)}-IV FLOOR` : '';
 
   // 1. Exact IVs beat every CP-based guess.
-  if (c.ivs && total >= 44 && !surplus) {
+  if (c.ivs && total >= 44) {
     const label = total === 45 ? 'PERFECT 4★ (15/15/15)' : '98% (44) – AS GOOD AS PERFECT';
     const note = c.luckySibling && !lucky ? ' · YOUR L50 BUILD, POWER UP THE LUCKY FIRST' : '';
     g = { ...g, verdict: 'KEEP', color: '#34d399', icon: total === 45 ? '👑' : '⭐', reason: (rankTag ? rankTag + ' · ' : '') + label + note };
@@ -1645,11 +1663,16 @@ function applyLogContext(g, p) {
       ? { ...g, verdict: 'SURPLUS', color: '#f87171', icon: '🗑️', reason: `${rankTag} – LUCKY, BUT YOU HAVE ${n} BETTER` }
       : { ...g, verdict: 'KEEP', color: '#fbbf24', icon: '🍀',
           reason: (rankTag ? rankTag + ' · ' : '') + `LUCKY${c.ivs ? ' ' + total : ''} · POWER UP FIRST` + (bonus >= 6 ? ' (HALF DUST BEATS A 45 UNTIL L50)' : ' (HALF DUST; XL CANDY IS THE LIMIT)') };
+  } else if (surplus && p.plan === 'grow' && belowFloor && (c.rank || 1) === 1) {
+    // Nothing better in a family whose evolution is the point: keep one to evolve.
+    g = { ...g, verdict: 'KEEP BEST', color: '#e2e8f0', icon: '🌱', reason: `${rankTag || c.species.toUpperCase()} · NOTHING BETTER YET: KEEP TO EVOLVE, REPLACE WHEN A BETTER ONE COMES` };
   } else if (surplus) {
     const goal = candyGoal(p);
-    g = goal && !c.dynamax && !c.marks.includes('shadow')
-      ? { ...g, verdict: 'TRADE', color: '#c084fc', icon: '🔄', reason: `${rankTag} – SURPLUS: TRADE FOR CANDY + A LUCKY CHANCE. ${goal}` }
-      : { ...g, verdict: 'SURPLUS', color: '#f87171', icon: '🗑️', reason: `${rankTag} – KEEP YOUR TOP ${n}, TRANSFER THIS` };
+    const prio = tradePriority(p);
+    const tag = rankTag || `${c.species.toUpperCase()}${floorNote}`;
+    g = goal && prio === 'HIGH' && !c.dynamax && !c.marks.includes('shadow')
+      ? { ...g, verdict: 'TRADE', color: '#c084fc', icon: '🔄', reason: `${tag}${rankTag ? floorNote : ''} – TRADE PRIORITY HIGH: RE-ROLL / LUCKY CHANCE + CANDY. ${goal}` }
+      : { ...g, verdict: 'SURPLUS', color: '#f87171', icon: '🗑️', reason: `${tag}${rankTag ? floorNote : ''} – TRANSFER${goal ? ' FOR CANDY' : ''} (TRADE PRIORITY LOW)` };
   } else if (c.ivs && total >= 41 && g.verdict === 'DELETE') {
     g = { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎', reason: `${ivPercent(c.ivs)}% IVs – WORTH A LOOK` };
   } else if (!c.ivs && c.logged >= 2 && g.verdict === 'DELETE' && c.isStrongest) {
@@ -1693,8 +1716,9 @@ function applyLogContext(g, p) {
   }
 
   // 4. Shiny: cosmetic value, never a transfer candidate.
-  if (c.marks.includes('shiny') && (g.verdict === 'DELETE' || g.verdict === 'SURPLUS')) {
-    g = { ...g, verdict: 'KEEP', color: '#34d399', icon: '✨', reason: 'SHINY' + (rankTag ? ' · ' + rankTag : '') };
+  if (c.marks.includes('shiny') && (g.verdict === 'DELETE' || g.verdict === 'SURPLUS' || g.verdict === 'TRADE')) {
+    const evolve = p.finals.length ? `, EVOLVE TO ${p.finals.map(f => baseSpecies(f.name)).join(' / ').toUpperCase()} WHEN YOU LIKE` : '';
+    g = { ...g, verdict: 'KEEP', color: '#34d399', icon: '✨', reason: `SHINY · KEEP${evolve}` + (rankTag ? ' · ' + rankTag : '') };
   }
 
   // Every ranked verdict carries its place among like Pokémon, whatever branch produced it.
@@ -1737,8 +1761,9 @@ function renderSpeciesSummary() {
     const isFamily = !poolOf(sp, isD).perSpecies;
     const best = ranked[0];
     const p0 = POKEMON_DATA.find(x => x.name === sp);
-    const pvpKeep = new Set(!isD && pvpRelevant(p0) ? speciesRanking(sp, false, 'pvp').slice(0, keepNPvp()).map(e => e.id) : []);
-    const surplus = ranked.slice(isD ? nd : n).filter(e => !e.shiny && !pvpKeep.has(e.id)).length;
+    const pvpKeep = new Set(!isD && pvpRelevant(p0) ? speciesRanking(sp, false, 'pvp').filter(e => e.ivs && meetsPvpFloor(e.ivs)).slice(0, keepNPvp()).map(e => e.id) : []);
+    const keepers = new Set(ranked.slice(0, isD ? nd : n).filter(e => e.ivs && meetsRaidFloor(e.ivs, POKEMON_DATA.find(x => x.name === e.species), isD)).map(e => e.id));
+    const surplus = ranked.filter(e => e.ivs && !e.shiny && !keepers.has(e.id) && !pvpKeep.has(e.id) && e.ivs[0] + e.ivs[1] + e.ivs[2] < 44).length;
     const bestText = best.ivs ? `${best.ivs.join('/')} (${ivPercent(best.ivs)}%)` : `${best.cp || '?'} CP, not appraised`;
     return `<tr style="border-top:1px solid var(--border);"><td style="padding:5px 4px;"><b>${label}</b>${isFamily ? ' <span style="color:#94a3b8;">family</span>' : ''}${isD ? ' <span style="color:#ec4899;">Dynamax</span>' : ''}</td><td style="padding:5px 4px; text-align:right;">${ranked.length}</td><td style="padding:5px 4px; text-align:right;">${bestText}</td><td style="padding:5px 4px; text-align:right; color:${surplus ? '#f87171' : '#34d399'};">${surplus ? surplus + ' surplus' : 'ok'}</td></tr>`;
   }).join('');
