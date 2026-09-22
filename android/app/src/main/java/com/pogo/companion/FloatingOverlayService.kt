@@ -57,6 +57,8 @@ class FloatingOverlayService : Service() {
     private lateinit var params: WindowManager.LayoutParams
     private var pillView: View? = null
     @Volatile private var dockLeft = false
+    /** Pill bounds in screen pixels, refreshed before each AUTO read; its text is not the game's. */
+    @Volatile private var pillRectOnScreen = android.graphics.Rect()
 
     private var screenWidth = 1080
     private var screenHeight = 2340
@@ -86,13 +88,13 @@ class FloatingOverlayService : Service() {
     @Volatile private var autoWantFrame = false
 
     // The mirror only sends frames while the screen changes, so "settled" has to be a timer:
-    // when the fingerprint has not changed for AUTO_SETTLE_MS, blink the pill out (exactly like a
-    // manual scan: its own labels must not be read as the game's), which also forces a fresh
-    // frame, and read that frame.
+    // when the fingerprint has not changed for AUTO_SETTLE_MS, nudge the pill's opacity by 1%
+    // (invisible, but it forces one fresh frame) and read that frame. The pill stays visible
+    // during AUTO; any OCR text under it is dropped by position in evaluate().
     private val autoSettle = Runnable {
         if (!autoMode) return@Runnable
         autoWantFrame = true
-        pillView?.alpha = 0f
+        pillView?.let { it.alpha = if (it.alpha >= 1f) 0.99f else 1f }
     }
     private val autoIdleStop = Runnable { setAutoMode(false) }
     private val autoMaxStop = Runnable { setAutoMode(false) }
@@ -438,8 +440,9 @@ class FloatingOverlayService : Service() {
         val sig = IntArray(24 * 8)
         var i = 0
         for (gy in 0 until 8) {
-            // rows 0-3 sample the CP arc (top 3-12%), rows 4-7 the name band (40-46%)
-            val y = if (gy < 4) (h * (0.03 + 0.0225 * gy)).toInt() else (h * (0.40 + 0.015 * (gy - 4))).toInt()
+            // All rows on the white card, which the idling 3D model never touches:
+            // rows 0-3 the name / HP band (40-46%), rows 4-7 the stats / badge band (56-62%).
+            val y = if (gy < 4) (h * (0.40 + 0.02 * gy)).toInt() else (h * (0.56 + 0.02 * (gy - 4))).toInt()
             for (gx in 0 until 24) {
                 // 24 columns over 69% of the width, on the side away from the pill
                 val x = (w * ((if (dockLeft) 0.26 else 0.05) + 0.03 * gx)).toInt()
@@ -474,7 +477,13 @@ class FloatingOverlayService : Service() {
         autoLoggedSig = sig
         val frame = imageToBitmap(image)
         if (looksLikeStorageCard(frame)) {
-            mainHandler.post { showPillReading() }
+            mainHandler.post {
+                pillView?.let { v ->
+                    val loc = IntArray(2); v.getLocationOnScreen(loc)
+                    pillRectOnScreen = android.graphics.Rect(loc[0], loc[1], loc[0] + v.width, loc[1] + v.height)
+                }
+                showPillReading()
+            }
             runOcr(frame, auto = true)
         } else {
             frame.recycle()
@@ -755,9 +764,14 @@ class FloatingOverlayService : Service() {
     private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false) {
         val lines = JSONArray()
         val plainText = StringBuilder()
+        // AUTO reads keep the pill on screen: skip any text inside it (scaled to capture pixels).
+        val scale = width.toFloat() / screenWidth
+        val pr = pillRectOnScreen
+        val pillRect = android.graphics.Rect((pr.left * scale).toInt(), (pr.top * scale).toInt(), (pr.right * scale).toInt(), (pr.bottom * scale).toInt())
         for (block in text.textBlocks) {
             for (line in block.lines) {
                 val box = line.boundingBox ?: continue
+                if (auto && android.graphics.Rect.intersects(box, pillRect)) continue
                 plainText.append(line.text).append('\n')
                 lines.put(
                     JSONObject()
