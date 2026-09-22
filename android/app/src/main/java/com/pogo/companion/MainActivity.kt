@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         handleIntent(intent)
+        UpdateChecker.checkOnLaunch(this)
     }
 
     private fun setupWebView() {
@@ -180,6 +181,11 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun minimizeToPill() {
             runOnUiThread { this@MainActivity.minimizeToPill() }
+        }
+
+        @JavascriptInterface
+        fun checkForUpdate() {
+            runOnUiThread { UpdateChecker.check(this@MainActivity, manual = true) }
         }
 
         /**

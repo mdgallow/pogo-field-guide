@@ -11,8 +11,8 @@ android {
         applicationId = "com.pogo.companion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 12
-        versionName = "2.1.9"
+        versionCode = 13
+        versionName = "2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -57,6 +57,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
@@ -66,7 +67,16 @@ val syncWebAssets by tasks.registering(Copy::class) {
     from(rootProject.file("../index.html"))
     into(layout.projectDirectory.dir("src/main/assets"))
 }
-tasks.named("preBuild") { dependsOn(syncWebAssets) }
+val writeVersionManifest by tasks.registering {
+    val out = rootProject.file("../version.json")
+    val code = android.defaultConfig.versionCode
+    val name = android.defaultConfig.versionName
+    outputs.file(out)
+    doLast {
+        out.writeText("{\"versionCode\": $code, \"versionName\": \"$name\", \"apk\": \"pogo-companion.apk\", \"notes\": \"\"}\n")
+    }
+}
+tasks.named("preBuild") { dependsOn(syncWebAssets, writeVersionManifest) }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
