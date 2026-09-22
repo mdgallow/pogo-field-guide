@@ -72,6 +72,19 @@ class FloatingOverlayService : Service() {
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
     private val scanRequested = AtomicBoolean(false)
+
+    // AUTO (catalogue) mode: log Pokémon as the player swipes through the appraisal view.
+    // Budgeted so it can never become a battery problem: frames are only looked at every
+    // AUTO_SAMPLE_MS, a look is a ~200-pixel fingerprint read straight from the capture buffer
+    // (no bitmap copy), and OCR runs once per new, settled Pokémon. Stops itself when idle.
+    @Volatile private var autoMode = false
+    private var autoStartedAt = 0L
+    private var autoLastChangeAt = 0L
+    private var autoLastSampleAt = 0L
+    private var autoLastSig: IntArray? = null
+    private var autoStableCount = 0
+    private var autoLoggedSig: IntArray? = null
+    @Volatile private var autoPendingOcr = false
     private val scanTimeout = Runnable {
         if (scanRequested.compareAndSet(true, false)) {
             Log.w(TAG, "No frame arrived for scan")
@@ -111,6 +124,10 @@ class FloatingOverlayService : Service() {
         private const val SCAN_TIMEOUT_MS = 1500L
         private const val PILL_HIDE_MS = 150L
         private const val EVAL_TIMEOUT_MS = 4000L
+        private const val AUTO_SAMPLE_MS = 700L
+        private const val AUTO_IDLE_STOP_MS = 30_000L
+        private const val AUTO_MAX_MS = 10 * 60_000L
+        private const val AUTO_SIG_DIFF = 12 // mean luminance change (0-255) that counts as a new screen
 
         @Volatile var isRunning = false
             private set
@@ -129,6 +146,7 @@ class FloatingOverlayService : Service() {
         OverlayBus.pillUpdater = { state -> finishScan(state) }
         OverlayBus.pillVisibility = { visible ->
             pillView?.visibility = if (visible) View.VISIBLE else View.GONE
+            if (!visible) setAutoMode(false)
         }
     }
 
@@ -232,6 +250,7 @@ class FloatingOverlayService : Service() {
         // Dragging works from anywhere on the pill; a touch that doesn't move is a tap.
         attachDragOrTap(view, null)
         attachDragOrTap(view.findViewById(R.id.pillScanBtn)) { requestScan() }
+        attachDragOrTap(view.findViewById(R.id.pillAutoBtn)) { setAutoMode(!autoMode) }
         attachDragOrTap(view.findViewById(R.id.pillExpandBtn)) { expandToApp() }
         attachDragOrTap(view.findViewById(R.id.pillCloseBtn)) { stopSelf() }
 
@@ -328,6 +347,7 @@ class FloatingOverlayService : Service() {
         var image: Image? = null
         try {
             image = reader.acquireLatestImage() ?: return
+            if (autoMode && !scanRequested.get()) autoSample(image)
             if (scanRequested.compareAndSet(true, false)) {
                 mainHandler.removeCallbacks(scanTimeout)
                 val frame = imageToBitmap(image)
@@ -340,6 +360,91 @@ class FloatingOverlayService : Service() {
         } finally {
             image?.close()
         }
+    }
+
+    // ---------------------------------------------------------------- AUTO mode
+
+    private fun setAutoMode(on: Boolean) {
+        if (on && mediaProjection == null) { requestScan(); return }
+        autoMode = on
+        val now = System.currentTimeMillis()
+        autoStartedAt = now
+        autoLastChangeAt = now
+        autoLastSig = null
+        autoLoggedSig = null
+        autoStableCount = 0
+        autoPendingOcr = false
+        mainHandler.post {
+            pillView?.findViewById<TextView>(R.id.pillAutoBtn)?.apply {
+                text = if (on) "AUTO ON" else "AUTO"
+                setTextColor(if (on) 0xFF34D399.toInt() else 0xFF94A3B8.toInt())
+            }
+        }
+        Log.i(TAG, "AUTO mode ${if (on) "on" else "off"}")
+    }
+
+    /**
+     * Runs on the capture thread for every frame while AUTO is on. Cheap by design: at most one
+     * sample per AUTO_SAMPLE_MS, each a 24x8 luminance grid over the CP arc and name band.
+     */
+    private fun autoSample(image: Image) {
+        val now = System.currentTimeMillis()
+        if (now - autoLastSampleAt < AUTO_SAMPLE_MS) return
+        autoLastSampleAt = now
+        if (now - autoStartedAt > AUTO_MAX_MS || now - autoLastChangeAt > AUTO_IDLE_STOP_MS) {
+            setAutoMode(false)
+            return
+        }
+
+        val plane = image.planes[0]
+        val buf = plane.buffer
+        val ps = plane.pixelStride
+        val rs = plane.rowStride
+        val w = image.width
+        val h = image.height
+        val sig = IntArray(24 * 8)
+        var i = 0
+        for (gy in 0 until 8) {
+            // rows 0-3 sample the CP arc (top 3-12%), rows 4-7 the name band (40-46%)
+            val y = if (gy < 4) (h * (0.03 + 0.0225 * gy)).toInt() else (h * (0.40 + 0.015 * (gy - 4))).toInt()
+            for (gx in 0 until 24) {
+                val x = (w * (0.06 + 0.036 * gx)).toInt()
+                val o = y * rs + x * ps
+                val r = buf.get(o).toInt() and 0xFF
+                val g = buf.get(o + 1).toInt() and 0xFF
+                val b = buf.get(o + 2).toInt() and 0xFF
+                sig[i++] = (r * 3 + g * 6 + b) / 10
+            }
+        }
+
+        val prev = autoLastSig
+        autoLastSig = sig
+        if (prev == null || meanDiff(prev, sig) > AUTO_SIG_DIFF) {
+            // Screen is changing (mid-swipe): wait for it to settle.
+            autoStableCount = 0
+            autoLastChangeAt = now
+            autoPendingOcr = true
+            return
+        }
+        autoStableCount++
+        val logged = autoLoggedSig
+        if (autoPendingOcr && autoStableCount >= 2 && (logged == null || meanDiff(logged, sig) > AUTO_SIG_DIFF)) {
+            autoPendingOcr = false
+            autoLoggedSig = sig
+            val frame = imageToBitmap(image)
+            if (looksLikeStorageCard(frame)) {
+                mainHandler.post { pillView?.findViewById<TextView>(R.id.pillScanBtn)?.text = "READING…" }
+                runOcr(frame, auto = true)
+            } else {
+                frame.recycle()
+            }
+        }
+    }
+
+    private fun meanDiff(a: IntArray, b: IntArray): Int {
+        var d = 0
+        for (i in a.indices) d += abs(a[i] - b[i])
+        return d / a.size
     }
 
     private fun imageToBitmap(image: Image): Bitmap {
@@ -359,6 +464,7 @@ class FloatingOverlayService : Service() {
 
     private fun releaseCapture() {
         isCapturing = false
+        autoMode = false
         scanRequested.set(false)
         mainHandler.removeCallbacks(scanTimeout)
         mainHandler.removeCallbacks(evalTimeout)
@@ -407,12 +513,12 @@ class FloatingOverlayService : Service() {
         view.findViewById<TextView>(R.id.pillScanBtn)?.text = "READING…"
     }
 
-    private fun runOcr(bitmap: Bitmap) {
+    private fun runOcr(bitmap: Bitmap, auto: Boolean = false) {
         val isStorage = looksLikeStorageCard(bitmap)
         val isFavorite = isStorage && looksFavorited(bitmap)
         val ivs = if (isStorage) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs) }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -521,7 +627,7 @@ class FloatingOverlayService : Service() {
         return if (bars.size == 3) bars.toIntArray() else null
     }
 
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?) {
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         for (block in text.textBlocks) {
@@ -545,7 +651,7 @@ class FloatingOverlayService : Service() {
             mainHandler.postDelayed(evalTimeout, EVAL_TIMEOUT_MS)
             evaluator(
                 JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines)
-                    .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).toString()
+                    .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).put("auto", auto).toString()
             )
             return
         }

@@ -59,6 +59,23 @@
         android:focusable="true"
         android:layout_marginBottom="3dp" />
 
+    <!-- AUTO: keep reading while swiping through the appraisal view -->
+    <TextView
+        android:id="@+id/pillAutoBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="AUTO"
+        android:textColor="@color/slate_text"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:background="@drawable/expand_btn_bg"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="3dp" />
+
     <!-- Answers (caption + value rows) are added here from pill_slot.xml at runtime -->
     <LinearLayout
         android:id="@+id/pillSlots"

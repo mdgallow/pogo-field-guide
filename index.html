@@ -719,7 +719,7 @@
   <div style="margin-top: 8px;">The top of the pill shows which screen it saw (<b>CATCH</b> or <b>STORAGE</b>), the Pokémon it read, and its CP. Below that are three answers:</div>
   <div style="margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px;">
     <div><b style="color:#fbbf24;">1. BERRY</b> (catch screen) – which berry to throw: Pinap, Silver Pinap, Razz, Golden Razz, or No Berry. A Pinap doubles candy but does nothing for the catch, so when the Pokémon is hard to catch at this CP (every starter is, for example) the pill says <b>RAZZ BERRY (TOO HARD FOR PINAP)</b> instead of letting you burn balls.<br>
-      <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b>, <b>TRADE</b>, <b>KEEP BEST</b> (keep your best one to evolve, transfer the rest) or <b>CHECK FIRST</b> (the CP might be perfect, or it is the strongest of its family you have scanned: look before deleting). A Pokémon you favorited in the game always says <b>KEEP · YOU FAVORITED IT</b>. Everything scanned in storage is remembered in <b>My Log</b>.</div>
+      <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b>, <b>TRADE</b>, <b>KEEP BEST</b> (keep your best one to evolve, transfer the rest) or <b>CHECK FIRST</b> (the CP might be perfect, or it is the strongest of its family you have scanned: look before deleting), or <b>SURPLUS</b> (you have logged more of this species than you need; this one ranks below your top 6). A Pokémon you favorited in the game always says <b>KEEP · YOU FAVORITED IT</b>. Everything scanned in storage is remembered in <b>My Log</b>.</div>
     <div><b style="color:#38bdf8;">BALL</b> (catch screen) – which ball to throw, from the game’s real catch rate for that species and how high its CP is: <b>POKÉ BALL (EASY)</b>, <b>GREAT BALL (MEDIUM)</b>, <b>ULTRA BALL (HARD)</b>. A possible perfect always says Ultra Ball.<br>
       Legendaries: <b>SAVE YOUR MASTER BALL</b> unless it is <b>PERFECT 100%</b> and you are on your last balls. A 98% is within 1% of perfect and not worth it. Roaming Galarian birds are the exception: <b>MASTER BALL NOW</b>, they run after one throw.</div>
     <div><b style="color:#34d399;">2. IV CHECK</b> – does this exact CP line up with perfect stats?<br>
@@ -738,8 +738,8 @@
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
   <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.7 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.7</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.1.8 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.1.8</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -752,7 +752,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.7</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.1.8</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -942,7 +942,9 @@
     <div style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
       Every Pokémon you scan in your storage is remembered on this device, recognised by its family and its exact height and weight, so renaming, powering up or favoriting it never confuses the pill. A favorited Pokémon is never marked DELETE, and neither is the strongest one you have scanned in a family. <span id="logCount" style="color:#38bdf8; font-weight:800;"></span>
     </div>
-    <div id="logBody" style="max-height:50vh; overflow-y:auto;"></div>
+    <div style="font-size:12px; margin-bottom:8px;">Keep the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> of each species; the rest are marked <b style="color:#f87171;">SURPLUS</b> (favorites, luckies and shinies are never surplus).</div>
+    <div id="logSpecies"></div>
+    <div id="logBody" style="max-height:40vh; overflow-y:auto;"></div>
     <textarea id="logTransferBox" style="display:none; width:100%; height:90px; margin-top:10px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:8px; font-size:11px; padding:6px; box-sizing:border-box;"></textarea>
     <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
       <button onclick="exportPokeLog()" style="flex:1; background:#1e293b; color:#38bdf8; border:1px solid #38bdf8; border-radius:8px; padding:8px; font-weight:800; font-size:12px; cursor:pointer;">Backup (copy text)</button>
@@ -977,7 +979,7 @@
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #34d399;">
           <b>4. On a Pokémon in your storage</b> it answers <b>VERDICT</b> (DELETE, KEEP, TRADE, KEEP BEST, CHECK FIRST), <b>IV CHECK</b> and <b>REASON</b>. Nicknames do not matter: it reads the candy name, the CP and the EVOLVE button, so “Robot 39” or a Charizard still called “Charmander 44” are identified correctly.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
-          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by its family plus its exact height and weight. That is how the pill protects the ones that matter: anything you <b>favorited</b> in the game always says KEEP, and the <b>strongest of a family</b> you have scanned never says DELETE. <b>Appraise once, remembered forever:</b> open the in-game appraisal (the three stat bars) and tap SCAN. The pill reads the exact IVs from the bars, saves them, and from then on shows them on every scan of that Pokémon as <b>15/14/15 · 98% (SAVED)</b>, whatever its name or CP becomes. A perfect always says KEEP · PERFECT 4★. Lucky is read from the page; tick <b>shiny</b> / <b>shadow</b> in My Log yourself (a shiny never says DELETE). Open <b>My Log</b> to see the list or make a backup. Uninstalling the app erases the log, so back it up first.</div>
+          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by its family plus its exact height and weight. That is how the pill protects the ones that matter: anything you <b>favorited</b> in the game always says KEEP, and the <b>strongest of a family</b> you have scanned never says DELETE. <b>Appraise once, remembered forever:</b> open the in-game appraisal (the three stat bars) and tap SCAN. The pill reads the exact IVs from the bars, saves them, and from then on shows them on every scan of that Pokémon as <b>15/14/15 · 98% (SAVED)</b>, whatever its name or CP becomes. A perfect always says KEEP · PERFECT 4★. Lucky is read from the page; tick <b>shiny</b> / <b>shadow</b> in My Log yourself (a shiny never says DELETE). <b>Catalogue a whole box fast:</b> open one Pokémon, open its appraisal, tap <b>AUTO</b> on the pill, then just swipe left/right through your Pokémon. Each one is read and logged as it settles on screen, with no taps. AUTO switches itself off after 30 seconds without a new Pokémon, after 10 minutes, or when you leave the storage page, so it never runs in the background. Once logged, each scan tells you where that Pokémon ranks among its species (<b>#2 OF 9 SNORLAX</b>) and marks anything beyond your top 6 as <b>SURPLUS</b>. Open <b>My Log</b> to see the list per species, change the 6, or make a backup. Uninstalling the app erases the log, so back it up first.</div>
       </div>
     </div>
 
@@ -1515,14 +1517,35 @@ function recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs) {
   return entry;
 }
 
+// How many of one species are worth keeping: enough to fill a raid / battle team.
+const KEEP_N_KEY = 'pogo_keep_n';
+function keepN() { return parseInt(localStorage.getItem(KEEP_N_KEY), 10) || 6; }
+function setKeepN(v) { localStorage.setItem(KEEP_N_KEY, String(Math.max(1, Math.min(20, parseInt(v, 10) || 6)))); renderLogModal(); }
+
+// Quality score for ranking entries of one species. Appraised beats unappraised. PvP species
+// rank on bulk (defense + HP) with low attack preferred, which is what wins leagues.
+function entryScore(e) {
+  if (!e.ivs) return -1 + (e.cp || 0) / 100000;
+  const [a, d, h] = e.ivs;
+  const p = POKEMON_DATA.find(x => x.name === e.species);
+  const pvp = p && p.act.includes('PvP');
+  return pvp ? (d + h) * 2 - a * 0.5 + (e.cp || 0) / 100000 : a + d + h + (e.cp || 0) / 100000;
+}
+
+function speciesRanking(species) {
+  return pokeLog.filter(e => e.species === species).sort((x, y) => entryScore(y) - entryScore(x));
+}
+
 function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs) {
   const entry = recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs);
   const relatives = entry ? pokeLog.filter(e => e.family === entry.family) : [];
   const bestCp = relatives.reduce((best, e) => Math.max(best, e.cp || 0), 0);
   const known = ivs || (entry && entry.ivs) || null;
+  const ranked = speciesRanking(pokemon.name);
   return { species: pokemon.name, favorite: !!favorite, root: pokemon.familyRoot,
     logged: relatives.length, bestCp, isStrongest: !!entry && !!cp && cp >= bestCp,
     ivs: known, ivsFromLog: !ivs && !!(entry && entry.ivs),
+    rank: entry ? ranked.indexOf(entry) + 1 : 0, ofSpecies: ranked.length, appraised: !!(entry && entry.ivs),
     marks: entry ? [entry.lucky && 'lucky', entry.shiny && 'shiny', entry.shadow && 'shadow'].filter(Boolean) : [] };
 }
 
@@ -1542,6 +1565,16 @@ function applyLogContext(g, p) {
   }
   if (c.marks.includes('shiny') && g.verdict === 'DELETE') {
     return { ...g, verdict: 'KEEP', color: '#34d399', icon: '✨', reason: 'SHINY' };
+  }
+  // Rank among the same species you have logged: keep the top N, the rest are surplus.
+  if (c.rank && c.ofSpecies >= 2 && c.appraised) {
+    const n = keepN();
+    const protectedEntry = c.marks.includes('lucky') || c.marks.includes('shiny');
+    if (c.rank > n && !protectedEntry) {
+      return { ...g, verdict: 'SURPLUS', color: '#f87171', icon: '🗑️',
+        reason: `#${c.rank} OF ${c.ofSpecies} ${c.species.toUpperCase()} – KEEP YOUR TOP ${n}, TRANSFER THIS` };
+    }
+    return { ...g, reason: `#${c.rank} OF ${c.ofSpecies} ${c.species.toUpperCase()} · ${g.reason}` };
   }
   if (c.logged >= 2 && g.verdict === 'DELETE' && c.isStrongest) {
     return { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎',
@@ -1564,7 +1597,23 @@ function closeLogModal() {
   document.getElementById('logOverlay').style.display = 'none';
 }
 
+function renderSpeciesSummary() {
+  const n = keepN();
+  const bySpecies = new Map();
+  for (const e of pokeLog) bySpecies.set(e.species, (bySpecies.get(e.species) || 0) + 1);
+  const rows = [...bySpecies.keys()].sort().map(sp => {
+    const ranked = speciesRanking(sp);
+    const best = ranked[0];
+    const surplus = ranked.slice(n).filter(e => !e.favorite && !e.lucky && !e.shiny).length;
+    const bestText = best.ivs ? `${best.ivs.join('/')} (${ivPercent(best.ivs)}%)` : `${best.cp || '?'} CP, not appraised`;
+    return `<tr style="border-top:1px solid var(--border);"><td style="padding:5px 4px;"><b>${sp}</b></td><td style="padding:5px 4px; text-align:right;">${ranked.length}</td><td style="padding:5px 4px; text-align:right;">${bestText}</td><td style="padding:5px 4px; text-align:right; color:${surplus ? '#f87171' : '#34d399'};">${surplus ? surplus + ' surplus' : 'ok'}</td></tr>`;
+  }).join('');
+  return rows ? `<table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:10px;"><tr style="color:var(--text-muted);"><td>Species</td><td style="text-align:right;">Logged</td><td style="text-align:right;">Your best</td><td style="text-align:right;">Beyond top ${n}</td></tr>${rows}</table>` : '';
+}
+
 function renderLogModal() {
+  document.getElementById('keepNInput').value = keepN();
+  document.getElementById('logSpecies').innerHTML = renderSpeciesSummary();
   const rows = [...pokeLog].sort((a, b) => (b.lastSeen || '').localeCompare(a.lastSeen || '')).map(e => `
     <tr style="border-top:1px solid var(--border);">
       <td style="padding:6px 4px;"><b>${e.species}</b>${e.favorite ? ' <span style="color:#fbbf24;">favorite</span>' : ''}${e.lucky ? ' <span style="color:#fbbf24;">lucky</span>' : ''}${e.hasMega ? ' <span style="color:#c084fc;">mega</span>' : ''}<br>
@@ -1680,7 +1729,7 @@ function getGuidance(p, matchInfo) {
     g = { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎', reason: 'APPRAISE BEFORE DELETING', next: 'APPRAISE IT' };
   }
   g = applyLogContext(g, p);
-  g.isDelete = g.verdict === 'DELETE';
+  g.isDelete = g.verdict === 'DELETE' || g.verdict === 'SURPLUS';
   return g;
 }
 
@@ -2798,6 +2847,7 @@ function pushNativePill() {
   const slots = [slot(captions[0], 'hudBerryLabel')];
   if (hudBall) slots.push(['BALL', hudBall.text, hudBall.color]);
   slots.push(slot(captions[1], 'hudCatchLabel'), slot(captions[2], 'hudActionLabel'));
+  if (scanContext && scanContext.rank) slots.push(['LOGGED', `${pokeLog.length} TOTAL · ${scanContext.ofSpecies} ${scanContext.species.toUpperCase()}`, '#94a3b8']);
   AndroidBridge.updatePill(evaluationMode, target, JSON.stringify(slots));
 }
 
@@ -3519,7 +3569,7 @@ function applyScanResult(result, isSilent = false) {
       const ivLabel = document.getElementById('hudCatchLabel');
       if (ivLabel) ivLabel.innerText = 'UNKNOWN';
     }
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    if (navigator.vibrate && !result.auto) navigator.vibrate([100, 50, 100]);
 
     const cpText = cp ? `${cp} CP` : 'CP';
     if (mode === 'storage') {
@@ -3563,7 +3613,8 @@ window.assessNativeOcr = async function (payload) {
       .map(l => l.t)
       .join('\n');
     const res = await classifyScan(!!payload.storage, readRegion);
-    applyScanResult({ ...res, favorite: !!payload.favorite, ivs: Array.isArray(payload.ivs) ? payload.ivs : null }, true);
+    applyScanResult({ ...res, favorite: !!payload.favorite, ivs: Array.isArray(payload.ivs) ? payload.ivs : null,
+      auto: !!payload.auto }, true);
   } catch (err) {
     console.error('Native scan assessment error:', err);
     applyScanResult({ mode: 'blank', pokemon: null, cp: null }, true);
