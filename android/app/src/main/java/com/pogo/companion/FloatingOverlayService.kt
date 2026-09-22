@@ -85,12 +85,13 @@ class FloatingOverlayService : Service() {
     @Volatile private var autoWantFrame = false
 
     // The mirror only sends frames while the screen changes, so "settled" has to be a timer:
-    // when the fingerprint has not changed for AUTO_SETTLE_MS, nudge the pill's opacity, which
-    // forces one fresh frame, and read that.
+    // when the fingerprint has not changed for AUTO_SETTLE_MS, blink the pill out (exactly like a
+    // manual scan: its own labels must not be read as the game's), which also forces a fresh
+    // frame, and read that frame.
     private val autoSettle = Runnable {
         if (!autoMode) return@Runnable
         autoWantFrame = true
-        pillView?.let { it.alpha = if (it.alpha >= 1f) 0.99f else 1f }
+        pillView?.alpha = 0f
     }
     private val autoIdleStop = Runnable { setAutoMode(false) }
     private val autoMaxStop = Runnable { setAutoMode(false) }
@@ -388,6 +389,7 @@ class FloatingOverlayService : Service() {
             mainHandler.postDelayed(autoMaxStop, AUTO_MAX_MS)
         }
         mainHandler.post {
+            if (!on) mainHandler.removeCallbacks(autoSettle)
             pillView?.let { if (it.alpha < 1f && !scanRequested.get()) it.alpha = 1f }
             pillView?.findViewById<TextView>(R.id.pillAutoBtn)?.apply {
                 text = if (on) "AUTO ON" else "AUTO"
@@ -418,7 +420,7 @@ class FloatingOverlayService : Service() {
             // rows 0-3 sample the CP arc (top 3-12%), rows 4-7 the name band (40-46%)
             val y = if (gy < 4) (h * (0.03 + 0.0225 * gy)).toInt() else (h * (0.40 + 0.015 * (gy - 4))).toInt()
             for (gx in 0 until 24) {
-                val x = (w * (0.06 + 0.036 * gx)).toInt()
+                val x = (w * (0.05 + 0.03 * gx)).toInt()   // 5%..74%: stays clear of the pill
                 val o = y * rs + x * ps
                 val r = buf.get(o).toInt() and 0xFF
                 val g = buf.get(o + 1).toInt() and 0xFF
@@ -429,7 +431,7 @@ class FloatingOverlayService : Service() {
 
         val prev = autoLastSig
         autoLastSig = sig
-        val changed = prev == null || meanDiff(prev, sig) > AUTO_SIG_DIFF
+        val changed = !autoWantFrame && (prev == null || meanDiff(prev, sig) > AUTO_SIG_DIFF)
         if (changed) {
             // Screen is changing (mid-swipe): restart the settle and idle timers.
             autoWantFrame = false
@@ -446,10 +448,11 @@ class FloatingOverlayService : Service() {
         autoLoggedSig = sig
         val frame = imageToBitmap(image)
         if (looksLikeStorageCard(frame)) {
-            mainHandler.post { pillView?.findViewById<TextView>(R.id.pillScanBtn)?.text = "READING…" }
+            mainHandler.post { showPillReading() }
             runOcr(frame, auto = true)
         } else {
             frame.recycle()
+            mainHandler.post { pillView?.alpha = 1f }
         }
     }
 
