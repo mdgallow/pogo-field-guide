@@ -13,6 +13,8 @@
 # BACK UP ~/.pogo-signing. If the key is ever lost, every user has to uninstall and reinstall,
 # and a Play Store listing could never be updated again.
 set -euo pipefail
+# gh needs to run inside the repo to know which repository's secrets to set.
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 DIR="$HOME/.pogo-signing"
 KEYSTORE="$DIR/release-keystore.p12"
