@@ -410,8 +410,9 @@ class FloatingOverlayService : Service() {
     private fun runOcr(bitmap: Bitmap) {
         val isStorage = looksLikeStorageCard(bitmap)
         val isFavorite = isStorage && looksFavorited(bitmap)
+        val ivs = if (isStorage) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite) }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -455,7 +456,72 @@ class FloatingOverlayService : Service() {
         return total > 0 && gold.toFloat() / total > 0.10f
     }
 
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean) {
+    /**
+     * Reads the appraisal panel's three IV bars (Attack / Defense / HP, 15 units each in three
+     * blocks of five). Same algorithm and colours as readIvBars() in index.html, calibrated on
+     * 36 real screenshots. Returns null when no appraisal panel is on screen.
+     */
+    private fun readIvBars(bmp: Bitmap): IntArray? {
+        val w = bmp.width
+        val h = bmp.height
+        fun kind(c: Int): Int { // 0 none, 1 rail, 2 red (full), 3 orange (partial)
+            val r = c shr 16 and 0xFF
+            val g = c shr 8 and 0xFF
+            val b = c and 0xFF
+            if (r in 206..239 && g in 206..239 && b in 201..239 && maxOf(r, g, b) - minOf(r, g, b) < 12) return 1
+            if (r > 195 && g in 106..149 && b in 106..154 && r - g > 70) return 2
+            if (r > 220 && g in 141..189 && b < 120) return 3
+            return 0
+        }
+        fun white(c: Int) = (c shr 16 and 0xFF) > 240 && (c shr 8 and 0xFF) > 240 && (c and 0xFF) > 240
+        val x0 = (w * 0.08).toInt()
+        val x1 = (w * 0.55).toInt()
+
+        val bands = ArrayList<IntArray>() // [start, end]
+        for (y in (h * 0.55).toInt() until (h * 0.95).toInt()) {
+            var n = 0
+            var x = x0
+            while (x < x1) {
+                if (kind(bmp.getPixel(x, y)) != 0) n++
+                x += 2
+            }
+            if (n * 2 > (x1 - x0) * 0.28) {
+                if (bands.isNotEmpty() && y - bands.last()[1] <= 2) bands.last()[1] = y else bands.add(intArrayOf(y, y))
+            }
+        }
+
+        val bars = ArrayList<Int>()
+        for (b in bands) {
+            val bh = b[1] - b[0] + 1
+            if (bh < h * 0.004 || bh > h * 0.016) continue
+            val y = (b[0] + b[1]) / 2
+            val xs = (x0 until x1).filter { kind(bmp.getPixel(it, y)) != 0 }
+            if (xs.isEmpty()) continue
+            val runs = ArrayList<IntArray>()
+            for (x in xs) {
+                if (runs.isNotEmpty() && x - runs.last()[1] <= w * 0.03) runs.last()[1] = x else runs.add(intArrayOf(x, x))
+            }
+            val best = runs.maxByOrNull { it[1] - it[0] } ?: continue
+            val left = best[0]
+            val right = best[1]
+            if (right - left < w * 0.25) continue
+            if (left < 12 || right + 12 >= w) continue
+            if (!white(bmp.getPixel(left - 12, y)) || !white(bmp.getPixel(right + 12, y))) continue
+            var filled = 0
+            var total = 0
+            for (x in left..right) {
+                val k = kind(bmp.getPixel(x, y))
+                if (k != 0) {
+                    total++
+                    if (k != 1) filled++
+                }
+            }
+            bars.add(Math.round(filled.toFloat() / total * 15))
+        }
+        return if (bars.size == 3) bars.toIntArray() else null
+    }
+
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         for (block in text.textBlocks) {
@@ -478,7 +544,8 @@ class FloatingOverlayService : Service() {
             // The WebView holds the Pokédex data; it answers through OverlayBus.pillUpdater.
             mainHandler.postDelayed(evalTimeout, EVAL_TIMEOUT_MS)
             evaluator(
-                JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines).toString()
+                JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines)
+                    .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).toString()
             )
             return
         }
