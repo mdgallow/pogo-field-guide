@@ -18,7 +18,13 @@ DIR="$HOME/.pogo-signing"
 KEYSTORE="$DIR/release-keystore.p12"
 PASSFILE="$DIR/password.txt"
 
-command -v openssl >/dev/null || { echo "openssl not found (use Git Bash)"; exit 1; }
+# Use the openssl bundled with Git for Windows (other copies on PATH often lack a config file).
+OPENSSL=openssl
+for cand in /mingw64/bin/openssl.exe /usr/bin/openssl.exe "/c/Program Files/Git/mingw64/bin/openssl.exe"; do
+  [ -x "$cand" ] && { OPENSSL="$cand"; break; }
+done
+"$OPENSSL" version >/dev/null 2>&1 || { echo "openssl not found (run this from Git Bash)"; exit 1; }
+echo "Using $OPENSSL ($("$OPENSSL" version))"
 command -v gh >/dev/null || { echo "GitHub CLI (gh) not found"; exit 1; }
 
 mkdir -p "$DIR"
@@ -28,13 +34,16 @@ if [ -f "$KEYSTORE" ] && [ -f "$PASSFILE" ]; then
   echo "Reusing the existing key in $DIR"
 else
   echo "Creating a new signing key in $DIR"
-  PASS=$(openssl rand -hex 24)
+  PASS=$("$OPENSSL" rand -hex 24)
+  echo "  1/3 generating RSA key + certificate"
   # MSYS_NO_PATHCONV stops Git Bash rewriting "/CN=..." into a Windows path.
-  MSYS_NO_PATHCONV=1 openssl req -x509 -newkey rsa:2048 -sha256 -days 10000 -nodes \
+  MSYS_NO_PATHCONV=1 "$OPENSSL" req -x509 -newkey rsa:2048 -sha256 -days 10000 -nodes \
     -keyout "$DIR/key.pem" -out "$DIR/cert.pem" \
-    -subj "/CN=PoGo Companion/O=PoGo Field Guide/C=US" 2>/dev/null
-  openssl pkcs12 -export -inkey "$DIR/key.pem" -in "$DIR/cert.pem" \
+    -subj "/CN=PoGo Companion/O=PoGo Field Guide/C=US"
+  echo "  2/3 packing the PKCS12 keystore"
+  "$OPENSSL" pkcs12 -export -inkey "$DIR/key.pem" -in "$DIR/cert.pem" \
     -name pogo-release -out "$KEYSTORE" -passout "pass:$PASS"
+  echo "  3/3 keystore written"
   rm -f "$DIR/key.pem" "$DIR/cert.pem"
   printf '%s' "$PASS" > "$PASSFILE"
 fi
