@@ -1,1 +1,1 @@
-{"versionCode": 19, "versionName": "2.2.6", "apk": "pogo-companion.apk", "notes": "Shadow Pokemon detected from their purple haze; shadow trade rules; pill no longer vanishes during AUTO."}
+{"versionCode": 20, "versionName": "2.2.7", "apk": "pogo-companion.apk", "notes": "Dynamax Pokemon detected from their badge and managed as their own pool (ranked only against other Dynamax, keep 3 by default, never trade)."}

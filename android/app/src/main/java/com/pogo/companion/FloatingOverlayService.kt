@@ -536,9 +536,10 @@ class FloatingOverlayService : Service() {
         val isStorage = looksLikeStorageCard(bitmap)
         val isFavorite = isStorage && looksFavorited(bitmap)
         val isShadow = isStorage && looksShadow(bitmap)
+        val isDynamax = isStorage && looksDynamax(bitmap)
         val ivs = if (isStorage) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow) }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -699,7 +700,37 @@ class FloatingOverlayService : Service() {
         return ring >= 0.45f && ring - edge >= 0.08f
     }
 
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false) {
+    /** Magenta round Dynamax badge under the height/weight row; same rule as looksDynamax() in index.html. */
+    private fun looksDynamax(bmp: Bitmap): Boolean {
+        val x0 = (bmp.width * 0.32).toInt()
+        val x1 = (bmp.width * 0.41).toInt()
+        val y0 = (bmp.height * 0.605).toInt()
+        val y1 = (bmp.height * 0.655).toInt()
+        var n = 0
+        var m = 0
+        for (y in y0 until y1 step 2) {
+            for (x in x0 until x1 step 2) {
+                val c = bmp.getPixel(x, y)
+                val r = (c shr 16 and 0xFF) / 255f
+                val g = (c shr 8 and 0xFF) / 255f
+                val b = (c and 0xFF) / 255f
+                val max = maxOf(r, g, b)
+                val d = max - minOf(r, g, b)
+                n++
+                if (max < 0.45f || d / max < 0.45f) continue
+                var hue = when (max) {
+                    r -> ((g - b) / d + 6f) % 6f
+                    g -> (b - r) / d + 2f
+                    else -> (r - g) / d + 4f
+                }
+                hue /= 6f
+                if (hue >= 0.88f || hue <= 0.02f) m++
+            }
+        }
+        return n > 0 && m.toFloat() / n >= 0.30f
+    }
+
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         for (block in text.textBlocks) {
@@ -724,7 +755,7 @@ class FloatingOverlayService : Service() {
             evaluator(
                 JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines)
                     .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).put("auto", auto)
-                    .put("shadow", isShadow).toString()
+                    .put("shadow", isShadow).put("dynamax", isDynamax).toString()
             )
             return
         }
