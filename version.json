@@ -1,1 +1,1 @@
-{"versionCode": 31, "versionName": "2.3.8", "apk": "pogo-companion.apk", "notes": "AUTO: new-card detection counts changed text samples instead of averaging, so swipes are noticed."}
+{"versionCode": 32, "versionName": "2.3.9", "apk": "pogo-companion.apk", "notes": "AUTO: new-card detection counts changed text samples (fix that 2.3.8 was meant to carry)."}

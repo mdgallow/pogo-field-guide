@@ -145,7 +145,8 @@ class FloatingOverlayService : Service() {
         private const val AUTO_TICK_MS = 1200L
         private const val AUTO_IDLE_STOP_MS = 30_000L
         private const val AUTO_MAX_MS = 10 * 60_000L
-        private const val AUTO_SIG_DIFF = 12 // mean luminance change (0-255) that counts as a new screen
+        private const val AUTO_SIG_DIFF = 12 // (legacy) mean luminance change
+        private const val AUTO_CHANGED_MIN = 6 // samples (of 400) that must flip to count as a new card
 
         @Volatile var isRunning = false
             private set
@@ -449,15 +450,15 @@ class FloatingOverlayService : Service() {
         val rs = plane.rowStride
         val w = image.width
         val h = image.height
-        val sig = IntArray(24 * 8)
+        // Text bands only (thin dark text on white): CP digits, name, HP line, stats row. Sampled
+        // densely (40 columns across the centre) so a different name or CP flips many samples.
+        val rows = doubleArrayOf(0.045, 0.058, 0.405, 0.415, 0.425, 0.452, 0.565, 0.58, 0.595, 0.61)
+        val sig = IntArray(40 * rows.size)
         var i = 0
-        for (gy in 0 until 8) {
-            // All rows on the white card, which the idling 3D model never touches:
-            // rows 0-3 the name / HP band (40-46%), rows 4-7 the stats / badge band (56-62%).
-            val y = if (gy < 4) (h * (0.40 + 0.02 * gy)).toInt() else (h * (0.56 + 0.02 * (gy - 4))).toInt()
-            for (gx in 0 until 24) {
-                // 24 columns over 69% of the width, on the side away from the pill
-                val x = (w * ((if (dockLeft) 0.26 else 0.05) + 0.03 * gx)).toInt()
+        for (gy in rows.indices) {
+            val y = (h * rows[gy]).toInt()
+            for (gx in 0 until 40) {
+                val x = (w * (0.28 + 0.011 * gx)).toInt()
                 val o = y * rs + x * ps
                 val r = buf.get(o).toInt() and 0xFF
                 val g = buf.get(o + 1).toInt() and 0xFF
@@ -467,15 +468,16 @@ class FloatingOverlayService : Service() {
         }
 
         val last = autoLastReadSig
-        val diff = if (last == null) 999 else meanDiff(last, sig)
-        if (last != null && diff <= AUTO_SIG_DIFF) { trail("same card (diff $diff)"); return }
+        // "Changed" = how many samples moved sharply (text appearing / vanishing), not the average.
+        val diff = if (last == null) 999 else changedCount(last, sig)
+        if (last != null && diff < AUTO_CHANGED_MIN) { trail("same card ($diff changed)"); return }
 
         val frame = imageToBitmap(image)
-        if (!looksLikeStorageCard(frame)) { trail("not a storage page (diff $diff)"); frame.recycle(); return }
+        if (!looksLikeStorageCard(frame)) { trail("not a storage page ($diff changed)"); frame.recycle(); return }
         autoLastReadSig = sig
         autoLastNewAt = System.currentTimeMillis()
         autoReads++
-        trail("new card (diff $diff): reading #$autoReads")
+        trail("new card ($diff changed): reading #$autoReads")
         mainHandler.post {
             pillView?.let { v ->
                 val loc = IntArray(2); v.getLocationOnScreen(loc)
@@ -485,6 +487,12 @@ class FloatingOverlayService : Service() {
             updateAutoButton()
         }
         runOcr(frame, auto = true)
+    }
+
+    private fun changedCount(a: IntArray, b: IntArray): Int {
+        var n = 0
+        for (i in a.indices) if (abs(a[i] - b[i]) > 40) n++
+        return n
     }
 
     private fun meanDiff(a: IntArray, b: IntArray): Int {
