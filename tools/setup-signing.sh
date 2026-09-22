@@ -36,13 +36,15 @@ else
   echo "Creating a new signing key in $DIR"
   PASS=$("$OPENSSL" rand -hex 24)
   echo "  1/3 generating RSA key + certificate"
-  # MSYS_NO_PATHCONV stops Git Bash rewriting "/CN=..." into a Windows path.
+  # MSYS_NO_PATHCONV stops Git Bash rewriting "/CN=..." into a Windows path, but it also stops
+  # it converting file paths, so those are handed over in Windows form.
+  WDIR=$(cygpath -m "$DIR")
   MSYS_NO_PATHCONV=1 "$OPENSSL" req -x509 -newkey rsa:2048 -sha256 -days 10000 -nodes \
-    -keyout "$DIR/key.pem" -out "$DIR/cert.pem" \
+    -keyout "$WDIR/key.pem" -out "$WDIR/cert.pem" \
     -subj "/CN=PoGo Companion/O=PoGo Field Guide/C=US"
   echo "  2/3 packing the PKCS12 keystore"
-  "$OPENSSL" pkcs12 -export -inkey "$DIR/key.pem" -in "$DIR/cert.pem" \
-    -name pogo-release -out "$KEYSTORE" -passout "pass:$PASS"
+  "$OPENSSL" pkcs12 -export -inkey "$WDIR/key.pem" -in "$WDIR/cert.pem" \
+    -name pogo-release -out "$(cygpath -m "$KEYSTORE")" -passout "pass:$PASS"
   echo "  3/3 keystore written"
   rm -f "$DIR/key.pem" "$DIR/cert.pem"
   printf '%s' "$PASS" > "$PASSFILE"
