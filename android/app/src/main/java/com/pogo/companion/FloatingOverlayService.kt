@@ -435,6 +435,7 @@ class FloatingOverlayService : Service() {
         if (changed) {
             // Screen is changing (mid-swipe): restart the settle and idle timers.
             autoWantFrame = false
+            mainHandler.post { pillView?.let { if (it.alpha < 1f && !scanRequested.get()) it.alpha = 1f } }
             mainHandler.removeCallbacks(autoSettle)
             mainHandler.postDelayed(autoSettle, AUTO_SETTLE_MS)
             mainHandler.removeCallbacks(autoIdleStop)
@@ -444,7 +445,10 @@ class FloatingOverlayService : Service() {
         if (!autoWantFrame) return
         autoWantFrame = false
         val logged = autoLoggedSig
-        if (logged != null && meanDiff(logged, sig) <= AUTO_SIG_DIFF) return   // same Pokémon as last time
+        if (logged != null && meanDiff(logged, sig) <= AUTO_SIG_DIFF) {  // same Pokémon as last time
+            mainHandler.post { pillView?.alpha = 1f }
+            return
+        }
         autoLoggedSig = sig
         val frame = imageToBitmap(image)
         if (looksLikeStorageCard(frame)) {
@@ -531,9 +535,10 @@ class FloatingOverlayService : Service() {
     private fun runOcr(bitmap: Bitmap, auto: Boolean = false) {
         val isStorage = looksLikeStorageCard(bitmap)
         val isFavorite = isStorage && looksFavorited(bitmap)
+        val isShadow = isStorage && looksShadow(bitmap)
         val ivs = if (isStorage) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto) }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -642,7 +647,59 @@ class FloatingOverlayService : Service() {
         return if (bars.size == 3) bars.toIntArray() else null
     }
 
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false) {
+    /**
+     * Shadow Pokémon are drawn with dark-violet flames hugging the body. Same rule as
+     * looksShadow() in index.html: the ring around the body is mostly dark violet and much
+     * more so than the screen edges (a purple night sky is uniform; Mewtwo's backdrop is bright).
+     */
+    private fun looksShadow(bmp: Bitmap): Boolean {
+        val w = bmp.width
+        val h = bmp.height
+        fun darkViolet(c: Int): Boolean {
+            val r = (c shr 16 and 0xFF) / 255f
+            val g = (c shr 8 and 0xFF) / 255f
+            val b = (c and 0xFF) / 255f
+            val max = maxOf(r, g, b)
+            val min = minOf(r, g, b)
+            val d = max - min
+            if (max < 0.18f || max > 0.62f || d / max < 0.35f) return false
+            var hue = when (max) {
+                r -> ((g - b) / d + 6f) % 6f
+                g -> (b - r) / d + 2f
+                else -> (r - g) / d + 4f
+            }
+            hue /= 6f
+            return hue in 0.68f..0.84f
+        }
+        var ringN = 0; var ringV = 0; var edgeN = 0; var edgeV = 0
+        var y = (h * 0.10).toInt()
+        while (y < (h * 0.34).toInt()) {
+            var x = (w * 0.22).toInt()
+            while (x < (w * 0.78).toInt()) {
+                if (!(x > w * 0.36 && x < w * 0.64 && y > h * 0.14 && y < h * 0.31)) {
+                    ringN++; if (darkViolet(bmp.getPixel(x, y))) ringV++
+                }
+                x += 3
+            }
+            y += 3
+        }
+        y = (h * 0.08).toInt()
+        while (y < (h * 0.34).toInt()) {
+            var x = (w * 0.02).toInt()
+            while (x < (w * 0.98).toInt()) {
+                if (x < w * 0.12 || x > w * 0.88) {
+                    edgeN++; if (darkViolet(bmp.getPixel(x, y))) edgeV++
+                }
+                x += 3
+            }
+            y += 3
+        }
+        val ring = ringV.toFloat() / maxOf(1, ringN)
+        val edge = edgeV.toFloat() / maxOf(1, edgeN)
+        return ring >= 0.45f && ring - edge >= 0.08f
+    }
+
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         for (block in text.textBlocks) {
@@ -666,7 +723,8 @@ class FloatingOverlayService : Service() {
             mainHandler.postDelayed(evalTimeout, EVAL_TIMEOUT_MS)
             evaluator(
                 JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines)
-                    .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).put("auto", auto).toString()
+                    .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).put("auto", auto)
+                    .put("shadow", isShadow).toString()
             )
             return
         }
