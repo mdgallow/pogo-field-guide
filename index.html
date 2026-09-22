@@ -739,8 +739,8 @@
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
   <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.3.4 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.3.4</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.3.5 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.3.5</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -753,7 +753,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.3.4</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.3.5</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -943,7 +943,7 @@
     <div style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
       Every Pokémon you scan in your storage is remembered on this device, recognised by its family and its exact height and weight, so renaming, powering up or favoriting it never confuses the pill. A favorited Pokémon is never marked DELETE, and neither is the strongest one you have scanned in a family. <span id="logCount" style="color:#38bdf8; font-weight:800;"></span>
     </div>
-    <div style="font-size:12px; margin-bottom:8px;">Keep the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> of each evolution family (per species for Great/Ultra League Pokémon, where the stage matters); the rest are marked <b style="color:#f87171;">SURPLUS</b>. Dynamax Pokémon are a separate pool (only they can enter Max Battles): keep the best <input id="keepNDmaxInput" type="number" min="1" max="20" value="3" onchange="setKeepNDynamax(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> Dynamax of each species. Luckies count as about 6 IV points better (half-price power-ups); a favorited surplus says <b style="color:#fbbf24;">FAVORITE?</b> instead of transfer; shinies are never surplus.</div>
+    <div style="font-size:12px; margin-bottom:8px;">Keep the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> of each evolution family (Great/Ultra League families rank by bulk: low attack, high defense and HP); the rest are marked <b style="color:#f87171;">SURPLUS</b>. Dynamax Pokémon are a separate pool (only they can enter Max Battles): keep the best <input id="keepNDmaxInput" type="number" min="1" max="20" value="3" onchange="setKeepNDynamax(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> Dynamax of each species. Luckies count as about 6 IV points better (half-price power-ups); a favorited surplus says <b style="color:#fbbf24;">FAVORITE?</b> instead of transfer; shinies are never surplus.</div>
     <div id="logSpecies"></div>
     <div id="logBody" style="max-height:40vh; overflow-y:auto;"></div>
     <details style="margin-top:8px; font-size:11px; color:var(--text-muted);"><summary style="cursor:pointer;">Last scan details (for troubleshooting)</summary><pre id="lastScanDebug" style="white-space:pre-wrap; background:#0f172a; padding:6px; border-radius:6px; max-height:30vh; overflow:auto;"></pre></details>
@@ -981,7 +981,7 @@
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #34d399;">
           <b>4. On a Pokémon in your storage</b> it answers <b>VERDICT</b> (DELETE, KEEP, TRADE, KEEP BEST, CHECK FIRST), <b>IV CHECK</b> and <b>REASON</b>. Nicknames do not matter: with the appraisal open it reads the “This Sandslash was caught…” banner (which always names the real species and the catch date); otherwise the candy name, the CP and the EVOLVE button. So “Robot 39” or a Charizard still called “Charmander 44” are identified correctly.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
-          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by its family plus its exact height and weight. That is how the pill protects the ones that matter: anything you <b>favorited</b> in the game always says KEEP, and the <b>strongest of a family</b> you have scanned never says DELETE. <b>Appraise once, remembered forever:</b> open the in-game appraisal (the three stat bars) and tap SCAN. The pill reads the exact IVs from the bars, saves them, and from then on shows them on every scan of that Pokémon as <b>15/14/15 · 98% (SAVED)</b>, whatever its name or CP becomes. A perfect always says KEEP · PERFECT 4★. Lucky and shadow are read from the page (the purple haze around a shadow, confirmed by its PURIFY button); tick <b>shiny</b> in My Log yourself (a shiny never says DELETE). A shadow can’t be traded until purified, so it never says TRADE; for raid species its +20% attack makes it the form to keep and power up. Dynamax Pokémon (read from their badge) are managed as their own pool: only they can enter Max Battles, they can’t be traded, and they are ranked only against other Dynamax of the same species (keep the best 3 by default). <b>Catalogue a whole box fast:</b> open one Pokémon, open its appraisal, tap <b>AUTO</b> on the pill, then just swipe left/right through your Pokémon. Each one is read and logged as it settles on screen, with no taps. AUTO switches itself off after 30 seconds without a new Pokémon, after 10 minutes, or when you leave the storage page, so it never runs in the background. Once logged, each scan tells you where that Pokémon ranks in its evolution family (<b>#2 OF 40 CHARMANDER FAMILY</b> — a perfect Charmander is a future perfect Charizard, so the family is what you manage; League Pokémon rank per species) and marks anything beyond your top 6 as <b>SURPLUS</b> — or, when the family is worth candy (a Charmander with perfect Charizards to max), as <b>TRADE FOR CANDY</b> with the goal spelled out. Luckies rank about 6 IV points higher than their bars (3 for legendaries, whose limit is XL candy) because half-price power-ups take them further; favorites below the cut get <b>FAVORITE?</b> advice instead of transfer. For Great/Ultra League species the ranking prefers low attack with high defense and HP: under the CP cap that build reaches a higher level and has more bulk. Open <b>My Log</b> to see the list per species, change the 6, or make a backup. Uninstalling the app erases the log, so back it up first.</div>
+          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by its family plus its exact height and weight. That is how the pill protects the ones that matter: anything you <b>favorited</b> in the game always says KEEP, and the <b>strongest of a family</b> you have scanned never says DELETE. <b>Appraise once, remembered forever:</b> open the in-game appraisal (the three stat bars) and tap SCAN. The pill reads the exact IVs from the bars, saves them, and from then on shows them on every scan of that Pokémon as <b>15/14/15 · 98% (SAVED)</b>, whatever its name or CP becomes. A perfect always says KEEP · PERFECT 4★. Lucky and shadow are read from the page (the purple haze around a shadow, confirmed by its PURIFY button); tick <b>shiny</b> in My Log yourself (a shiny never says DELETE). A shadow can’t be traded until purified, so it never says TRADE; for raid species its +20% attack makes it the form to keep and power up. Dynamax Pokémon (read from their badge) are managed as their own pool: only they can enter Max Battles, they can’t be traded, and they are ranked only against other Dynamax of the same species (keep the best 3 by default). <b>Catalogue a whole box fast:</b> open one Pokémon, open its appraisal, tap <b>AUTO</b> on the pill, then just swipe left/right through your Pokémon. Each one is read and logged as it settles on screen, with no taps. AUTO switches itself off after 30 seconds without a new Pokémon, after 10 minutes, or when you leave the storage page, so it never runs in the background. Once logged, each scan tells you where that Pokémon ranks in its evolution family (<b>#2 OF 40 CHARMANDER FAMILY</b> — a perfect Charmander is a future perfect Charizard, so the family is what you manage; League families rank by bulk, so a 0/15/15 Marill is a future top Azumarill) and marks anything beyond your top 6 as <b>SURPLUS</b> — or, when the family is worth candy (a Charmander with perfect Charizards to max), as <b>TRADE FOR CANDY</b> with the goal spelled out. Luckies rank about 6 IV points higher than their bars (3 for legendaries, whose limit is XL candy) because half-price power-ups take them further; favorites below the cut get <b>FAVORITE?</b> advice instead of transfer. For Great/Ultra League species the ranking prefers low attack with high defense and HP: under the CP cap that build reaches a higher level and has more bulk. Open <b>My Log</b> to see the list per species, change the 6, or make a backup. Uninstalling the app erases the log, so back it up first.</div>
       </div>
     </div>
 
@@ -1544,7 +1544,7 @@ function setKeepN(v) { localStorage.setItem(KEEP_N_KEY, String(Math.max(1, Math.
 // L40, so their lucky edge is smaller. Under a league CP cap levels are cheap, so no bonus.
 function luckyBonus(p) {
   if (!p) return 0;
-  if (p.act.includes('PvP') && (p.max_cp || 0) > 1500) return 0;
+  if (POKEMON_DATA.some(q => q.familyRoot === p.familyRoot && q.act.includes('PvP') && (q.max_cp || 0) > 1500)) return 0;
   return p.isLegendary ? 3 : 6;
 }
 
@@ -1555,19 +1555,20 @@ function entryScore(e) {
   if (!e.ivs) return cp;                                     // unappraised: below all appraised
   const [a, d, h] = e.ivs;
   const p = POKEMON_DATA.find(x => x.name === e.species);
-  const leagueCapped = p && p.act.includes('PvP') && (p.max_cp || 0) > 1500;
+  const leagueCapped = p && POKEMON_DATA.some(q => q.familyRoot === p.familyRoot && q.act.includes('PvP') && (q.max_cp || 0) > 1500);
   const base = leagueCapped ? (d + h) * 2 - a * 0.5 : a + d + h;
   const evolved = p && p.isEvolvedForm ? 10000 : 0;
   return (base + (e.lucky ? luckyBonus(p) : 0)) * 100000 + evolved + cp;
 }
 
 // The unit of "how many do I need" is the evolution family: IVs carry through evolution, so a
-// perfect Charmander is a future perfect Charizard. Exceptions: league-capped PvP species (a
-// Charmeleon is not a Great League Charizard) and Dynamax (its own pool) rank per species.
+// perfect Charmander is a future perfect Charizard, and a low-attack Marill is a future
+// Great League Azumarill (league families score the whole family with the bulk formula).
+// Only Dynamax ranks per species (its own pool).
 function poolOf(species, dynamax = false) {
   const p = POKEMON_DATA.find(x => x.name === species);
   const family = p ? POKEMON_DATA.filter(q => q.familyRoot === p.familyRoot) : [];
-  const perSpecies = dynamax || family.some(q => q.act.includes('PvP') && (q.max_cp || 0) > 1500);
+  const perSpecies = dynamax;
   return { key: perSpecies ? species : (p ? p.familyRoot : species), perSpecies,
     members: new Set(perSpecies ? [species] : family.map(q => q.name)) };
 }
