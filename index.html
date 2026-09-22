@@ -719,6 +719,7 @@
   <div style="margin-top: 8px;">The top of the pill shows which screen it saw (<b>CATCH</b> or <b>STORAGE</b>), the Pokémon it read, and its CP. Below that are three answers:</div>
   <div style="margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px;">
     <div><b style="color:#fbbf24;">1. BERRY</b> (catch screen) – which berry to throw: Pinap, Silver Pinap, Razz, Golden Razz, or No Berry. A Pinap doubles candy but does nothing for the catch, so when the Pokémon is hard to catch at this CP (every starter is, for example) the pill says <b>RAZZ BERRY (TOO HARD FOR PINAP)</b> instead of letting you burn balls.<br>
+      <b style="color:#fbbf24;">Colours:</b> <b style="color:#fbbf24;">gold</b> = keep and invest (top of its species, 44/45, lucky to power up) · <b style="color:#c084fc;">purple</b> = keep · <b style="color:#e2e8f0;">white</b> = look before you act (check first, favorite?, not appraised) · <b style="color:#f87171;">red</b> = transfer · <b style="color:#94a3b8;">grey</b> = no verdict.<br>
       <b style="color:#fbbf24;">1. VERDICT</b> (storage screen) – <b>DELETE</b>, <b>KEEP</b>, <b>TRADE</b>, <b>KEEP BEST</b> (keep your best one to evolve, transfer the rest) or <b>CHECK FIRST</b> (the CP might be perfect, or it is the strongest of its family you have scanned: look before deleting), or <b>SURPLUS</b> (you have logged more of this species than you need; this one ranks below your top 6). A favorited Pokémon is never told to transfer, but if it ranks below your top 6 the pill says <b>FAVORITE? · STILL WORTH THE STAR?</b> so an old star does not hide a weak Pokémon. A lucky one is never told to trade (it has used its one trade) and says <b>LUCKY · POWER UP FIRST</b>: half-price power-ups let even a lucky 37 out-perform a normal 45 at any stardust budget short of level 50, so invest in the lucky first and keep the 45 as the level-50 build. Everything scanned in storage is remembered in <b>My Log</b>.</div>
     <div><b style="color:#38bdf8;">BALL</b> (catch screen) – which ball to throw, from the game’s real catch rate for that species and how high its CP is: <b>POKÉ BALL (EASY)</b>, <b>GREAT BALL (MEDIUM)</b>, <b>ULTRA BALL (HARD)</b>. A possible perfect always says Ultra Ball.<br>
       Legendaries: <b>SAVE YOUR MASTER BALL</b> unless it is <b>PERFECT 100%</b> and you are on your last balls. A 98% is within 1% of perfect and not worth it. Roaming Galarian birds are the exception: <b>MASTER BALL NOW</b>, they run after one throw.</div>
@@ -738,8 +739,8 @@
 <div style="max-width: 1400px; margin: 0 auto 10px auto; padding: 0 4px; display: flex; flex-direction: column; gap: 8px;">
   <a id="apkDownloadLink" href="./pogo-companion.apk" download="pogo-companion.apk" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 2px solid #34d399; border-radius: 14px; padding: 12px 16px; font-weight: 900; font-size: 13.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); text-transform: uppercase; letter-spacing: 0.5px; box-sizing: border-box;">
     <span style="font-size: 20px;">🤖</span>
-    <span>DOWNLOAD STANDALONE ANDROID APK v2.2.8 (CALCY IV STYLE PILL)</span>
-    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.2.8</span>
+    <span>DOWNLOAD STANDALONE ANDROID APK v2.2.9 (CALCY IV STYLE PILL)</span>
+    <span style="font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 700; color: #f0fdf4;">NATIVE OVERLAY v2.2.9</span>
   </a>
 
   <button id="launchMiniHudHeroBtn" onclick="launchMiniFloatingOverlay()" style="width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: 2px solid #38bdf8; border-radius: 14px; padding: 10px 16px; font-weight: 900; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.1s ease;">
@@ -752,7 +753,7 @@
 <div class="header-box">
   <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
     <div class="app-title">
-      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.2.8</span></h1>
+      <h1>PoGo Mobile Companion <span style="font-size:12px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px; vertical-align:middle; border:1px solid rgba(56,189,248,0.4); font-weight:800;">v2.2.9</span></h1>
       <p>1,401 Pokémon • 45 Hundos & 44 Priority • 0-2★ Actions • Field Berry Guide</p>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -1801,9 +1802,28 @@ function getGuidance(p, matchInfo) {
     g = { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎', reason: 'APPRAISE BEFORE DELETING', next: 'APPRAISE IT' };
   }
   g = applyLogContext(g, p);
+  g.color = verdictColor(g, p);
   g.isDelete = g.verdict === 'DELETE' || g.verdict === 'SURPLUS';
   g.isSuggestion = g.verdict === 'FAVORITE?';
   return g;
+}
+
+// Colour = the decision, so a glance is enough. Gold: keep and invest. Purple: keep. White:
+// look before you act. Red: transfer. Grey: no verdict. (Never red-vs-green; the word is always there.)
+const TIER_COLORS = { gold: '#fbbf24', purple: '#c084fc', white: '#e2e8f0', red: '#f87171', grey: '#94a3b8' };
+function verdictColor(g, p) {
+  const c = scanContext && scanContext.species === p.name ? scanContext : null;
+  const ivTotal = c && c.ivs ? c.ivs[0] + c.ivs[1] + c.ivs[2] : 0;
+  const reason = g.reason || '';
+  if (g.verdict === 'DELETE' || g.verdict === 'SURPLUS') return TIER_COLORS.red;
+  if (g.verdict === 'CHECK FIRST' || g.verdict === 'FAVORITE?' || scanMatchAmbiguous) return TIER_COLORS.white;
+  if (g.verdict === 'KEEP' || g.verdict === 'TRADE' || g.verdict === 'KEEP BEST') {
+    const top = (c && c.rank === 1 && c.ofSpecies >= 2) || ivTotal >= 44 || /PERFECT|POWER UP FIRST/.test(reason);
+    if (top) return TIER_COLORS.gold;
+    if (c && c.rank && c.ofSpecies >= 2 && !c.appraised) return TIER_COLORS.white; // not appraised yet
+    return TIER_COLORS.purple;
+  }
+  return TIER_COLORS.grey;
 }
 
 function actionBadgeHtml(p) {
