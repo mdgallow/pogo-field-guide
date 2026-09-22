@@ -17,10 +17,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // CI writes ../release-keystore.p12: the permanent key when the KEYSTORE_BASE64 /
-    // KEYSTORE_PASSWORD repo secrets exist (see tools/setup-signing.sh), otherwise a throwaway.
-    // Only builds signed with the permanent key can be installed over each other.
-    val releaseKeystore = file("../release-keystore.p12")
+    // CI writes the keystore OUTSIDE the repo tree (KEYSTORE_FILE, in the runner's temp dir) so a
+    // Pages deploy of the working tree can never publish it: the permanent key when the
+    // KEYSTORE_BASE64 / KEYSTORE_PASSWORD secrets exist (see tools/setup-signing.sh), otherwise
+    // a throwaway. Only builds signed with the permanent key install over each other.
+    val releaseKeystore = file(System.getenv("KEYSTORE_FILE") ?: "../release-keystore.p12")
     signingConfigs {
         create("release") {
             if (releaseKeystore.exists()) {

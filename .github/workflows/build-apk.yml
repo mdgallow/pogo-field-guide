@@ -35,13 +35,15 @@ jobs:
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Using the permanent signing key from repo secrets"
-            echo "$KEYSTORE_BASE64" | base64 -d > android/release-keystore.p12
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release-keystore.p12"
             echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release-keystore.p12" >> "$GITHUB_ENV"
           else
             echo "::warning::No signing secrets set (run tools/setup-signing.sh once). Using a throwaway key: this APK cannot be installed over any other build."
             THROWAWAY=$(openssl rand -hex 16)
-            keytool -genkeypair -keystore android/release-keystore.p12 -storetype PKCS12               -alias pogo-release -keyalg RSA -keysize 2048 -validity 10000               -storepass "$THROWAWAY" -keypass "$THROWAWAY"               -dname "CN=PoGo Companion, OU=Mobile, O=PoGo Field Guide, C=US"
+            keytool -genkeypair -keystore "$RUNNER_TEMP/release-keystore.p12" -storetype PKCS12               -alias pogo-release -keyalg RSA -keysize 2048 -validity 10000               -storepass "$THROWAWAY" -keypass "$THROWAWAY"               -dname "CN=PoGo Companion, OU=Mobile, O=PoGo Field Guide, C=US"
             echo "KEYSTORE_PASSWORD=$THROWAWAY" >> "$GITHUB_ENV"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release-keystore.p12" >> "$GITHUB_ENV"
           fi
 
       - name: Build Android Release APK
