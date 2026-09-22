@@ -184,6 +184,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         @JavascriptInterface
+        fun autoTrail(): String = OverlayBus.autoTrail
+
+        @JavascriptInterface
         fun checkForUpdate() {
             runOnUiThread { UpdateChecker.check(this@MainActivity, manual = true) }
         }

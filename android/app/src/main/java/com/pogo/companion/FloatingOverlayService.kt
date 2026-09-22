@@ -77,39 +77,28 @@ class FloatingOverlayService : Service() {
     private val scanRequested = AtomicBoolean(false)
 
     // AUTO (catalogue) mode: log Pokémon as the player swipes through the appraisal view.
-    // Budgeted so it can never become a battery problem: frames are only looked at every
-    // AUTO_SAMPLE_MS, a look is a ~200-pixel fingerprint read straight from the capture buffer
-    // (no bitmap copy), and OCR runs once per new, settled Pokémon. Stops itself when idle.
+    // Deliberately simple: every AUTO_TICK_MS the pill nudges its opacity by 1% (forces one fresh
+    // frame from the mirror), that frame's card fingerprint is compared with the last one read,
+    // and only a new card is OCR'd. Stops itself when idle or after AUTO_MAX_MS.
     @Volatile private var autoMode = false
-    private var autoLastSampleAt = 0L
-    private var autoLastSig: IntArray? = null
-    private var autoLoggedSig: IntArray? = null
-    /** Set by the settle timer: the next frame that arrives is the one to read. */
     @Volatile private var autoWantFrame = false
-
-    // The mirror only sends frames while the screen changes, so "settled" has to be a timer:
-    // when the fingerprint has not changed for AUTO_SETTLE_MS, nudge the pill's opacity by 1%
-    // (invisible, but it forces one fresh frame) and read that frame. The pill stays visible
-    // during AUTO; any OCR text under it is dropped by position in evaluate().
-    private val autoSettle = Runnable {
-        if (!autoMode) return@Runnable
-        autoWantFrame = true
-        pillView?.let { it.alpha = if (it.alpha >= 1f) 0.99f else 1f }
-    }
-    private val autoIdleStop = Runnable { setAutoMode(false) }
-    private val autoMaxStop = Runnable { setAutoMode(false) }
-    private val scanTimeout = Runnable {
-        if (scanRequested.compareAndSet(true, false)) {
-            Log.w(TAG, "No frame arrived for scan")
-            finishScan(PillState.message("STANDBY", "NO PICTURE", "TAP SCAN AGAIN"))
+    private var autoLastReadSig: IntArray? = null
+    private var autoReads = 0
+    private var autoLastNewAt = 0L
+    private val autoTrail = ArrayDeque<String>()   // last ~40 AUTO events, shown in My Log
+    private val autoTick = object : Runnable {
+        override fun run() {
+            if (!autoMode) return
+            val now = System.currentTimeMillis()
+            if (now - autoLastNewAt > AUTO_IDLE_STOP_MS) { trail("idle 30s: off"); setAutoMode(false); return }
+            autoWantFrame = true
+            pillView?.let { it.alpha = if (it.alpha >= 1f) 0.99f else 1f }
+            mainHandler.postDelayed(this, AUTO_TICK_MS)
+            // No frame within the tick = the mirror gave nothing; say so in the trail.
+            mainHandler.postDelayed({ if (autoWantFrame) { autoWantFrame = false; trail("no frame") } }, AUTO_TICK_MS - 100)
         }
     }
-
-    /** Guards against the backgrounded WebView never answering an evaluation request. */
-    private val evalTimeout = Runnable {
-        Log.w(TAG, "WebView did not answer the evaluation request")
-        showStandby()
-    }
+    private val autoMaxStop = Runnable { trail("10 min: off"); setAutoMode(false) }
 
     private val projectionCallback = object : MediaProjection.Callback() {
         override fun onStop() {
@@ -140,8 +129,7 @@ class FloatingOverlayService : Service() {
         private const val SCAN_TIMEOUT_MS = 1500L
         private const val PILL_HIDE_MS = 150L
         private const val EVAL_TIMEOUT_MS = 4000L
-        private const val AUTO_SAMPLE_MS = 250L
-        private const val AUTO_SETTLE_MS = 350L
+        private const val AUTO_TICK_MS = 1200L
         private const val AUTO_IDLE_STOP_MS = 30_000L
         private const val AUTO_MAX_MS = 10 * 60_000L
         private const val AUTO_SIG_DIFF = 12 // mean luminance change (0-255) that counts as a new screen
@@ -401,25 +389,37 @@ class FloatingOverlayService : Service() {
     private fun setAutoMode(on: Boolean) {
         if (on && mediaProjection == null) { requestScan(); return }
         autoMode = on
-        autoLastSig = null
-        autoLoggedSig = null
         autoWantFrame = false
-        mainHandler.removeCallbacks(autoSettle)
-        mainHandler.removeCallbacks(autoIdleStop)
+        autoLastReadSig = null
+        autoReads = 0
+        autoLastNewAt = System.currentTimeMillis()
+        mainHandler.removeCallbacks(autoTick)
         mainHandler.removeCallbacks(autoMaxStop)
         if (on) {
-            mainHandler.postDelayed(autoIdleStop, AUTO_IDLE_STOP_MS)
+            trail("on")
+            mainHandler.postDelayed(autoTick, 300)
             mainHandler.postDelayed(autoMaxStop, AUTO_MAX_MS)
         }
         mainHandler.post {
-            if (!on) mainHandler.removeCallbacks(autoSettle)
             pillView?.let { if (it.alpha < 1f && !scanRequested.get()) it.alpha = 1f }
-            pillView?.findViewById<TextView>(R.id.pillAutoBtn)?.apply {
-                text = if (on) "AUTO ON" else "AUTO"
-                setTextColor(if (on) 0xFF34D399.toInt() else 0xFF94A3B8.toInt())
-            }
+            updateAutoButton()
         }
         Log.i(TAG, "AUTO mode ${if (on) "on" else "off"}")
+    }
+
+    private fun updateAutoButton() {
+        pillView?.findViewById<TextView>(R.id.pillAutoBtn)?.apply {
+            text = if (autoMode) "AUTO · $autoReads read" else "AUTO"
+            setTextColor(if (autoMode) 0xFF34D399.toInt() else 0xFF94A3B8.toInt())
+        }
+    }
+
+    private fun trail(msg: String) {
+        synchronized(autoTrail) {
+            autoTrail.addLast("${java.text.SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.US).format(java.util.Date())} $msg")
+            while (autoTrail.size > 40) autoTrail.removeFirst()
+        }
+        OverlayBus.autoTrail = synchronized(autoTrail) { autoTrail.joinToString("\n") }
     }
 
     /**
@@ -427,9 +427,8 @@ class FloatingOverlayService : Service() {
      * sample per AUTO_SAMPLE_MS, each a 24x8 luminance grid over the CP arc and name band.
      */
     private fun autoSample(image: Image) {
-        val now = System.currentTimeMillis()
-        if (!autoWantFrame && now - autoLastSampleAt < AUTO_SAMPLE_MS) return
-        autoLastSampleAt = now
+        if (!autoWantFrame) return
+        autoWantFrame = false
 
         val plane = image.planes[0]
         val buf = plane.buffer
@@ -454,41 +453,25 @@ class FloatingOverlayService : Service() {
             }
         }
 
-        val prev = autoLastSig
-        autoLastSig = sig
-        val changed = !autoWantFrame && (prev == null || meanDiff(prev, sig) > AUTO_SIG_DIFF)
-        if (changed) {
-            // Screen is changing (mid-swipe): restart the settle and idle timers.
-            autoWantFrame = false
-            mainHandler.post { pillView?.let { if (it.alpha < 1f && !scanRequested.get()) it.alpha = 1f } }
-            mainHandler.removeCallbacks(autoSettle)
-            mainHandler.postDelayed(autoSettle, AUTO_SETTLE_MS)
-            mainHandler.removeCallbacks(autoIdleStop)
-            mainHandler.postDelayed(autoIdleStop, AUTO_IDLE_STOP_MS)
-            return
-        }
-        if (!autoWantFrame) return
-        autoWantFrame = false
-        val logged = autoLoggedSig
-        if (logged != null && meanDiff(logged, sig) <= AUTO_SIG_DIFF) {  // same Pokémon as last time
-            mainHandler.post { pillView?.alpha = 1f }
-            return
-        }
-        autoLoggedSig = sig
+        val last = autoLastReadSig
+        val diff = if (last == null) 999 else meanDiff(last, sig)
+        if (last != null && diff <= AUTO_SIG_DIFF) { trail("same card (diff $diff)"); return }
+
         val frame = imageToBitmap(image)
-        if (looksLikeStorageCard(frame)) {
-            mainHandler.post {
-                pillView?.let { v ->
-                    val loc = IntArray(2); v.getLocationOnScreen(loc)
-                    pillRectOnScreen = android.graphics.Rect(loc[0], loc[1], loc[0] + v.width, loc[1] + v.height)
-                }
-                showPillReading()
+        if (!looksLikeStorageCard(frame)) { trail("not a storage page (diff $diff)"); frame.recycle(); return }
+        autoLastReadSig = sig
+        autoLastNewAt = System.currentTimeMillis()
+        autoReads++
+        trail("new card (diff $diff): reading #$autoReads")
+        mainHandler.post {
+            pillView?.let { v ->
+                val loc = IntArray(2); v.getLocationOnScreen(loc)
+                pillRectOnScreen = android.graphics.Rect(loc[0], loc[1], loc[0] + v.width, loc[1] + v.height)
             }
-            runOcr(frame, auto = true)
-        } else {
-            frame.recycle()
-            mainHandler.post { pillView?.alpha = 1f }
+            showPillReading()
+            updateAutoButton()
         }
+        runOcr(frame, auto = true)
     }
 
     private fun meanDiff(a: IntArray, b: IntArray): Int {
@@ -515,6 +498,8 @@ class FloatingOverlayService : Service() {
     private fun releaseCapture() {
         isCapturing = false
         autoMode = false
+        mainHandler.removeCallbacks(autoTick)
+        mainHandler.removeCallbacks(autoMaxStop)
         scanRequested.set(false)
         mainHandler.removeCallbacks(scanTimeout)
         mainHandler.removeCallbacks(evalTimeout)
@@ -826,6 +811,7 @@ class FloatingOverlayService : Service() {
         val mode = state.mode.uppercase()
 
         v.findViewById<TextView>(R.id.pillScanBtn)?.text = "SCAN"
+        updateAutoButton()
         v.findViewById<TextView>(R.id.pillModeBadge)?.text = mode
         setTextOrHide(v.findViewById(R.id.pillTargetLabel), state.target, 0xFFFFFFFF.toInt())
 

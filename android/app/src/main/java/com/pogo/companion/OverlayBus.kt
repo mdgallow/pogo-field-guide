@@ -25,6 +25,9 @@ object OverlayBus {
     /** Set by the service: pushes evaluated slot data onto the pill. */
     @Volatile var pillUpdater: ((PillState) -> Unit)? = null
 
+    /** Last AUTO events (newest last), for the troubleshooting panel in My Log. */
+    @Volatile var autoTrail: String = ""
+
     /** Set by the service: hides the pill while the full app is on screen. */
     @Volatile var pillVisibility: ((Boolean) -> Unit)? = null
 }
