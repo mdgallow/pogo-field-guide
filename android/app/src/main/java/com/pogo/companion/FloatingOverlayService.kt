@@ -100,6 +100,19 @@ class FloatingOverlayService : Service() {
     }
     private val autoMaxStop = Runnable { trail("10 min: off"); setAutoMode(false) }
 
+    private val scanTimeout = Runnable {
+        if (scanRequested.compareAndSet(true, false)) {
+            Log.w(TAG, "No frame arrived for scan")
+            finishScan(PillState.message("STANDBY", "NO PICTURE", "TAP SCAN AGAIN"))
+        }
+    }
+
+    /** Guards against the backgrounded WebView never answering an evaluation request. */
+    private val evalTimeout = Runnable {
+        Log.w(TAG, "WebView did not answer the evaluation request")
+        showStandby()
+    }
+
     private val projectionCallback = object : MediaProjection.Callback() {
         override fun onStop() {
             // System or user revoked capture (e.g. screen lock on Android 14+).
