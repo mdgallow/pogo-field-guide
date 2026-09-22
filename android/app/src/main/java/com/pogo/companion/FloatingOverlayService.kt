@@ -56,6 +56,7 @@ class FloatingOverlayService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var params: WindowManager.LayoutParams
     private var pillView: View? = null
+    @Volatile private var dockLeft = false
 
     private var screenWidth = 1080
     private var screenHeight = 2340
@@ -127,6 +128,9 @@ class FloatingOverlayService : Service() {
 
         private const val PREFS = "pogo_overlay"
         private const val PREF_PILL_Y = "pill_y"
+        private const val PREF_PILL_SIDE = "pill_side"   // "right" (default) or "left"
+        /** Default vertical position: where testing settled on, top of the pill ~57% down the screen. */
+        private const val DEFAULT_PILL_Y_FRACTION = 0.57f
         private const val PILL_WIDTH_DP = 80
         private const val CAPTION_COLOR = 0xFF94A3B8.toInt()
         private const val DEFAULT_VALUE_COLOR = 0xFFE2E8F0.toInt()
@@ -252,10 +256,13 @@ class FloatingOverlayService : Service() {
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
-            // Docked to the right edge; only the vertical position is draggable.
-            gravity = Gravity.TOP or Gravity.END
+            // Docked to one edge (right by default, left for left-handed players: drag it across).
+            // Vertical position is draggable and remembered.
+            val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+            dockLeft = prefs.getString(PREF_PILL_SIDE, "right") == "left"
+            gravity = Gravity.TOP or (if (dockLeft) Gravity.START else Gravity.END)
             x = 10
-            y = getSharedPreferences(PREFS, MODE_PRIVATE).getInt(PREF_PILL_Y, 350)
+            y = prefs.getInt(PREF_PILL_Y, (screenHeight * DEFAULT_PILL_Y_FRACTION).toInt())
         }
 
         // Dragging works from anywhere on the pill; a touch that doesn't move is a tap.
@@ -273,6 +280,7 @@ class FloatingOverlayService : Service() {
         val touchSlop = ViewConfiguration.get(this).scaledTouchSlop
         var startY = 0
         var touchStartY = 0f
+        var touchStartX = 0f
         var dragging = false
 
         view.setOnTouchListener { v, event ->
@@ -280,12 +288,14 @@ class FloatingOverlayService : Service() {
                 MotionEvent.ACTION_DOWN -> {
                     startY = params.y
                     touchStartY = event.rawY
+                    touchStartX = event.rawX
                     dragging = false
                     v.isPressed = true
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val dy = (event.rawY - touchStartY).toInt()
-                    if (dragging || abs(dy) > touchSlop) {
+                    val dx = (event.rawX - touchStartX).toInt()
+                    if (dragging || abs(dy) > touchSlop || abs(dx) > touchSlop) {
                         dragging = true
                         v.isPressed = false
                         val maxY = (screenHeight - (pillView?.height ?: 0)).coerceAtLeast(0)
@@ -296,7 +306,18 @@ class FloatingOverlayService : Service() {
                 MotionEvent.ACTION_UP -> {
                     v.isPressed = false
                     if (dragging) {
-                        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(PREF_PILL_Y, params.y).apply()
+                        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+                        prefs.edit().putInt(PREF_PILL_Y, params.y).apply()
+                        // Dragged well past the middle of the screen: dock on the other side.
+                        val toLeft = event.rawX < screenWidth * 0.4f
+                        val toRight = event.rawX > screenWidth * 0.6f
+                        if ((toLeft && !dockLeft) || (toRight && dockLeft)) {
+                            dockLeft = toLeft
+                            params.gravity = Gravity.TOP or (if (dockLeft) Gravity.START else Gravity.END)
+                            pillView?.let { windowManager.updateViewLayout(it, params) }
+                            prefs.edit().putString(PREF_PILL_SIDE, if (dockLeft) "left" else "right").apply()
+                            vibrateTap()
+                        }
                     } else if (onTap != null) {
                         v.performClick()
                         vibrateTap()
@@ -420,7 +441,8 @@ class FloatingOverlayService : Service() {
             // rows 0-3 sample the CP arc (top 3-12%), rows 4-7 the name band (40-46%)
             val y = if (gy < 4) (h * (0.03 + 0.0225 * gy)).toInt() else (h * (0.40 + 0.015 * (gy - 4))).toInt()
             for (gx in 0 until 24) {
-                val x = (w * (0.05 + 0.03 * gx)).toInt()   // 5%..74%: stays clear of the pill
+                // 24 columns over 69% of the width, on the side away from the pill
+                val x = (w * ((if (dockLeft) 0.26 else 0.05) + 0.03 * gx)).toInt()
                 val o = y * rs + x * ps
                 val r = buf.get(o).toInt() and 0xFF
                 val g = buf.get(o + 1).toInt() and 0xFF

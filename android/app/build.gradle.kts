@@ -11,8 +11,8 @@ android {
         applicationId = "com.pogo.companion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 20
-        versionName = "2.2.7"
+        versionCode = 21
+        versionName = "2.2.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

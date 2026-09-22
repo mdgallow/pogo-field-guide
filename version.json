@@ -1,1 +1,1 @@
-{"versionCode": 20, "versionName": "2.2.7", "apk": "pogo-companion.apk", "notes": "Dynamax Pokemon detected from their badge and managed as their own pool (ranked only against other Dynamax, keep 3 by default, never trade)."}
+{"versionCode": 21, "versionName": "2.2.8", "apk": "pogo-companion.apk", "notes": "Pill defaults to the tested position; drag it across the screen to dock on the left."}
