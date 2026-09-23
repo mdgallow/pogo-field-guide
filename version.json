@@ -1,1 +1,1 @@
-{"versionCode": 32, "versionName": "2.3.9", "apk": "pogo-companion.apk", "notes": "AUTO: new-card detection counts changed text samples (fix that 2.3.8 was meant to carry)."}
+{"versionCode": 33, "versionName": "2.3.10", "apk": "pogo-companion.apk", "notes": "Log identity: same species + CP + IVs is the same Pokemon; integer kg/m parse; no duplicate entries when size is unreadable."}
