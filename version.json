@@ -1,1 +1,1 @@
-{"versionCode": 33, "versionName": "2.3.10", "apk": "pogo-companion.apk", "notes": "Log identity: same species + CP + IVs is the same Pokemon; integer kg/m parse; no duplicate entries when size is unreadable."}
+{"versionCode": 34, "versionName": "2.3.11", "apk": "pogo-companion.apk", "notes": "Log identity is scored across species, size, CP, IVs, catch date and place; no duplicate entries when a clue is hidden or misread."}

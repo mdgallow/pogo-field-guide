@@ -1470,8 +1470,8 @@ function parseStorageDetails(statsText, dateText) {
   const num = m => (m ? parseFloat(m[1].replace(',', '.')) : null);
   const date = (dateText || '').match(/\b(20[12]\d)\b[\s\S]{0,6}?(\d{2})\/(\d{2})/);
   return {
-    weight: num((statsText || '').match(/(\d{1,4}[.,]\d{1,2})\s*k[gq]/i)),
-    height: num((statsText || '').match(/(\d{1,2}[.,]\d{1,2})\s*m\b/i)),
+    weight: num((statsText || '').match(/(\d{1,4}(?:[.,]\d{1,2})?)\s*k[gq]/i)),
+    height: num((statsText || '').match(/(\d{1,2}(?:[.,]\d{1,2})?)\s*m\b/i)),
     date: date ? `${date[1]}-${date[2]}-${date[3]}` : null
   };
 }
@@ -1482,18 +1482,13 @@ function recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs) {
   const family = pokemon.familyRoot;
   const now = new Date().toISOString();
   const sized = !!(details && details.weight && details.height);
-  let entry = null;
-  if (sized) {
-    entry = pokeLog.find(e => e.family === family && e.weight === details.weight && e.height === details.height);
-  }
+  // Identity is a score over every clue on the page, not one exact key: size, CP, IVs, catch
+  // date and place each add evidence; a contradiction on IVs or date rules a candidate out
+  // (OCR can turn a 6 into an 8, so CP alone is only evidence). The best known entry wins if it
+  // clears the bar; otherwise this is a new Pokémon.
+  let entry = findLogEntry(pokemon, cp, details, ivs);
   if (!entry) {
-    // The appraisal panel can hide the size: fall back to the same species + CP scanned in the
-    // last 2 minutes (the player just scanned it, then opened the appraisal).
-    entry = pokeLog.find(e => e.species === pokemon.name && e.cp === cp && cp &&
-      (Date.now() - Date.parse(e.lastSeen || 0)) < 120000) || null;
-  }
-  if (!entry) {
-    if (!sized && !ivs) return null;                            // nothing to fingerprint with
+    if (!sized && !ivs && !cp) return null;                     // nothing to identify it by
     entry = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), family,
       weight: sized ? details.weight : null, height: sized ? details.height : null,
       ivs: null, firstSeen: now, scans: 0 };
@@ -1505,7 +1500,8 @@ function recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs) {
     pokeLog.push(entry);
   }
   entry.species = pokemon.name;
-  entry.cp = cp || entry.cp || null;
+  // A CP within a few points of the stored one is an OCR slip (6 vs 8), not a power-up: keep the stored value.
+  entry.cp = (cp && entry.cp && Math.abs(cp - entry.cp) <= 5) ? entry.cp : (cp || entry.cp || null);
   entry.favorite = !!favorite;
   entry.date = (details && details.date) || entry.date || null;
   entry.ivGuess = matchInfo ? (matchInfo.type === '45' ? 'maybe 100%' : 'maybe 98%') : null;
@@ -1602,6 +1598,30 @@ function speciesRanking(species, dynamax = false, lane = 'raid') {
   const pool = poolOf(species, dynamax);
   return pokeLog.filter(e => pool.members.has(e.species) && !!e.dynamax === dynamax)
     .sort((x, y) => entryScore(y, lane) - entryScore(x, lane));
+}
+
+function findLogEntry(pokemon, cp, details, ivs) {
+  const sized = !!(details && details.weight && details.height);
+  const near = (a, b, tol) => a != null && b != null && Math.abs(a - b) <= tol;
+  let best = null, bestScore = 0;
+  for (const e of pokeLog) {
+    if (e.family !== pokemon.familyRoot) continue;
+    // Hard contradictions
+    if (ivs && e.ivs && (e.ivs[0] !== ivs[0] || e.ivs[1] !== ivs[1] || e.ivs[2] !== ivs[2])) continue;
+    if (details && details.date && e.date && details.date !== e.date) continue;
+    let score = 0;
+    if (e.species === pokemon.name) score += 1;                         // same stage (evolving changes it)
+    if (sized && near(e.weight, details.weight, 0.02) && near(e.height, details.height, 0.01)) score += 3;
+    else if (sized && (near(e.weight, details.weight, 0.02) || near(e.height, details.height, 0.01))) score += 1;
+    if (cp && e.cp === cp) score += 2;
+    if (ivs && e.ivs) score += 3;                                        // identical (contradiction excluded above)
+    if (details && details.date && e.date) score += 2;                  // identical (ditto)
+    if (details && details.where && e.where && details.where === e.where) score += 1;
+    if (cp && e.cp === cp && (Date.now() - Date.parse(e.lastSeen || 0)) < 120000) score += 2; // just scanned
+    if (score > bestScore) { best = e; bestScore = score; }
+  }
+  // Bar: two independent clues agreeing (e.g. size + CP, or CP + IVs), or exact size on its own.
+  return bestScore >= 4 ? best : null;
 }
 
 function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs) {
