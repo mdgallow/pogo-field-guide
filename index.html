@@ -1397,7 +1397,56 @@ function getBallAdvice(p, cpVal, matchInfo) {
   return pickBall(p, cpVal);
 }
 
+// Name key for matching OCR text to species: ♀/♂ survive (Nidoran♀ vs Nidoran♂ are different
+// lines), everything else non-alphanumeric is dropped.
+function nameKey(str) {
+  return String(str || '').toLowerCase().replace(/♀/g, 'f').replace(/♂/g, 'm').replace(/[^a-z0-9]/g, '');
+}
+
+// Every species sharing this Pokémon's candy: the line plus all regional forms and branch
+// evolutions of it (Exeggcute -> Exeggutor + Exeggutor (Alola); Wurmple -> Silcoon/Cascoon ->
+// Beautifly/Dustox). Built as a closure over base species names.
+const familyCache = new Map();
+function candyFamily(p) {
+  const root = baseSpecies(p.familyRoot || p.name);
+  if (familyCache.has(root)) return familyCache.get(root);
+  const names = new Set([root, baseSpecies(p.name)]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const q of POKEMON_DATA) {
+      const qn = baseSpecies(q.name);
+      const linked = names.has(qn) || names.has(baseSpecies(q.familyRoot || '')) || q.finals.some(f => names.has(baseSpecies(f.name)));
+      if (!linked) continue;
+      for (const nm of [qn, baseSpecies(q.familyRoot || ''), ...q.finals.map(f => baseSpecies(f.name))]) {
+        if (nm && !names.has(nm)) { names.add(nm); grew = true; }
+      }
+    }
+  }
+  const family = POKEMON_DATA.filter(q => names.has(baseSpecies(q.name)));
+  familyCache.set(root, family);
+  return family;
+}
+
+// Type words printed under the type icons ("GRASS / DRAGON"): the one on-page clue that
+// separates regional forms of the same species.
+const TYPE_WORDS = ['NORMAL', 'FIRE', 'WATER', 'GRASS', 'ELECTRIC', 'ICE', 'FIGHTING', 'POISON', 'GROUND', 'FLYING',
+  'PSYCHIC', 'BUG', 'ROCK', 'GHOST', 'DRAGON', 'DARK', 'STEEL', 'FAIRY'];
+function readTypeWords(text) {
+  const up = (text || '').toUpperCase();
+  return TYPE_WORDS.filter(t => new RegExp('\\b' + t + '\\b').test(up));
+}
+function hasTypes(p, words) {
+  const own = (p.types || []).map(t => t.replace('POKEMON_TYPE_', ''));
+  return words.every(w => own.includes(w));
+}
+
 function annotateFamilyGuidance() {
+  // Two entries carry raw ids instead of display names; normalise so form handling is uniform.
+  for (const p of POKEMON_DATA) {
+    if (p.name === 'FARFETCHD_GALARIAN') p.name = "Farfetch'd (Galar)";
+    if (p.name === 'MR_MIME_GALARIAN') p.name = 'Mr. Mime (Galar)';
+  }
   const key = n => n.toLowerCase().replace(/\b(forme?|breed|variety)\b/g, '').replace(/[^a-z0-9]/g, '');
   const index = new Map(POKEMON_DATA.map(p => [key(p.name), p]));
 
@@ -1540,8 +1589,10 @@ function setKeepN(v) { localStorage.setItem(KEEP_N_KEY, String(Math.max(1, Math.
 // L40, so their lucky edge is smaller. Under a league CP cap levels are cheap, so no bonus.
 function luckyBonus(p) {
   if (!p) return 0;
-  return p.isLegendary ? 3 : 6;
+  return p.isLegendary ? 3 : 8;
 }
+// IV total a Pokémon "plays like" once the lucky discount is counted: what rank and floor use.
+function effectiveTotal(ivs, p, lucky) { return ivs[0] + ivs[1] + ivs[2] + (lucky ? luckyBonus(p) : 0); }
 
 // Score = IV tier x 100000 + CP, so equal IVs always rank by CP (higher first) and any
 // appraised entry outranks every unappraised one.
@@ -1561,13 +1612,14 @@ function entryScore(e, lane = 'raid') {
 // A slot is earned, not filled: below these floors a Pokémon is not a keeper even if the
 // count is short. Legendaries / Dynamax can't be farmed, so their floor is lower.
 function raidFloor(p) { return (p && (p.isLegendary || p.isRoaming)) ? 30 : 37; }   // 37 = 3★ / 82%
-function meetsRaidFloor(ivs, p, dynamax) { const t = ivs[0] + ivs[1] + ivs[2]; return t >= (dynamax ? 30 : raidFloor(p)); }
+function meetsRaidFloor(ivs, p, dynamax, lucky = false) { return effectiveTotal(ivs, p, lucky) >= (dynamax ? 30 : raidFloor(p)); }
 function meetsPvpFloor(ivs) { return ivs[1] + ivs[2] >= 24 && ivs[0] <= 12; }        // real bulk, low attack
 
 // Trades are limited per day, so they should go where a re-roll / lucky has upside:
 // rare or meta families first. Natural 44 / 45 are never traded (protected elsewhere).
 function tradePriority(p) {
   if (!p) return 'LOW';
+  if (p.plan === 'trade_evolve') return 'HIGH';
   const meta = p.act.includes('Lucky') || p.act.includes('XL') || p.isLegendary ||
     p.finals.some(f => (f.pve_n || 9999) <= 100 || (f.pvp_n || 9999) <= 100) || (p.pve_n || 9999) <= 100 || (p.pvp_n || 9999) <= 100;
   return meta ? 'HIGH' : 'LOW';
@@ -1609,18 +1661,27 @@ function findLogEntry(pokemon, cp, details, ivs) {
     // Hard contradictions
     if (ivs && e.ivs && (e.ivs[0] !== ivs[0] || e.ivs[1] !== ivs[1] || e.ivs[2] !== ivs[2])) continue;
     if (details && details.date && e.date && details.date !== e.date) continue;
-    let score = 0;
+    const bothSized = sized && e.weight != null && e.height != null;
+    const sizeMatch = bothSized && near(e.weight, details.weight, 0.02) && near(e.height, details.height, 0.01);
+    if (bothSized && !near(e.weight, details.weight, 0.02) && !near(e.height, details.height, 0.01)) continue; // a different body
+    let score = 0, anchors = 0;
     if (e.species === pokemon.name) score += 1;                         // same stage (evolving changes it)
-    if (sized && near(e.weight, details.weight, 0.02) && near(e.height, details.height, 0.01)) score += 3;
-    else if (sized && (near(e.weight, details.weight, 0.02) || near(e.height, details.height, 0.01))) score += 1;
-    if (cp && e.cp === cp) score += 2;
+    if (sizeMatch) { score += 3; anchors++; }
+    else if (bothSized) score += 1;                                     // one dimension within wobble
+    else if (sized || e.weight == null) score += 1;                     // one side unsized: cannot contradict
+    if (cp && e.cp === cp) { score += 2; anchors++; }
     if (ivs && e.ivs) score += 3;                                        // identical (contradiction excluded above)
-    if (details && details.date && e.date) score += 2;                  // identical (ditto)
+    if (details && details.date && e.date) { score += 2; anchors++; }   // identical (ditto)
     if (details && details.where && e.where && details.where === e.where) score += 1;
     if (cp && e.cp === cp && (Date.now() - Date.parse(e.lastSeen || 0)) < 120000) score += 2; // just scanned
+    // Identical IVs alone are common (research rewards, community days): they need an anchor,
+    // and when both sides have a size, that anchor must be the size itself or the CP (a shared
+    // catch date is too weak on a community day).
+    if (anchors === 0) continue;
+    if (bothSized && !sizeMatch && !(cp && e.cp === cp)) continue;
     if (score > bestScore) { best = e; bestScore = score; }
   }
-  // Bar: two independent clues agreeing (e.g. size + CP, or CP + IVs), or exact size on its own.
+  // Bar: an anchor (size, CP or catch date) plus at least one more agreeing clue.
   return bestScore >= 4 ? best : null;
 }
 
@@ -1647,115 +1708,130 @@ function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs) {
 }
 
 // Lets what we know about THIS Pokémon overrule the advice for its species.
+// Rank/keep decisions for the scanned Pokémon. Every branch sets `reason` (full sentence: card,
+// toast, My Log) and `short` (<= ~40 chars, decision first: what the pill shows).
+let lastGuidance = null;
 function applyLogContext(g, p) {
   const c = scanContext;
   if (!c || c.species !== p.name) return g;
   const n = c.dynamax ? keepNDynamax() : keepN();
   const np = keepNPvp();
   const lucky = c.marks.includes('lucky');
+  const shadow = c.marks.includes('shadow');
   const ranked = c.rank && c.ofSpecies >= 2 && c.appraised;
   const total = c.ivs ? c.ivs[0] + c.ivs[1] + c.ivs[2] : 0;
+  const eff = c.ivs ? effectiveTotal(c.ivs, p, lucky) : 0;
   const natural44 = c.ivs && total >= 44 && !lucky;           // never traded, never surplus
-  const inRaid = ranked && c.rank <= n && meetsRaidFloor(c.ivs, p, c.dynamax);
+  const inRaid = ranked && c.rank <= n && meetsRaidFloor(c.ivs, p, c.dynamax, lucky);
   const inPvp = ranked && c.pvpLane && c.rankPvp > 0 && c.rankPvp <= np && meetsPvpFloor(c.ivs);
-  const belowFloor = c.ivs && !meetsRaidFloor(c.ivs, p, c.dynamax) && !(c.pvpLane && meetsPvpFloor(c.ivs));
+  const belowFloor = c.ivs && !meetsRaidFloor(c.ivs, p, c.dynamax, lucky) && !(c.pvpLane && meetsPvpFloor(c.ivs));
   const surplus = c.appraised && !natural44 && ((ranked && !inRaid && !inPvp) || belowFloor);
-  // The pill names only the lane that earned the slot; a surplus shows both, as the justification.
+  const better = ranked ? Math.max(0, c.rank - 1) : 0;
+  const floor = c.dynamax ? 30 : raidFloor(p);
+  const pvpDecided = ranked && c.pvpLane && !inRaid && inPvp;
+  scanLane = pvpDecided ? 'PVP' : '';
+
+  // Rank tags: full for the card, short for the pill.
   const pool = `${c.dynamax ? 'DYNAMAX ' : ''}${c.poolLabel}`;
   const rankTag = !ranked ? ''
     : surplus && c.pvpLane ? `#${c.rank} RAID · #${c.rankPvp} PVP · ${pool}`
     : inRaid || !c.pvpLane ? `#${c.rank}${c.pvpLane ? ' RAID' : ''} OF ${c.ofSpecies} ${pool}`
     : `#${c.rankPvp} PVP OF ${c.ofSpecies} ${pool}`;
-  const pvpDecided = ranked && c.pvpLane && !inRaid && inPvp;
-  scanLane = pvpDecided ? 'PVP' : '';
-  const floorNote = belowFloor && !(ranked && !inRaid && !inPvp) ? ` – BELOW THE ${c.dynamax ? '30' : raidFloor(p)}-IV FLOOR` : '';
+  const rk = !ranked ? '' : pvpDecided ? `#${c.rankPvp} PVP/${c.ofSpecies}` : `#${c.rank}/${c.ofSpecies}`;
+  const why = belowFloor ? `BELOW ${floor}-IV FLOOR` : better ? `${better} BETTER` : '';
+  const finalName = p.finals.length ? p.finals.map(f => baseSpecies(f.name)).join('/').toUpperCase() : '';
+  const set = (verdict, color, icon, reason, short) => ({ ...g, verdict, color, icon, reason, short });
 
-  // 1. Exact IVs beat every CP-based guess.
   if (c.ivs && total >= 44) {
+    // 1. Natural 44 / 45 (or lucky 44/45): protected.
     const label = total === 45 ? 'PERFECT 4★ (15/15/15)' : '98% (44) – AS GOOD AS PERFECT';
     const note = c.luckySibling && !lucky ? ' · YOUR L50 BUILD, POWER UP THE LUCKY FIRST' : '';
-    g = { ...g, verdict: 'KEEP', color: '#34d399', icon: total === 45 ? '👑' : '⭐', reason: (rankTag ? rankTag + ' · ' : '') + label + note };
+    g = set('KEEP', '#34d399', total === 45 ? '👑' : '⭐', (rankTag ? rankTag + ' · ' : '') + label + note,
+      `${total === 45 ? 'PERFECT' : '98%'} · KEEP${rk ? ' · ' + rk : ''}`);
   } else if (lucky) {
-    // A Pokémon can only be traded once; a lucky has used its trade. Half-price power-ups make
-    // it the one to invest in first, unless you already own more better ones than you need.
-    const bonus = luckyBonus(p);
+    // 2. Lucky: cannot be traded again; half-price power-ups make a lucky 37 play like a 45.
     g = surplus
-      ? { ...g, verdict: 'SURPLUS', color: '#f87171', icon: '🗑️', reason: `${rankTag} – LUCKY, BUT YOU HAVE ${n} BETTER` }
-      : { ...g, verdict: 'KEEP', color: '#fbbf24', icon: '🍀',
-          reason: (rankTag ? rankTag + ' · ' : '') + `LUCKY${c.ivs ? ' ' + total : ''} · POWER UP FIRST` + (bonus >= 6 ? ' (HALF DUST BEATS A 45 UNTIL L50)' : ' (HALF DUST; XL CANDY IS THE LIMIT)') };
+      ? set('SURPLUS', '#f87171', '🗑️', `${rankTag || c.species.toUpperCase()} – LUCKY ${total} (≈${eff}), BUT ${why || 'NOT WORTH A SLOT'}. TRANSFER`, `TRANSFER · LUCKY · ${why || rk}`)
+      : set('KEEP', '#fbbf24', '🍀', (rankTag ? rankTag + ' · ' : '') + `LUCKY ${total} PLAYS LIKE A ${Math.min(45, eff)} (HALF DUST) · POWER UP FIRST`,
+          `LUCKY ${total}≈${Math.min(45, eff)} · POWER UP${rk ? ' · ' + rk : ''}`);
+  } else if (p.plan === 'trade_evolve' && !c.dynamax && !shadow && (surplus || g.verdict === 'TRADE')) {
+    // 3. Machoke & co: a trade re-rolls IVs AND makes the evolution free; always worth a trade.
+    g = set('TRADE', '#c084fc', '🔄', `${rankTag || c.species.toUpperCase()} – TRADE IT: FREE EVOLUTION AFTER TRADE, IVs RE-ROLL${finalName ? ' (→ ' + finalName + ')' : ''}`,
+      `TRADE: FREE EVO → ${finalName}`);
   } else if (surplus && p.plan === 'grow' && belowFloor && (c.rank || 1) === 1) {
-    // Nothing better in a family whose evolution is the point: keep one to evolve.
-    g = { ...g, verdict: 'KEEP BEST', color: '#e2e8f0', icon: '🌱', reason: `${rankTag || c.species.toUpperCase()} · NOTHING BETTER YET: KEEP TO EVOLVE, REPLACE WHEN A BETTER ONE COMES` };
+    // 4. Nothing better in a family whose evolution is the point: keep one to evolve.
+    g = set('KEEP BEST', '#e2e8f0', '🌱', `${rankTag || c.species.toUpperCase()} · NOTHING BETTER YET: KEEP TO EVOLVE, REPLACE WHEN A BETTER ONE COMES`, `KEEP TO EVOLVE · BEST SO FAR`);
   } else if (surplus) {
+    // 5. Surplus: trade where a re-roll / lucky has upside, otherwise transfer.
     const goal = candyGoal(p);
     const prio = tradePriority(p);
-    const tag = rankTag || `${c.species.toUpperCase()}${floorNote}`;
-    g = goal && prio === 'HIGH' && !c.dynamax && !c.marks.includes('shadow')
-      ? { ...g, verdict: 'TRADE', color: '#c084fc', icon: '🔄', reason: `${tag}${rankTag ? floorNote : ''} – TRADE PRIORITY HIGH: RE-ROLL / LUCKY CHANCE + CANDY. ${goal}` }
-      : { ...g, verdict: 'SURPLUS', color: '#f87171', icon: '🗑️', reason: `${tag}${rankTag ? floorNote : ''} – TRANSFER${goal ? ' FOR CANDY' : ''} (TRADE PRIORITY LOW)` };
+    const tag = rankTag || c.species.toUpperCase();
+    const wh = why ? ` – ${why}` : '';
+    g = prio === 'HIGH' && !c.dynamax && !shadow
+      ? set('TRADE', '#c084fc', '🔄', `${tag}${wh} – TRADE (PRIORITY HIGH): RE-ROLL / LUCKY CHANCE${goal ? ' + CANDY. ' + goal : ''}`, `TRADE (RE-ROLL) · ${why || rk}`)
+      : set('SURPLUS', '#f87171', '🗑️', `${tag}${wh} – TRANSFER${goal ? ' FOR CANDY' : ''} (TRADE PRIORITY ${prio})`, `TRANSFER · ${why || rk}`);
   } else if (c.ivs && total >= 41 && g.verdict === 'DELETE') {
-    g = { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎', reason: `${ivPercent(c.ivs)}% IVs – WORTH A LOOK` };
+    g = set('CHECK FIRST', '#fbbf24', '🔎', `${ivPercent(c.ivs)}% IVs – WORTH A LOOK`, `${ivPercent(c.ivs)}% · CHECK FIRST`);
   } else if (!c.ivs && c.logged >= 2 && g.verdict === 'DELETE' && c.isStrongest) {
-    g = { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎', reason: `STRONGEST ${c.root.toUpperCase()} FAMILY OF ${c.logged} YOU SCANNED` };
+    g = set('CHECK FIRST', '#fbbf24', '🔎', `STRONGEST ${c.root.toUpperCase()} FAMILY OF ${c.logged} YOU SCANNED`, `CHECK FIRST · STRONGEST SEEN`);
   } else if (!c.ivs && c.logged >= 2 && g.verdict === 'KEEP BEST') {
-    g = { ...g, reason: c.isStrongest ? `YOUR STRONGEST OF ${c.logged} SCANNED. ${g.reason}` : `YOU SCANNED A STRONGER ONE (CP ${c.bestCp})` };
+    g = { ...g, reason: c.isStrongest ? `YOUR STRONGEST OF ${c.logged} SCANNED. ${g.reason}` : `YOU SCANNED A STRONGER ONE (CP ${c.bestCp})`,
+      short: c.isStrongest ? 'KEEP BEST · STRONGEST SEEN' : `SEEN A STRONGER ONE (${c.bestCp} CP)` };
   } else if (pvpDecided) {
-    g = { ...g, verdict: 'KEEP', color: '#c084fc', icon: '⚔️', reason: `${rankTag} · PVP CHAMP (LOW ATTACK, MAX BULK)` };
-  } else if (rankTag && c.poolIsFamily && p.finals.length && !surplus) {
-    const target = p.finals.map(f => baseSpecies(f.name)).join(' / ').toUpperCase();
-    g = { ...g, verdict: 'KEEP', color: '#c084fc', icon: '🌱', reason: `${rankTag} · EVOLVE TO ${target} WHEN CANDY ALLOWS` };
+    g = set('KEEP', '#c084fc', '⚔️', `${rankTag} · PVP CHAMP (LOW ATTACK, MAX BULK)`, `PVP CHAMP · KEEP · ${rk}`);
+  } else if (rankTag && c.poolIsFamily && p.finals.length && !surplus &&
+             (p.plan === 'grow' || p.finals.some(f => !f.act.includes('Transfer')))) {
+    // 6. A lower stage holding a slot in a family worth evolving.
+    g = set('KEEP', '#c084fc', '🌱', `${rankTag} · EVOLVE TO ${finalName} WHEN CANDY ALLOWS`, `EVOLVE → ${finalName} · ${rk}`);
   } else if (rankTag) {
-    g = { ...g, reason: `${rankTag} · ${g.reason}` };
+    g = { ...g, reason: `${rankTag} · ${g.reason}`, short: `${g.verdict} · ${rk}` };
   }
 
-  // 2. Dynamax: its own pool. Only Dynamax Pokémon can enter Max Battles, so a better normal one
-  //    is no substitute, and they cannot be traded or Mega Evolved. Ranked against Dynamax only.
+  // 7. Dynamax: its own pool; cannot be traded or Mega Evolved.
   if (c.dynamax) {
     const tradeBased = g.verdict === 'TRADE' || /TRADE|LUCKY/.test(g.reason || '');
     if (g.verdict === 'SURPLUS') {
-      g = { ...g, reason: `${rankTag} – KEEP YOUR TOP ${n} DYNAMAX FOR MAX BATTLES, TRANSFER THIS` };
+      g = { ...g, reason: `${rankTag} – KEEP YOUR TOP ${n} DYNAMAX FOR MAX BATTLES, TRANSFER THIS`, short: `TRANSFER · DYNAMAX · ${why || rk}` };
     } else if (tradeBased || g.verdict === 'DELETE' || g.verdict === 'KEEP BEST' || g.verdict === 'CHECK FIRST') {
-      g = { ...g, verdict: 'KEEP', color: '#ec4899', icon: '🔴', reason: (rankTag ? rankTag + ' · ' : '') + 'DYNAMAX · MAX BATTLES POOL (CAN’T TRADE)' };
+      g = set('KEEP', '#ec4899', '🔴', (rankTag ? rankTag + ' · ' : '') + 'DYNAMAX · MAX BATTLES POOL (CAN’T TRADE)', `DYNAMAX · KEEP${rk ? ' · ' + rk : ''}`);
     } else {
-      g = { ...g, reason: 'DYNAMAX · ' + g.reason };
+      g = { ...g, reason: 'DYNAMAX · ' + g.reason, short: 'DYNAMAX · ' + (g.short || g.verdict) };
     }
   }
 
-  // 3. Shadow: cannot be traded until purified, so every trade-based verdict is off the table.
-  //    +20% attack makes it the best raid form of a raid-relevant species; purifying throws that away.
-  if (c.marks.includes('shadow')) {
+  // 8. Shadow: cannot be traded until purified; +20% attack makes it the raid form to keep.
+  if (shadow) {
     const raidForm = (p.pve_n || 9999) <= 300;
     const tradeBased = g.verdict === 'TRADE' || /TRADE|LUCKY/.test(g.reason || '');
     if (g.verdict !== 'SURPLUS' && (raidForm || tradeBased)) {
       g = raidForm
-        ? { ...g, verdict: 'KEEP', color: '#c084fc', icon: '🟣', reason: (rankTag ? rankTag + ' · ' : '') + 'SHADOW · +20% ATTACK, BEST RAID FORM. DON’T PURIFY' }
-        : { ...g, verdict: 'KEEP', color: '#c084fc', icon: '🟣', reason: (rankTag ? rankTag + ' · ' : '') + 'SHADOW · CAN’T TRADE UNTIL PURIFIED' };
+        ? set('KEEP', '#c084fc', '🟣', (rankTag ? rankTag + ' · ' : '') + 'SHADOW · +20% ATTACK, BEST RAID FORM. DON’T PURIFY', `SHADOW RAID FORM · KEEP${rk ? ' · ' + rk : ''}`)
+        : set('KEEP', '#c084fc', '🟣', (rankTag ? rankTag + ' · ' : '') + 'SHADOW · CAN’T TRADE UNTIL PURIFIED', `SHADOW · KEEP (NO TRADE)${rk ? ' · ' + rk : ''}`);
     } else if (g.verdict === 'SURPLUS') {
-      g = { ...g, reason: g.reason + ' (SHADOW: TRANSFER, OR PURIFY IF YOU WANT TO TRADE IT)' };
+      g = { ...g, reason: g.reason + ' (SHADOW: TRANSFER, OR PURIFY IF YOU WANT TO TRADE IT)', short: `TRANSFER · SHADOW · ${why || rk}` };
     }
   }
 
-  // 4. Shiny: cosmetic value, never a transfer candidate.
+  // 9. Shiny: cosmetic value, never a transfer candidate.
   if (c.marks.includes('shiny') && (g.verdict === 'DELETE' || g.verdict === 'SURPLUS' || g.verdict === 'TRADE')) {
-    const evolve = p.finals.length ? `, EVOLVE TO ${p.finals.map(f => baseSpecies(f.name)).join(' / ').toUpperCase()} WHEN YOU LIKE` : '';
-    g = { ...g, verdict: 'KEEP', color: '#34d399', icon: '✨', reason: `SHINY · KEEP${evolve}` + (rankTag ? ' · ' + rankTag : '') };
+    const evolve = finalName ? `, EVOLVE TO ${finalName} WHEN YOU LIKE` : '';
+    g = set('KEEP', '#34d399', '✨', `SHINY · KEEP${evolve}` + (rankTag ? ' · ' + rankTag : ''), `SHINY · KEEP${rk ? ' · ' + rk : ''}`);
   }
 
   // Every ranked verdict carries its place among like Pokémon, whatever branch produced it.
-  if (rankTag && !(g.reason || '').includes(rankTag)) {
-    g = { ...g, reason: `${rankTag} · ${g.reason}` };
-  }
+  if (rankTag && !(g.reason || '').includes(rankTag)) g = { ...g, reason: `${rankTag} · ${g.reason}` };
+  if (rk && !(g.short || '').includes(rk)) g = { ...g, short: `${g.short || g.verdict} · ${rk}` };
 
-  // 5. Favorite: the player's flag is respected, but it may be years old. Say when the numbers
-  //    disagree with it instead of hiding them.
+  // 10. Favorite: respected, but it may be years old; say when the numbers disagree.
   if (c.favorite) {
     if (g.verdict === 'DELETE' || g.verdict === 'SURPLUS') {
-      g = { ...g, verdict: 'FAVORITE?', color: '#fbbf24', icon: '⭐',
-        reason: (rankTag ? `${rankTag}${surplus ? ` – YOU HAVE ${n} BETTER` : ''}. ` : '') + 'STILL WORTH THE STAR? UNFAVORITE TO FREE THE SLOT' };
+      g = set('FAVORITE?', '#fbbf24', '⭐', (rankTag ? `${rankTag}${why ? ' – ' + why : ''}. ` : '') + 'STILL WORTH THE STAR? UNFAVORITE TO FREE THE SLOT',
+        `FAVORITE? · ${why || rk || 'STILL WORTH IT?'}`);
     } else {
-      g = { ...g, reason: 'FAVORITE · ' + g.reason };
+      g = { ...g, reason: 'FAVORITE · ' + g.reason, short: '★ ' + (g.short || g.verdict) };
     }
   }
+  lastGuidance = g;
   return g;
 }
 
@@ -1790,6 +1866,8 @@ function renderSpeciesSummary() {
   return rows ? `<table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:10px;"><tr style="color:var(--text-muted);"><td>Species</td><td style="text-align:right;">Logged</td><td style="text-align:right;">Your best</td><td style="text-align:right;">Beyond top ${n} (${nd} Dynamax)</td></tr>${rows}</table>` : '';
 }
 
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
 function renderLogModal() {
   const trail = (isNativeApp && AndroidBridge.autoTrail) ? AndroidBridge.autoTrail() : '';
   document.getElementById('lastScanDebug').innerText = (lastScanDebug || 'No native scan yet.') + (trail ? '\n\nAUTO trail:\n' + trail : '');
@@ -1806,12 +1884,12 @@ function renderLogModal() {
   }
   const rows = [...pokeLog].sort((a, b) => a.species.localeCompare(b.species) || (rankOf.get(a.id) - rankOf.get(b.id))).map(e => `
     <tr style="border-top:1px solid var(--border);">
-      <td style="padding:6px 4px;"><span style="color:#94a3b8;">#${rankOf.get(e.id)}${rankPvpOf.has(e.id) ? ' · P#' + rankPvpOf.get(e.id) : ''}</span> <b>${e.species}</b>${e.favorite ? ' <span style="color:#fbbf24;">favorite</span>' : ''}${e.lucky ? ' <span style="color:#fbbf24;">lucky</span>' : ''}${e.hasMega ? ' <span style="color:#c084fc;">mega</span>' : ''}${e.dynamax ? ' <span style="color:#ec4899;">dynamax</span>' : ''}<br>
-        <span style="color:var(--text-muted);">${e.weight ? e.weight + 'kg · ' + e.height + 'm' : 'size not read'}${e.date ? ' · caught ' + e.date : ''}${e.where ? ' · ' + e.where : ''}</span><br>
+      <td style="padding:6px 4px;"><span style="color:#94a3b8;">#${rankOf.get(e.id)}${rankPvpOf.has(e.id) ? ' · P#' + rankPvpOf.get(e.id) : ''}</span> <b>${esc(e.species)}</b>${e.favorite ? ' <span style="color:#fbbf24;">favorite</span>' : ''}${e.lucky ? ' <span style="color:#fbbf24;">lucky</span>' : ''}${e.hasMega ? ' <span style="color:#c084fc;">mega</span>' : ''}${e.dynamax ? ' <span style="color:#ec4899;">dynamax</span>' : ''}<br>
+        <span style="color:var(--text-muted);">${e.weight ? e.weight + 'kg · ' + e.height + 'm' : 'size not read'}${e.date ? ' · caught ' + esc(e.date) : ''}${e.where ? ' · ' + esc(e.where) : ''}</span><br>
         <label style="color:var(--text-muted); cursor:pointer;"><input type="checkbox" ${e.shiny ? 'checked' : ''} onchange="setLogMark('${e.id}','shiny',this.checked)"> shiny</label>
         <label style="color:var(--text-muted); cursor:pointer; margin-left:8px;"><input type="checkbox" ${e.shadow ? 'checked' : ''} onchange="setLogMark('${e.id}','shadow',this.checked)"> shadow</label></td>
       <td style="padding:6px 4px; text-align:right;">${e.cp || '-'} CP</td>
-      <td style="padding:6px 4px; text-align:right;">${e.ivs ? `<b style="color:${ivPercent(e.ivs) === 100 ? '#34d399' : '#e2e8f0'};">${e.ivs.join('/')}</b><br>${ivPercent(e.ivs)}%` : (e.ivGuess || 'not appraised')}</td>
+      <td style="padding:6px 4px; text-align:right;">${e.ivs ? `<b style="color:${ivPercent(e.ivs) === 100 ? '#34d399' : '#e2e8f0'};">${e.ivs.join('/')}</b><br>${ivPercent(e.ivs)}%` : esc(e.ivGuess || 'not appraised')}</td>
       <td style="padding:6px 4px; text-align:right;"><button onclick="deleteLogEntry('${e.id}')" style="background:none; border:none; color:#f87171; cursor:pointer; font-weight:800;">remove</button></td>
     </tr>`).join('');
   document.getElementById('logBody').innerHTML = pokeLog.length
@@ -1858,10 +1936,24 @@ function importPokeLog() {
     const incoming = JSON.parse(box.value);
     if (!Array.isArray(incoming)) throw new Error('not a log backup');
     const known = new Set(pokeLog.map(e => e.id));
-    pokeLog.push(...incoming.filter(e => e && e.id && e.family && !known.has(e.id)));
+    const isNum = v => v == null || (typeof v === 'number' && isFinite(v));
+    const valid = e => e && typeof e === 'object' && /^[a-z0-9]{4,24}$/.test(String(e.id || '')) &&
+      typeof e.family === 'string' && typeof e.species === 'string' && POKEMON_DATA.some(p => p.name === e.species) &&
+      isNum(e.weight) && isNum(e.height) && isNum(e.cp) &&
+      (e.ivs == null || (Array.isArray(e.ivs) && e.ivs.length === 3 && e.ivs.every(v => Number.isInteger(v) && v >= 0 && v <= 15)));
+    const accepted = incoming.filter(e => valid(e) && !known.has(e.id));
+    const dropped = incoming.length - accepted.length;
+    const before = pokeLog.slice();
+    pokeLog.push(...accepted.map(e => ({ ...e, scans: Number.isInteger(e.scans) ? e.scans : 1 })));
+    try {
+      renderLogModal();                      // prove the merged log renders before persisting it
+    } catch (renderErr) {
+      pokeLog = before;
+      throw new Error('an entry could not be displayed (' + renderErr.message + ')');
+    }
     savePokeLog();
     box.style.display = 'none';
-    renderLogModal();
+    if (dropped) alert(`Imported ${accepted.length}; skipped ${dropped} entr${dropped === 1 ? 'y' : 'ies'} that were invalid or already present.`);
   } catch (err) {
     alert('That is not a valid log backup: ' + err.message);
   }
@@ -1871,7 +1963,7 @@ function importPokeLog() {
 // evolved form of the family they have logged. Null when the family has nothing worth funding.
 // Maxing costs ~200 candy from L20 to L40, then 296 XL candy to L50.
 function candyGoal(p) {
-  const valuableFamily = p.act.includes('Lucky') || p.act.includes('XL') || p.plan === 'grow' ||
+  const valuableFamily = p.act.includes('Lucky') || p.act.includes('XL') || p.act.includes('PvP') || p.isLegendary || p.plan === 'grow' ||
     (p.finals.length && p.finals.some(f => !f.act.includes('Transfer')));
   if (!valuableFamily) return null;
   const finals = p.finals.length ? p.finals : [p];
@@ -1932,7 +2024,8 @@ function getGuidance(p, matchInfo) {
   g.badgeAct = g.badgeAct || p.act;
   g.next = g.verdict === 'DELETE' ? 'TRANSFER' : g.reason;
   // Never tell anyone to delete something whose CP lines up with perfect or near-perfect IVs.
-  if (matchInfo && g.verdict === 'DELETE') {
+  const savedIvs = scanContext && scanContext.species === p.name && scanContext.ivs;
+  if (matchInfo && g.verdict === 'DELETE' && !savedIvs) {
     g = { ...g, verdict: 'CHECK FIRST', color: '#fbbf24', icon: '🔎', reason: 'APPRAISE BEFORE DELETING', next: 'APPRAISE IT' };
   }
   g = applyLogContext(g, p);
@@ -1951,7 +2044,8 @@ function verdictColor(g, p) {
   const reason = g.reason || '';
   if (g.verdict === 'DELETE' || g.verdict === 'SURPLUS') return TIER_COLORS.red;
   if (g.verdict === 'CHECK FIRST' || g.verdict === 'FAVORITE?' || scanMatchAmbiguous) return TIER_COLORS.white;
-  if (g.verdict === 'KEEP' || g.verdict === 'TRADE' || g.verdict === 'KEEP BEST') {
+  if (g.verdict === 'TRADE') return TIER_COLORS.purple;
+  if (g.verdict === 'KEEP' || g.verdict === 'KEEP BEST') {
     const top = (c && c.rank === 1 && c.ofSpecies >= 2) || ivTotal >= 44 || /PERFECT|POWER UP FIRST/.test(reason);
     if (top) return TIER_COLORS.gold;
     if (c && c.rank && c.ofSpecies >= 2 && !c.appraised) return TIER_COLORS.white; // not appraised yet
@@ -2042,7 +2136,7 @@ const RAID_CATCH_LEVELS = [20, 25, 15];
 
 function evaluateCpMatch(p, cpVal) {
   if (!cpVal || !p) return null;
-  const fixedLevels = p.isLegendary && evaluationMode === 'catch';
+  const fixedLevels = p.isLegendary && !p.isRoaming && evaluationMode === 'catch';
   for (const t of IV_TABLES) {
     const table = p[t.key];
     if (!table) continue;
@@ -3074,7 +3168,10 @@ function pushNativePill() {
   const slot = (caption, id) => [caption, txt(id), document.getElementById(id)?.style.color || ''];
   const slots = [slot(captions[0], 'hudBerryLabel')];
   if (hudBall) slots.push(['BALL', hudBall.text, hudBall.color]);
-  slots.push(slot(captions[1], 'hudCatchLabel'), slot(captions[2], 'hudActionLabel'));
+  slots.push(slot(captions[1], 'hudCatchLabel'));
+  const reasonSlot = slot(captions[2], 'hudActionLabel');
+  if (evaluationMode === 'storage' && lastGuidance && lastGuidance.short) reasonSlot[1] = lastGuidance.short;
+  slots.push(reasonSlot);
   if (scanContext && scanContext.rank) slots.push(['LOGGED', `${pokeLog.length} TOTAL · ${scanContext.ofSpecies} ${scanContext.species.toUpperCase()}`, '#94a3b8']);
   AndroidBridge.updatePill(evaluationMode + (scanLane && evaluationMode === 'storage' ? ' · ' + scanLane : ''), target, JSON.stringify(slots));
 }
@@ -3614,11 +3711,11 @@ function matchPokemonAdvanced(rawText, cpVal = null) {
 // around Eagan, Minnesota". It names the real species (never the nickname), so it is the best
 // identification there is, and it carries the catch date. Returns { pokemon, date } or null.
 const BANNER_FORM_PREFIX = { alolan: 'Alola', galarian: 'Galar', hisuian: 'Hisui', paldean: 'Paldea' };
-function matchPokemonFromBanner(bannerText) {
+function matchPokemonFromBanner(bannerText, typesText = '') {
   const text = (bannerText || '').replace(/\n/g, ' ');
   const m = text.match(/This\s+(.{2,40}?)\s+was\s+(?:caught|hatched|received|traded|rescued|evolved)/i);
   if (!m) return null;
-  const key = str => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const key = nameKey;
   const rawWords = m[1].split(/\s+/);
   const shadow = rawWords.some(w => /^shadow$/i.test(w));
   const purified = rawWords.some(w => /^purified$/i.test(w));
@@ -3627,8 +3724,17 @@ function matchPokemonFromBanner(bannerText) {
   if (words.length && BANNER_FORM_PREFIX[words[0].toLowerCase()]) form = BANNER_FORM_PREFIX[words.shift().toLowerCase()];
   const name = words.join(' ');
   const wanted = form ? `${name} (${form})` : name;
-  let pokemon = POKEMON_DATA.find(p => key(p.name) === key(wanted)) ||
-    POKEMON_DATA.find(p => key(p.name) === key(name));
+  let ambiguous = false;
+  let pokemon = form ? POKEMON_DATA.find(p => key(p.name) === key(wanted)) : null;
+  if (!pokemon && !form) {
+    // No form prefix: every form of that species is a candidate; the type row separates them.
+    const forms = POKEMON_DATA.filter(p => key(baseSpecies(p.name)) === key(name));
+    const words = readTypeWords(typesText);
+    const byType = words.length ? forms.filter(p => hasTypes(p, words)) : forms;
+    const pick = byType.length ? byType : forms;
+    pokemon = pick.find(p => !/\(/.test(p.name)) || pick[0] || null;   // base form first when still tied
+    ambiguous = pick.length > 1;
+  }
   if (!pokemon) {
     // OCR slip: closest species name within 1-2 edits
     const k = key(name);
@@ -3638,7 +3744,7 @@ function matchPokemonFromBanner(bannerText) {
   const d = text.match(/on\s+(\d{1,2})\/(\d{1,2})\/(20\d{2})/);
   const date = d ? `${d[3]}-${d[1].padStart(2, '0')}-${d[2].padStart(2, '0')}` : null;
   const where = (text.match(/around\s+(.+?)(?:\.|$)/i) || [])[1] || null;
-  return { pokemon, date, where, shadow, purified };
+  return { pokemon, date, where, shadow, purified, ambiguous };
 }
 
 // On the storage page the name is the one thing a player can edit ("Robot 39", "Charmander 44",
@@ -3649,8 +3755,8 @@ function matchPokemonFromBanner(bannerText) {
 //   3. the EVOLVE button        -> present = not the final stage, absent = final stage
 // The name is only a tie-breaker between stages that survive all three.
 // Returns { pokemon, ambiguous } or null when the candy label could not be read.
-function matchPokemonFromStoragePage(candyText, cpVal, nameText, buttonsText) {
-  const key = str => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+function matchPokemonFromStoragePage(candyText, cpVal, nameText, buttonsText, typesText = '') {
+  const key = nameKey;
   // Every "<X> CANDY" on the page ("+1 CANDY", "XL CANDY" and "MELTAN CANDY" can all be there);
   // keep the one that names a species. OCR may glue a neighbouring label on ("STARDUST MELTAN
   // CANDY"), so shorter tails are tried too.
@@ -3666,9 +3772,15 @@ function matchPokemonFromStoragePage(candyText, cpVal, nameText, buttonsText) {
   }
   if (!base) return null;
 
-  const family = POKEMON_DATA.filter(p => p === base || p.evo === base.evo || base.finals.includes(p));
+  const family = candyFamily(base);
   let candidates = family.filter(p => !cpVal || !p.max_cp || cpVal <= p.max_cp);
   if (!candidates.length) candidates = family;
+  // Regional forms share the candy; the type row is what tells them apart.
+  const typeWords = readTypeWords(typesText);
+  if (typeWords.length) {
+    const byType = candidates.filter(p => hasTypes(p, typeWords));
+    if (byType.length) candidates = byType;
+  }
 
   // Only read the EVOLVE button's absence as "final stage" if POWER UP (right above it) was seen,
   // i.e. that part of the page really was on screen. MEGA EVOLVE is a different button.
@@ -3693,9 +3805,14 @@ function matchPokemonFromStoragePage(candyText, cpVal, nameText, buttonsText) {
 
   candidates.sort((a, b) => (a.max_cp || 0) - (b.max_cp || 0));
   const named = matchPokemonAdvanced(nameText, cpVal);
-  if (named && candidates.includes(named)) return { pokemon: named, ambiguous: false };
-  // Several stages still fit and the name didn't settle it: say so instead of pretending.
-  return { pokemon: candidates[0], ambiguous: candidates.length > 1 };
+  if (named && candidates.includes(named)) {
+    // The name settles the stage, but not which regional form of it when types were not read.
+    const sameStage = candidates.filter(p => baseSpecies(p.name) === baseSpecies(named.name));
+    return { pokemon: named, ambiguous: sameStage.length > 1 };
+  }
+  // Several stages / forms still fit: prefer the base form, say so instead of pretending.
+  const pick = candidates.find(p => !/\(/.test(p.name)) || candidates[0];
+  return { pokemon: pick, ambiguous: candidates.length > 1 };
 }
 
 function findBestPokemonMatch(rawName, cpVal = null) {
@@ -3747,6 +3864,7 @@ const SCAN_REGIONS = {
   storageAppraisal: { x: 0.07, y: 0.68, w: 0.45, h: 0.22, whiteText: false },
   storageBanner: { x: 0.0, y: 0.84, w: 1.0, h: 0.16, whiteText: false },
   storageStats: { x: 0.0,  y: 0.42, w: 1.0,  h: 0.22, whiteText: false },
+  storageTypes: { x: 0.22, y: 0.56, w: 0.56, h: 0.07, whiteText: false },
   storageDate:  { x: 0.5,  y: 0.28, w: 0.5,  h: 0.18, whiteText: true },
   catchCapsule: { x: 0.06, y: 0.22,  w: 0.78, h: 0.20,  whiteText: true },
   topHalf:      { x: 0.05, y: 0.05,  w: 0.90, h: 0.45,  whiteText: true }
@@ -3770,11 +3888,12 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
     // With the appraisal panel open the EVOLVE button is hidden, so its absence proves nothing.
     const appraisalOpen = /ATTACK|DEFENSE/i.test(await readRegion(SCAN_REGIONS.storageAppraisal));
     // 1. The "This <species> was caught…" banner (appraisal open): exact species, never a nickname.
-    const banner = appraisalOpen ? matchPokemonFromBanner(await readRegion(SCAN_REGIONS.storageBanner)) : null;
+    const typesText = await readRegion(SCAN_REGIONS.storageTypes);
+    const banner = appraisalOpen ? matchPokemonFromBanner(await readRegion(SCAN_REGIONS.storageBanner), typesText) : null;
     const buttonsText = appraisalOpen ? '' : await readRegion(SCAN_REGIONS.storageButtons);
     // 2. Candy label + CP + EVOLVE button, with the name as tie-breaker.
     const fromPage = banner ? null : matchPokemonFromStoragePage(await readRegion(SCAN_REGIONS.storageCandy), cp,
-      nameText, buttonsText);
+      nameText, buttonsText, typesText);
     if (banner || fromPage) {
       const details = parseStorageDetails(await readRegion(SCAN_REGIONS.storageStats), await readRegion(SCAN_REGIONS.storageDate));
       // Every lucky carries a "LUCKY POKÉMON" label under its name, so no label = not lucky.
@@ -3792,7 +3911,7 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
       if (banner) {
         details.date = banner.date || details.date;
         details.where = banner.where;
-        return { mode: 'storage', pokemon: banner.pokemon, cp, ambiguous: false, details };
+        return { mode: 'storage', pokemon: banner.pokemon, cp, ambiguous: !!banner.ambiguous, details };
       }
       return { mode: 'storage', pokemon: fromPage.pokemon, cp, ambiguous: fromPage.ambiguous, details };
     }
@@ -3823,6 +3942,8 @@ function applyScanResult(result, isSilent = false) {
   scanMatchAmbiguous = ambiguous;
   scanRoamingUnclearFor = null;
   scanContext = null;
+  scanLane = '';
+  lastGuidance = null;
   if (mode === 'catch' && pokemon) {
     const resolved = resolveRoamingBird(pokemon, cp);
     pokemon = resolved.pokemon;
