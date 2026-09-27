@@ -11,20 +11,25 @@ android {
         applicationId = "com.pogo.companion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "2.0.0"
+        versionCode = 35
+        versionName = "2.3.12"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // CI writes the keystore OUTSIDE the repo tree (KEYSTORE_FILE, in the runner's temp dir) so a
+    // Pages deploy of the working tree can never publish it: the permanent key when the
+    // KEYSTORE_BASE64 / KEYSTORE_PASSWORD secrets exist (see tools/setup-signing.sh), otherwise
+    // a throwaway. Only builds signed with the permanent key install over each other.
+    val releaseKeystore = file(System.getenv("KEYSTORE_FILE") ?: "../release-keystore.p12")
     signingConfigs {
         create("release") {
-            val keystoreFile = file("../release-keystore.jks")
-            if (keystoreFile.exists()) {
-                storeFile = keystoreFile
-                storePassword = "pogo2026pass"
+            if (releaseKeystore.exists()) {
+                storeFile = releaseKeystore
+                storeType = "pkcs12"
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
                 keyAlias = "pogo-release"
-                keyPassword = "pogo2026pass"
+                keyPassword = System.getenv("KEYSTORE_PASSWORD")
                 enableV1Signing = true
                 enableV2Signing = true
                 enableV3Signing = true
@@ -35,8 +40,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            val keystoreFile = file("../release-keystore.jks")
-            if (keystoreFile.exists()) {
+            if (releaseKeystore.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
             proguardFiles(
@@ -54,8 +58,29 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
+
+// The WebView UI is the repo-root index.html (also served as the PWA); bundle the current copy
+// on every build instead of committing a second one under assets/.
+val syncWebAssets by tasks.registering(Copy::class) {
+    from(rootProject.file("../index.html"))
+    into(layout.projectDirectory.dir("src/main/assets"))
+}
+val writeVersionManifest by tasks.registering {
+    val out = rootProject.file("../version.json")
+    val code = android.defaultConfig.versionCode
+    val name = android.defaultConfig.versionName
+    outputs.file(out)
+    doLast {
+        // Keep whatever notes were committed; only the version fields are generated.
+        val existing = if (out.exists()) out.readText() else ""
+        val notes = Regex("\"notes\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"").find(existing)?.groupValues?.get(1) ?: ""
+        out.writeText("{\"versionCode\": $code, \"versionName\": \"$name\", \"apk\": \"pogo-companion.apk\", \"notes\": \"$notes\"}\n")
+    }
+}
+tasks.named("preBuild") { dependsOn(syncWebAssets, writeVersionManifest) }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")

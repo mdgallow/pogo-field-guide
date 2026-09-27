@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -35,28 +35,33 @@ jobs:
         with:
           gradle-version: '8.4'
 
-      - name: Generate Official Release Keystore
+      - name: Prepare signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          keytool -genkeypair -v \
-            -keystore android/release-keystore.jks \
-            -alias pogo-release \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass pogo2026pass \
-            -keypass pogo2026pass \
-            -dname "CN=PoGo Companion, OU=Mobile, O=PoGo Field Guide, L=San Jose, ST=CA, C=US"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Using the permanent signing key from repo secrets"
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release-keystore.p12"
+            echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release-keystore.p12" >> "$GITHUB_ENV"
+          else
+            echo "::error::KEYSTORE_BASE64 / KEYSTORE_PASSWORD secrets are not set. A deploy signed with a throwaway key would be offered to every installed app as an update it cannot install. Run tools/setup-signing.sh once."
+            exit 1
+          fi
 
       - name: Build Android Release APK
         run: |
           cd android
           gradle assembleRelease --no-daemon --stacktrace
 
-      - name: Stage APK for Pages & Direct Download
+      - name: Stage the site (only what the website needs)
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk ./pogo-companion.apk
-          echo "Official Signed Release APK successfully built and staged:"
-          ls -lh ./pogo-companion.apk
+          mkdir -p site
+          cp index.html sw.js manifest.json icon.svg icon-192.png icon-512.png apple-touch-icon.png pogo_qr_code.png version.json site/
+          cp android/app/build/outputs/apk/release/app-release.apk site/pogo-companion.apk
+          cp site/pogo-companion.apk ./pogo-companion.apk
+          ls -lh site
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -64,13 +69,17 @@ jobs:
           name: pogo-companion-apk
           path: ./pogo-companion.apk
 
+      - name: Make sure no secrets are in the published tree
+        run: |
+          ! find site -name "*.p12" -o -name "*.jks" -o -name "*.kt" | grep .
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: 'site'
 
       - name: Deploy to GitHub Pages
         id: deployment
