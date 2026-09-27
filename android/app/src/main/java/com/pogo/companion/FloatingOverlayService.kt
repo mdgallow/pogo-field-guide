@@ -569,7 +569,6 @@ class FloatingOverlayService : Service() {
         isCapturing = false
         autoMode = false
         mainHandler.removeCallbacks(autoTick)
-        mainHandler.removeCallbacks(autoMaxStop)
         scanRequested.set(false)
         mainHandler.removeCallbacks(scanTimeout)
         mainHandler.removeCallbacks(evalTimeout)
