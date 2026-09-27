@@ -52,6 +52,9 @@ class MainActivity : AppCompatActivity() {
         OverlayBus.ocrEvaluator = { payloadJson ->
             webView.evaluateJavascript("window.assessNativeOcr && window.assessNativeOcr($payloadJson);", null)
         }
+        OverlayBus.pillAction = { action ->
+            webView.evaluateJavascript("window.pillAction && window.pillAction(${org.json.JSONObject.quote(action)});", null)
+        }
 
         if (savedInstanceState == null) handleIntent(intent)
         UpdateChecker.checkOnLaunch(this)
@@ -219,6 +222,19 @@ class MainActivity : AppCompatActivity() {
             }
             runOnUiThread { OverlayBus.pillUpdater?.invoke(PillState(mode, target, slots)) }
         }
+
+        /** Same as updatePill plus the actions the pill should offer (["gone"]). */
+        @JavascriptInterface
+        fun updatePillEx(mode: String, target: String, slotsJson: String, actionsJson: String) {
+            val rows = JSONArray(slotsJson)
+            val slots = (0 until rows.length()).map { i ->
+                val row = rows.getJSONArray(i)
+                PillSlot(row.optString(0), row.optString(1), parseCssColor(row.optString(2)))
+            }
+            val acts = JSONArray(actionsJson)
+            val actions = (0 until acts.length()).map { acts.optString(it) }
+            runOnUiThread { OverlayBus.pillUpdater?.invoke(PillState(mode, target, slots, actions)) }
+        }
     }
 
     /** Accepts the two forms the page produces: "#rrggbb" and "rgb(r, g, b)". */
@@ -245,6 +261,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         OverlayBus.ocrEvaluator = null
+        OverlayBus.pillAction = null
         webView.destroy()
     }
 }

@@ -291,6 +291,7 @@ class FloatingOverlayService : Service() {
         attachDragOrTap(view.findViewById(R.id.pillAutoBtn)) { setAutoMode(!autoMode) }
         attachDragOrTap(view.findViewById(R.id.pillExpandBtn)) { expandToApp() }
         attachDragOrTap(view.findViewById(R.id.pillCloseBtn)) { stopSelf() }
+        attachDragOrTap(view.findViewById(R.id.pillGoneBtn)) { OverlayBus.pillAction?.invoke("gone") }
 
         try {
             windowManager.addView(view, params)
@@ -319,6 +320,7 @@ class FloatingOverlayService : Service() {
                 R.id.pillAutoBtn -> "Auto scan while swiping"
                 R.id.pillExpandBtn -> "Open the full app"
                 R.id.pillCloseBtn -> "Close the pill"
+                R.id.pillGoneBtn -> "I transferred this Pokémon"
                 else -> null
             }
         }
@@ -904,6 +906,7 @@ class FloatingOverlayService : Service() {
             setTextOrHide(row.findViewById(R.id.pillSlotValue), slot.value, slot.color ?: DEFAULT_VALUE_COLOR)
             container.addView(row)
         }
+        v.findViewById<View>(R.id.pillGoneBtn)?.visibility = if (state.actions.contains("gone")) View.VISIBLE else View.GONE
     }
 
     /** Empty lines collapse so the pill is never taller than what it has to say. */

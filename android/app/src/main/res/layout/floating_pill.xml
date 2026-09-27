@@ -83,6 +83,24 @@
         android:layout_height="wrap_content"
         android:orientation="vertical" />
 
+    <!-- GONE: the player transferred the Pokémon on screen (shown only for transfer/trade verdicts) -->
+    <TextView
+        android:id="@+id/pillGoneBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="GONE ✓"
+        android:textColor="@color/red_delete"
+        android:textSize="8.5sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:background="@drawable/expand_btn_bg"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:layout_marginTop="2dp"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true" />
+
     <!-- OPEN the full app  |  close the pill -->
     <LinearLayout
         android:layout_width="match_parent"

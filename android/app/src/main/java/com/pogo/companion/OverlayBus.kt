@@ -4,7 +4,7 @@ package com.pogo.companion
 data class PillSlot(val caption: String, val value: String, val color: Int? = null)
 
 /** What the floating pill displays after an evaluation. Text only, any number of answers. */
-data class PillState(val mode: String, val target: String, val slots: List<PillSlot>) {
+data class PillState(val mode: String, val target: String, val slots: List<PillSlot>, val actions: List<String> = emptyList()) {
     companion object {
         /** A status message (no captions), e.g. "NOTHING TO READ". */
         fun message(mode: String, vararg lines: String) =
@@ -24,6 +24,9 @@ object OverlayBus {
 
     /** Set by the service: pushes evaluated slot data onto the pill. */
     @Volatile var pillUpdater: ((PillState) -> Unit)? = null
+
+    /** Set by MainActivity: runs a pill action ("gone") in the page. */
+    @Volatile var pillAction: ((String) -> Unit)? = null
 
     /** Last AUTO events (newest last), for the troubleshooting panel in My Log. */
     @Volatile var autoTrail: String = ""

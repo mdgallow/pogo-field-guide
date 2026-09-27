@@ -981,7 +981,7 @@
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #34d399;">
           <b>4. On a Pokémon in your storage</b> it answers <b>VERDICT</b> (DELETE, KEEP, TRADE, KEEP BEST, CHECK FIRST), <b>IV CHECK</b> and <b>REASON</b>. Nicknames do not matter: with the appraisal open it reads the “This Sandslash was caught…” banner (which always names the real species and the catch date); otherwise the candy name, the CP and the EVOLVE button. So “Robot 39” or a Charizard still called “Charmander 44” are identified correctly.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
-          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by its family plus its exact height and weight. That is how the pill protects the ones that matter: anything you <b>favorited</b> in the game always says KEEP, and the <b>strongest of a family</b> you have scanned never says DELETE. <b>Appraise once, remembered forever:</b> open the in-game appraisal (the three stat bars) and tap SCAN. The pill reads the exact IVs from the bars, saves them, and from then on shows them on every scan of that Pokémon as <b>15/14/15 · 98% (SAVED)</b>, whatever its name or CP becomes. A perfect always says KEEP · PERFECT 4★. Lucky and shadow are read from the page (the purple haze around a shadow, confirmed by its PURIFY button); tick <b>shiny</b> in My Log yourself (a shiny never says DELETE). A shadow can’t be traded until purified, so it never says TRADE; for raid species its +20% attack makes it the form to keep and power up. Dynamax Pokémon (read from their badge) are managed as their own pool: only they can enter Max Battles, they can’t be traded, and they are ranked only against other Dynamax of the same species (keep the best 3 by default). <b>Catalogue a whole box fast:</b> open one Pokémon, open its appraisal, tap <b>AUTO</b> on the pill, then just swipe left/right through your Pokémon. Each one is read and logged as it settles on screen, with no taps. AUTO switches itself off after 30 seconds without a new Pokémon, after 10 minutes, or when you leave the storage page, so it never runs in the background. Once logged, each scan tells you where that Pokémon ranks in its evolution family (<b>#2 OF 40 CHARMANDER FAMILY</b> — a perfect Charmander is a future perfect Charizard, so the family is what you manage). Great/Ultra League families get a second lane: <b>#1 PVP</b> ranks by bulk (low attack, high defense and HP: under the CP cap that build reaches a higher level and wins more), so a 0/15/15 Azumarill can be your PVP champ while a perfect one leads the RAID lane. A Pokémon is surplus only when it is outside both lanes and marks anything beyond your top 6 as <b>SURPLUS</b> — or, when the family is worth candy (a Charmander with perfect Charizards to max), as <b>TRADE FOR CANDY</b> with the goal spelled out. Luckies rank about 6 IV points higher than their bars (3 for legendaries, whose limit is XL candy) because half-price power-ups take them further; favorites below the cut get <b>FAVORITE?</b> advice instead of transfer. For Great/Ultra League species the ranking prefers low attack with high defense and HP: under the CP cap that build reaches a higher level and has more bulk. Open <b>My Log</b> to see the list per species, change the 6, or make a backup. Uninstalling the app erases the log, so back it up first.</div>
+          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by its family plus its exact height and weight. That is how the pill protects the ones that matter: anything you <b>favorited</b> in the game always says KEEP, and the <b>strongest of a family</b> you have scanned never says DELETE. <b>Appraise once, remembered forever:</b> open the in-game appraisal (the three stat bars) and tap SCAN. The pill reads the exact IVs from the bars, saves them, and from then on shows them on every scan of that Pokémon as <b>15/14/15 · 98% (SAVED)</b>, whatever its name or CP becomes. A perfect always says KEEP · PERFECT 4★. Lucky and shadow are read from the page (the purple haze around a shadow, confirmed by its PURIFY button); tick <b>shiny</b> in My Log yourself (a shiny never says DELETE). A shadow can’t be traded until purified, so it never says TRADE; for raid species its +20% attack makes it the form to keep and power up. Dynamax Pokémon (read from their badge) are managed as their own pool: only they can enter Max Battles, they can’t be traded, and they are ranked only against other Dynamax of the same species (keep the best 3 by default). <b>Catalogue a whole box fast:</b> open one Pokémon, open its appraisal, tap <b>AUTO</b> on the pill, then just swipe left/right through your Pokémon. Each one is read and logged as it settles on screen, with no taps. AUTO switches itself off after 30 seconds without a new Pokémon, after 10 minutes, or when you leave the storage page, so it never runs in the background. Once logged, each scan tells you where that Pokémon ranks in its evolution family (<b>#2 OF 40 CHARMANDER FAMILY</b> — a perfect Charmander is a future perfect Charizard, so the family is what you manage). Great/Ultra League families get a second lane: <b>#1 PVP</b> ranks by bulk (low attack, high defense and HP: under the CP cap that build reaches a higher level and wins more), so a 0/15/15 Azumarill can be your PVP champ while a perfect one leads the RAID lane. A Pokémon is surplus only when it is outside both lanes and marks anything beyond your top 6 as <b>SURPLUS</b> — or, when the family is worth candy (a Charmander with perfect Charizards to max), as <b>TRADE FOR CANDY</b> with the goal spelled out. Luckies rank about 6 IV points higher than their bars (3 for legendaries, whose limit is XL candy) because half-price power-ups take them further; favorites below the cut get <b>FAVORITE?</b> advice instead of transfer. For Great/Ultra League species the ranking prefers low attack with high defense and HP: under the CP cap that build reaches a higher level and has more bulk. When the pill says transfer or trade and you do it, tap <b>GONE</b> on the pill (or “gone” on the My Log row) so it leaves the ranking. An AUTO pass through a family is also a census: anything logged in that family that you did not swipe past is marked “not seen in last sweep” and steps out of the ranking until it shows up again. A Pokémon that evolves keeps its entry (matched by IVs and catch date) and the row notes what it was. Open <b>My Log</b> to see the list per species, change the 6, or make a backup. Uninstalling the app erases the log, so back it up first.</div>
       </div>
     </div>
 
@@ -1440,6 +1440,15 @@ function hasTypes(p, words) {
   const own = (p.types || []).map(t => t.replace('POKEMON_TYPE_', ''));
   return words.every(w => own.includes(w));
 }
+// Narrow candidates by the type words read: an exact type set wins outright (Rattata is NORMAL,
+// Alolan Rattata is DARK/NORMAL, so "NORMAL" alone must pick Kanto), else any that contain them.
+function filterByTypes(list, words) {
+  if (!words.length) return list;
+  const exact = list.filter(p => (p.types || []).length === words.length && hasTypes(p, words));
+  if (exact.length) return exact;
+  const loose = list.filter(p => hasTypes(p, words));
+  return loose.length ? loose : list;
+}
 
 function annotateFamilyGuidance() {
   // Two entries carry raw ids instead of display names; normalise so form handling is uniform.
@@ -1543,11 +1552,17 @@ function recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs) {
       ivs: null, firstSeen: now, scans: 0 };
     pokeLog.push(entry);
   }
-  if (!entry) {
-    entry = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), family,
-      weight: details.weight, height: details.height, ivs: null, firstSeen: now, scans: 0 };
-    pokeLog.push(entry);
+  // Matched across stages (same IVs / date / body): it evolved. Size and CP change with the
+  // stage, so refresh them; keep the previous stage on the entry for the log.
+  const evolved = !!entry.species && entry.species !== pokemon.name;
+  if (evolved) {
+    entry.wasSpecies = entry.species;
+    entry.evolvedAt = now;
+    if (sized) { entry.weight = details.weight; entry.height = details.height; }
+    if (cp) entry.cp = cp;
   }
+  if (entry.gone) { entry.gone = false; entry.goneAt = null; }   // seen again: it is still here
+  if (entry.missing) { entry.missing = false; entry.missingSince = null; }
   entry.species = pokemon.name;
   // A CP within a few points of the stored one is an OCR slip (6 vs 8), not a power-up: keep the stored value.
   entry.cp = (cp && entry.cp && Math.abs(cp - entry.cp) <= 5) ? entry.cp : (cp || entry.cp || null);
@@ -1564,6 +1579,7 @@ function recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs) {
   if (details && details.shadow) entry.shadow = true;
   if (details && (details.purified || details.notShadow)) entry.shadow = false;
   entry.hasMega = !!pokemon.has_mega;
+  if (details && 'formUnsure' in details) entry.formUnsure = !!details.formUnsure;
   entry.lastSeen = now;
   entry.scans += 1;
   savePokeLog();
@@ -1648,8 +1664,15 @@ function poolOf(species, dynamax = false) {
 
 function speciesRanking(species, dynamax = false, lane = 'raid') {
   const pool = poolOf(species, dynamax);
-  return pokeLog.filter(e => pool.members.has(e.species) && !!e.dynamax === dynamax)
+  return pokeLog.filter(e => pool.members.has(e.species) && !!e.dynamax === dynamax && !e.gone && !e.missing)
     .sort((x, y) => entryScore(y, lane) - entryScore(x, lane));
+}
+
+// Is `to` a later stage of the species named `fromName` (same candy family, higher form)?
+function isEvolutionOf(fromName, to) {
+  const from = POKEMON_DATA.find(x => x.name === fromName);
+  if (!from || !to.isEvolvedForm) return false;
+  return candyFamily(from).includes(to) && (to.max_cp || 0) > (from.max_cp || 0);
 }
 
 function findLogEntry(pokemon, cp, details, ivs) {
@@ -1663,6 +1686,13 @@ function findLogEntry(pokemon, cp, details, ivs) {
     if (details && details.date && e.date && details.date !== e.date) continue;
     const bothSized = sized && e.weight != null && e.height != null;
     const sizeMatch = bothSized && near(e.weight, details.weight, 0.02) && near(e.height, details.height, 0.01);
+    // Evolution: the body changes, so size cannot contradict; instead demand identical IVs and
+    // the same catch date, the two things evolution never changes.
+    const evolution = e.species !== pokemon.name && isEvolutionOf(e.species, pokemon);
+    if (evolution) {
+      if (ivs && e.ivs && details && details.date && e.date) { if (bestScore < 6) { best = e; bestScore = 6; } }
+      continue;
+    }
     if (bothSized && !near(e.weight, details.weight, 0.02) && !near(e.height, details.height, 0.01)) continue; // a different body
     let score = 0, anchors = 0;
     if (e.species === pokemon.name) score += 1;                         // same stage (evolving changes it)
@@ -1685,8 +1715,44 @@ function findLogEntry(pokemon, cp, details, ivs) {
   return bestScore >= 4 ? best : null;
 }
 
-function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs) {
+// --- Sweep reconciliation ------------------------------------------------------------------
+// The game never says when a Pokémon was transferred. An AUTO pass through a family is a census:
+// once two or more different entries of a family have been seen in the same AUTO session and
+// the pass has lasted a while, any logged entry of that family (same Dynamax pool) not seen
+// during it is marked "missing" and leaves the ranking. Seeing it again restores it.
+const sweeps = new Map();   // familyRoot|dynamax -> { start, seen:Set<id>, last }
+const SWEEP_GAP_MS = 90000, SWEEP_MIN_MS = 20000;
+function noteSweep(entry, auto) {
+  if (!auto || !entry) return;
+  const key = `${entry.family}|${entry.dynamax ? 1 : 0}`;
+  const now = Date.now();
+  let sw = sweeps.get(key);
+  if (!sw || now - sw.last > SWEEP_GAP_MS) { sw = { start: now, seen: new Set(), last: now }; sweeps.set(key, sw); }
+  sw.seen.add(entry.id);
+  sw.last = now;
+  if (sw.seen.size >= 2 && now - sw.start >= SWEEP_MIN_MS) {
+    for (const e of pokeLog) {
+      if (e.family !== entry.family || !!e.dynamax !== !!entry.dynamax || sw.seen.has(e.id) || e.gone || e.missing) continue;
+      if (Date.parse(e.lastSeen || 0) < sw.start) { e.missing = true; e.missingSince = new Date().toISOString(); }
+    }
+    savePokeLog();
+  }
+}
+
+// Pill action: the player transferred (or is about to transfer) the Pokémon on screen.
+window.pillAction = function (action) {
+  if (action !== 'gone' || !scanContext || !scanContext.entryId) return;
+  const e = pokeLog.find(x => x.id === scanContext.entryId);
+  if (!e) return;
+  e.gone = true;
+  e.goneAt = new Date().toISOString();
+  savePokeLog();
+  if (isNativeApp) AndroidBridge.updatePill('STORAGE', e.species, JSON.stringify([['', 'MARKED AS GONE', '#94a3b8'], ['', 'LEFT THE RANKING', '#94a3b8']]));
+};
+
+function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs, auto = false) {
   const entry = recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs);
+  noteSweep(entry, auto);
   const relatives = entry ? pokeLog.filter(e => e.family === entry.family) : [];
   const bestCp = relatives.reduce((best, e) => Math.max(best, e.cp || 0), 0);
   const known = ivs || (entry && entry.ivs) || null;
@@ -1695,7 +1761,7 @@ function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs) {
   const pool = poolOf(pokemon.name, dynamax);
   const pvpLane = !dynamax && pvpRelevant(pokemon);
   const rankedPvp = pvpLane ? speciesRanking(pokemon.name, dynamax, 'pvp') : [];
-  return { species: pokemon.name, favorite: !!favorite, root: pokemon.familyRoot,
+  return { species: pokemon.name, favorite: !!favorite, root: pokemon.familyRoot, entryId: entry ? entry.id : null,
     logged: relatives.length, bestCp, isStrongest: !!entry && !!cp && cp >= bestCp,
     ivs: known, ivsFromLog: !ivs && !!(entry && entry.ivs),
     rank: entry ? ranked.indexOf(entry) + 1 : 0, ofSpecies: ranked.length, appraised: !!(entry && entry.ivs),
@@ -1848,7 +1914,7 @@ function renderSpeciesSummary() {
   const n = keepN();
   const nd = keepNDynamax();
   const pools = new Map();
-  for (const e of pokeLog) { const pl = poolOf(e.species, !!e.dynamax); pools.set(`${pl.key}|${e.dynamax ? 1 : 0}`, e.species); }
+  for (const e of pokeLog) { if (e.gone || e.missing) continue; const pl = poolOf(e.species, !!e.dynamax); pools.set(`${pl.key}|${e.dynamax ? 1 : 0}`, e.species); }
   const rows = [...pools.keys()].sort().map(key => {
     const [label, dm] = key.split('|');
     const sp = pools.get(key);
@@ -1884,13 +1950,13 @@ function renderLogModal() {
   }
   const rows = [...pokeLog].sort((a, b) => a.species.localeCompare(b.species) || (rankOf.get(a.id) - rankOf.get(b.id))).map(e => `
     <tr style="border-top:1px solid var(--border);">
-      <td style="padding:6px 4px;"><span style="color:#94a3b8;">#${rankOf.get(e.id)}${rankPvpOf.has(e.id) ? ' · P#' + rankPvpOf.get(e.id) : ''}</span> <b>${esc(e.species)}</b>${e.favorite ? ' <span style="color:#fbbf24;">favorite</span>' : ''}${e.lucky ? ' <span style="color:#fbbf24;">lucky</span>' : ''}${e.hasMega ? ' <span style="color:#c084fc;">mega</span>' : ''}${e.dynamax ? ' <span style="color:#ec4899;">dynamax</span>' : ''}<br>
+      <td style="padding:6px 4px;"><span style="color:#94a3b8;">#${rankOf.get(e.id)}${rankPvpOf.has(e.id) ? ' · P#' + rankPvpOf.get(e.id) : ''}</span> <b>${esc(e.species)}</b>${e.favorite ? ' <span style="color:#fbbf24;">favorite</span>' : ''}${e.lucky ? ' <span style="color:#fbbf24;">lucky</span>' : ''}${e.hasMega ? ' <span style="color:#c084fc;">mega</span>' : ''}${e.dynamax ? ' <span style="color:#ec4899;">dynamax</span>' : ''}${e.gone ? ' <span style="color:#f87171;">gone</span>' : ''}${e.missing ? ' <span style="color:#f59e0b;">not seen in last sweep</span>' : ''}${e.wasSpecies ? ' <span style="color:#94a3b8;">was ' + esc(e.wasSpecies) + '</span>' : ''}${e.formUnsure ? ' <span style="color:#94a3b8;">form unsure</span>' : ''}<br>
         <span style="color:var(--text-muted);">${e.weight ? e.weight + 'kg · ' + e.height + 'm' : 'size not read'}${e.date ? ' · caught ' + esc(e.date) : ''}${e.where ? ' · ' + esc(e.where) : ''}</span><br>
         <label style="color:var(--text-muted); cursor:pointer;"><input type="checkbox" ${e.shiny ? 'checked' : ''} onchange="setLogMark('${e.id}','shiny',this.checked)"> shiny</label>
         <label style="color:var(--text-muted); cursor:pointer; margin-left:8px;"><input type="checkbox" ${e.shadow ? 'checked' : ''} onchange="setLogMark('${e.id}','shadow',this.checked)"> shadow</label></td>
       <td style="padding:6px 4px; text-align:right;">${e.cp || '-'} CP</td>
       <td style="padding:6px 4px; text-align:right;">${e.ivs ? `<b style="color:${ivPercent(e.ivs) === 100 ? '#34d399' : '#e2e8f0'};">${e.ivs.join('/')}</b><br>${ivPercent(e.ivs)}%` : esc(e.ivGuess || 'not appraised')}</td>
-      <td style="padding:6px 4px; text-align:right;"><button onclick="deleteLogEntry('${e.id}')" style="background:none; border:none; color:#f87171; cursor:pointer; font-weight:800;">remove</button></td>
+      <td style="padding:6px 4px; text-align:right;">${(e.gone || e.missing) ? `<button onclick="restoreLogEntry('${e.id}')" style="background:none; border:none; color:#34d399; cursor:pointer; font-weight:800;">still have it</button><br>` : `<button onclick="markLogEntryGone('${e.id}')" style="background:none; border:none; color:#f59e0b; cursor:pointer; font-weight:800;">gone</button><br>`}<button onclick="deleteLogEntry('${e.id}')" style="background:none; border:none; color:#f87171; cursor:pointer; font-weight:800;">remove</button></td>
     </tr>`).join('');
   document.getElementById('logBody').innerHTML = pokeLog.length
     ? `<table style="width:100%; border-collapse:collapse; font-size:12px;">${rows}</table>`
@@ -1901,6 +1967,16 @@ function renderLogModal() {
 function setLogMark(id, mark, on) {
   const e = pokeLog.find(x => x.id === id);
   if (e) { e[mark] = !!on; savePokeLog(); }
+}
+
+function markLogEntryGone(id) {
+  const e = pokeLog.find(x => x.id === id);
+  if (e) { e.gone = true; e.goneAt = new Date().toISOString(); savePokeLog(); renderLogModal(); }
+}
+
+function restoreLogEntry(id) {
+  const e = pokeLog.find(x => x.id === id);
+  if (e) { e.gone = false; e.missing = false; e.goneAt = null; e.missingSince = null; savePokeLog(); renderLogModal(); }
 }
 
 function deleteLogEntry(id) {
@@ -3173,7 +3249,12 @@ function pushNativePill() {
   if (evaluationMode === 'storage' && lastGuidance && lastGuidance.short) reasonSlot[1] = lastGuidance.short;
   slots.push(reasonSlot);
   if (scanContext && scanContext.rank) slots.push(['LOGGED', `${pokeLog.length} TOTAL · ${scanContext.ofSpecies} ${scanContext.species.toUpperCase()}`, '#94a3b8']);
-  AndroidBridge.updatePill(evaluationMode + (scanLane && evaluationMode === 'storage' ? ' · ' + scanLane : ''), target, JSON.stringify(slots));
+  const verdict = lastGuidance ? lastGuidance.verdict : '';
+  const actions = evaluationMode === 'storage' && scanContext && scanContext.entryId &&
+    ['DELETE', 'SURPLUS', 'TRADE', 'FAVORITE?', 'CHECK FIRST'].includes(verdict) ? ['gone'] : [];
+  const modeText = evaluationMode + (scanLane && evaluationMode === 'storage' ? ' · ' + scanLane : '');
+  if (AndroidBridge.updatePillEx) AndroidBridge.updatePillEx(modeText, target, JSON.stringify(slots), JSON.stringify(actions));
+  else AndroidBridge.updatePill(modeText, target, JSON.stringify(slots));
 }
 
 // Pre-initialize PiP stream and video element on page load so readyState is 4 (HAVE_ENOUGH_DATA)
@@ -3729,11 +3810,9 @@ function matchPokemonFromBanner(bannerText, typesText = '') {
   if (!pokemon && !form) {
     // No form prefix: every form of that species is a candidate; the type row separates them.
     const forms = POKEMON_DATA.filter(p => key(baseSpecies(p.name)) === key(name));
-    const words = readTypeWords(typesText);
-    const byType = words.length ? forms.filter(p => hasTypes(p, words)) : forms;
-    const pick = byType.length ? byType : forms;
+    const pick = filterByTypes(forms, readTypeWords(typesText));
     pokemon = pick.find(p => !/\(/.test(p.name)) || pick[0] || null;   // base form first when still tied
-    ambiguous = pick.length > 1;
+    ambiguous = pick.length > 1 ? 'form' : false;
   }
   if (!pokemon) {
     // OCR slip: closest species name within 1-2 edits
@@ -3776,11 +3855,7 @@ function matchPokemonFromStoragePage(candyText, cpVal, nameText, buttonsText, ty
   let candidates = family.filter(p => !cpVal || !p.max_cp || cpVal <= p.max_cp);
   if (!candidates.length) candidates = family;
   // Regional forms share the candy; the type row is what tells them apart.
-  const typeWords = readTypeWords(typesText);
-  if (typeWords.length) {
-    const byType = candidates.filter(p => hasTypes(p, typeWords));
-    if (byType.length) candidates = byType;
-  }
+  candidates = filterByTypes(candidates, readTypeWords(typesText));
 
   // Only read the EVOLVE button's absence as "final stage" if POWER UP (right above it) was seen,
   // i.e. that part of the page really was on screen. MEGA EVOLVE is a different button.
@@ -3808,11 +3883,14 @@ function matchPokemonFromStoragePage(candyText, cpVal, nameText, buttonsText, ty
   if (named && candidates.includes(named)) {
     // The name settles the stage, but not which regional form of it when types were not read.
     const sameStage = candidates.filter(p => baseSpecies(p.name) === baseSpecies(named.name));
-    return { pokemon: named, ambiguous: sameStage.length > 1 };
+    return { pokemon: named, ambiguous: sameStage.length > 1 ? 'form' : false };
   }
   // Several stages / forms still fit: prefer the base form, say so instead of pretending.
+  // 'stage' ambiguity (Charmander vs Charmeleon) is not logged; 'form' ambiguity (Kanto vs
+  // Alolan) is logged as the base form and flagged, so a missed type row never loses a Pokémon.
+  const stages = new Set(candidates.map(p => baseSpecies(p.name)));
   const pick = candidates.find(p => !/\(/.test(p.name)) || candidates[0];
-  return { pokemon: pick, ambiguous: candidates.length > 1 };
+  return { pokemon: pick, ambiguous: stages.size > 1 ? 'stage' : (candidates.length > 1 ? 'form' : false) };
 }
 
 function findBestPokemonMatch(rawName, cpVal = null) {
@@ -3911,7 +3989,7 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
       if (banner) {
         details.date = banner.date || details.date;
         details.where = banner.where;
-        return { mode: 'storage', pokemon: banner.pokemon, cp, ambiguous: !!banner.ambiguous, details };
+        return { mode: 'storage', pokemon: banner.pokemon, cp, ambiguous: banner.ambiguous || false, details };
       }
       return { mode: 'storage', pokemon: fromPage.pokemon, cp, ambiguous: fromPage.ambiguous, details };
     }
@@ -3938,7 +4016,7 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
 // result: { mode, pokemon, cp, ambiguous, details, favorite } as produced by classifyScan().
 function applyScanResult(result, isSilent = false) {
   let { mode, pokemon, cp } = result;
-  const ambiguous = !!result.ambiguous;
+  const ambiguous = result.ambiguous || false;   // false | 'form' | 'stage'
   scanMatchAmbiguous = ambiguous;
   scanRoamingUnclearFor = null;
   scanContext = null;
@@ -3964,14 +4042,15 @@ function applyScanResult(result, isSilent = false) {
       cpInp.value = cp;
       checkCaughtCp();
     }
-    if (mode === 'storage' && pokemon && !ambiguous) {
+    if (mode === 'storage' && pokemon && ambiguous !== 'stage') {
+      if (result.details) result.details.formUnsure = ambiguous === 'form';
       if (result.details && result.shadowHaze && !result.details.notShadow) result.details.shadow = true;
       if (result.details) result.details.dynamax = !!result.dynamax;
-      scanContext = buildScanContext(pokemon, cp, result.details, result.favorite, cp ? evaluateCpMatch(pokemon, cp) : null, result.ivs);
+      scanContext = buildScanContext(pokemon, cp, result.details, result.favorite, cp ? evaluateCpMatch(pokemon, cp) : null, result.ivs, !!result.auto);
     }
     // Without a species, clear the slots: the CP filter's top row is a guess, not a read.
-    updateVerticalHud(pokemon, (pokemon && cp && !ambiguous) ? evaluateCpMatch(pokemon, cp) : null);
-    if (ambiguous) {
+    updateVerticalHud(pokemon, (pokemon && cp && ambiguous !== 'stage') ? evaluateCpMatch(pokemon, cp) : null);
+    if (ambiguous === 'stage') {
       // The IV check is per species; with the exact stage unknown it would be a coin flip.
       const ivLabel = document.getElementById('hudCatchLabel');
       if (ivLabel) ivLabel.innerText = 'UNKNOWN';
