@@ -77,28 +77,44 @@ class FloatingOverlayService : Service() {
     private val scanRequested = AtomicBoolean(false)
 
     // AUTO (catalogue) mode: log Pokémon as the player swipes through the appraisal view.
-    // Deliberately simple: every AUTO_TICK_MS the pill nudges its opacity by 1% (forces one fresh
-    // frame from the mirror), that frame's card fingerprint is compared with the last one read,
-    // and only a new card is OCR'd. Stops itself when idle or after AUTO_MAX_MS.
+    // Every AUTO_TICK_MS the pill blinks out (so nothing under it is hidden and its own text is
+    // never read), one fresh frame is sampled, and a card that differs from the last one READ
+    // is OCR'd. Any change on screen counts as activity (swiping back to a card already read
+    // keeps AUTO alive); AUTO stops after AUTO_IDLE_STOP_MS without activity, after
+    // AUTO_OFF_PAGE_MS off the storage page, or at AUTO_MAX_MS, and says why on the pill.
     @Volatile private var autoMode = false
     @Volatile private var autoWantFrame = false
     private var autoLastReadSig: IntArray? = null
+    private var autoLastSeenSig: IntArray? = null
     private var autoReads = 0
-    private var autoLastNewAt = 0L
+    private var autoLastActiveAt = 0L
+    private var autoOffPageSince = 0L
+    private var autoStartedAt = 0L
+    /** A manual SCAN interrupted AUTO; AUTO restarts fresh when that scan has rendered. */
+    private var autoResumeAfterScan = false
     private val autoTrail = ArrayDeque<String>()   // last ~40 AUTO events, shown in My Log
     private val autoTick = object : Runnable {
         override fun run() {
             if (!autoMode) return
             val now = System.currentTimeMillis()
-            if (now - autoLastNewAt > AUTO_IDLE_STOP_MS) { trail("idle 30s: off"); setAutoMode(false); return }
+            if (now - autoStartedAt > AUTO_MAX_MS) { stopAuto("10 min: off", "AUTO OFF: 10 MIN LIMIT", "TAP AUTO TO CONTINUE"); return }
+            if (now - autoLastActiveAt > AUTO_IDLE_STOP_MS) { stopAuto("idle 30s: off", "AUTO OFF: NOTHING NEW FOR 30 S", "TAP AUTO TO CONTINUE"); return }
+            if (autoOffPageSince != 0L && now - autoOffPageSince > AUTO_OFF_PAGE_MS) { stopAuto("left storage page: off", "AUTO OFF: LEFT THE STORAGE PAGE", "TAP AUTO TO CONTINUE"); return }
+            // Blink out; the frame that follows has no pill in it.
+            pillView?.alpha = 0f
             autoWantFrame = true
-            pillView?.let { it.alpha = if (it.alpha >= 1f) 0.99f else 1f }
             mainHandler.postDelayed(this, AUTO_TICK_MS)
-            // No frame within the tick = the mirror gave nothing; say so in the trail.
-            mainHandler.postDelayed({ if (autoWantFrame) { autoWantFrame = false; trail("no frame") } }, AUTO_TICK_MS - 100)
+            mainHandler.postDelayed({
+                if (autoWantFrame) { autoWantFrame = false; trail("no frame"); pillView?.alpha = 1f }
+            }, AUTO_TICK_MS - 200)
         }
     }
-    private val autoMaxStop = Runnable { trail("10 min: off"); setAutoMode(false) }
+
+    private fun stopAuto(trailMsg: String, line1: String, line2: String) {
+        trail(trailMsg)
+        setAutoMode(false)
+        finishScan(PillState.message("AUTO", line1, line2))
+    }
 
     private val scanTimeout = Runnable {
         if (scanRequested.compareAndSet(true, false)) {
@@ -144,8 +160,8 @@ class FloatingOverlayService : Service() {
         private const val EVAL_TIMEOUT_MS = 4000L
         private const val AUTO_TICK_MS = 1200L
         private const val AUTO_IDLE_STOP_MS = 30_000L
+        private const val AUTO_OFF_PAGE_MS = 5_000L
         private const val AUTO_MAX_MS = 10 * 60_000L
-        private const val AUTO_SIG_DIFF = 12 // (legacy) mean luminance change
         private const val AUTO_CHANGED_MIN = 6 // samples (of 400) that must flip to count as a new card
 
         @Volatile var isRunning = false
@@ -276,7 +292,14 @@ class FloatingOverlayService : Service() {
         attachDragOrTap(view.findViewById(R.id.pillExpandBtn)) { expandToApp() }
         attachDragOrTap(view.findViewById(R.id.pillCloseBtn)) { stopSelf() }
 
-        windowManager.addView(view, params)
+        try {
+            windowManager.addView(view, params)
+        } catch (e: Exception) {
+            Log.e(TAG, "Cannot show the pill (overlay permission?)", e)
+            pillView = null
+            stopSelf()
+            return
+        }
         finishScan(PillState.message("STANDBY", "TAP SCAN ON A POKÉMON"))
     }
 
@@ -287,6 +310,18 @@ class FloatingOverlayService : Service() {
         var touchStartX = 0f
         var dragging = false
 
+        if (onTap != null) {
+            // Accessibility services (TalkBack, switch access) activate via ACTION_CLICK, which only
+            // reaches an OnClickListener; the touch listener above it handles drag and forwards taps.
+            view.setOnClickListener { vibrateTap(); onTap() }
+            view.contentDescription = when (view.id) {
+                R.id.pillScanBtn -> "Scan the screen now"
+                R.id.pillAutoBtn -> "Auto scan while swiping"
+                R.id.pillExpandBtn -> "Open the full app"
+                R.id.pillCloseBtn -> "Close the pill"
+                else -> null
+            }
+        }
         view.setOnTouchListener { v, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -323,9 +358,7 @@ class FloatingOverlayService : Service() {
                             vibrateTap()
                         }
                     } else if (onTap != null) {
-                        v.performClick()
-                        vibrateTap()
-                        onTap()
+                        v.performClick()   // the OnClickListener below runs the action
                     }
                 }
                 MotionEvent.ACTION_CANCEL -> v.isPressed = false
@@ -380,15 +413,17 @@ class FloatingOverlayService : Service() {
      * reader's queue never fills with stale images; one is only decoded when a scan is pending.
      */
     private fun onFrameAvailable(reader: ImageReader) {
+        if (!isCapturing) return
         var image: Image? = null
         try {
             image = reader.acquireLatestImage() ?: return
-            if (autoMode && !scanRequested.get()) autoSample(image)
             if (scanRequested.compareAndSet(true, false)) {
                 mainHandler.removeCallbacks(scanTimeout)
                 val frame = imageToBitmap(image)
                 mainHandler.post { showPillReading() }
                 runOcr(frame)
+            } else if (autoMode) {
+                autoSample(image)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Frame processing failed", e)
@@ -405,14 +440,16 @@ class FloatingOverlayService : Service() {
         autoMode = on
         autoWantFrame = false
         autoLastReadSig = null
+        autoLastSeenSig = null
         autoReads = 0
-        autoLastNewAt = System.currentTimeMillis()
+        autoOffPageSince = 0L
+        val now = System.currentTimeMillis()
+        autoLastActiveAt = now
+        autoStartedAt = now
         mainHandler.removeCallbacks(autoTick)
-        mainHandler.removeCallbacks(autoMaxStop)
         if (on) {
             trail("on")
             mainHandler.postDelayed(autoTick, 300)
-            mainHandler.postDelayed(autoMaxStop, AUTO_MAX_MS)
         }
         mainHandler.post {
             pillView?.let { if (it.alpha < 1f && !scanRequested.get()) it.alpha = 1f }
@@ -467,15 +504,32 @@ class FloatingOverlayService : Service() {
             }
         }
 
+        val now = System.currentTimeMillis()
+        // Any change on screen is activity, whether or not the card is new (swiping back and
+        // forth over cards already read must not count as idle).
+        val seen = autoLastSeenSig
+        if (seen == null || changedCount(seen, sig) >= AUTO_CHANGED_MIN) autoLastActiveAt = now
+        autoLastSeenSig = sig
+
         val last = autoLastReadSig
         // "Changed" = how many samples moved sharply (text appearing / vanishing), not the average.
         val diff = if (last == null) 999 else changedCount(last, sig)
-        if (last != null && diff < AUTO_CHANGED_MIN) { trail("same card ($diff changed)"); return }
+        if (last != null && diff < AUTO_CHANGED_MIN) {
+            trail("same card ($diff changed)")
+            mainHandler.post { pillView?.alpha = 1f }
+            return
+        }
 
         val frame = imageToBitmap(image)
-        if (!looksLikeStorageCard(frame)) { trail("not a storage page ($diff changed)"); frame.recycle(); return }
+        if (!looksLikeStorageCard(frame)) {
+            if (autoOffPageSince == 0L) autoOffPageSince = now
+            trail("not a storage page ($diff changed)")
+            frame.recycle()
+            mainHandler.post { pillView?.alpha = 1f }
+            return
+        }
+        autoOffPageSince = 0L
         autoLastReadSig = sig
-        autoLastNewAt = System.currentTimeMillis()
         autoReads++
         trail("new card ($diff changed): reading #$autoReads")
         mainHandler.post {
@@ -495,14 +549,9 @@ class FloatingOverlayService : Service() {
         return n
     }
 
-    private fun meanDiff(a: IntArray, b: IntArray): Int {
-        var d = 0
-        for (i in a.indices) d += abs(a[i] - b[i])
-        return d / a.size
-    }
-
     private fun imageToBitmap(image: Image): Bitmap {
         val plane = image.planes[0]
+        plane.buffer.rewind()   // the same Image may have been read for the AUTO fingerprint
         val rowPadding = plane.rowStride - plane.pixelStride * image.width
         val padded = Bitmap.createBitmap(
             image.width + rowPadding / plane.pixelStride,
@@ -549,7 +598,13 @@ class FloatingOverlayService : Service() {
             return
         }
         val view = pillView ?: return
-        if (scanRequested.get() || view.alpha < 1f) return
+        if (scanRequested.get()) return
+        if (autoMode) {
+            // Manual SCAN wins; AUTO restarts from scratch once this scan has rendered.
+            autoResumeAfterScan = true
+            trail("paused for manual scan")
+            setAutoMode(false)
+        }
 
         // Blink the pill out so nothing underneath it (date tag, favorite star, candy label)
         // is hidden from the scan. The mirror needs a moment to show the pill gone; the second
@@ -832,6 +887,10 @@ class FloatingOverlayService : Service() {
         val mode = state.mode.uppercase()
 
         v.findViewById<TextView>(R.id.pillScanBtn)?.text = "SCAN"
+        if (autoResumeAfterScan) {
+            autoResumeAfterScan = false
+            mainHandler.postDelayed({ if (!autoMode && mediaProjection != null) setAutoMode(true) }, 400)
+        }
         updateAutoButton()
         v.findViewById<TextView>(R.id.pillModeBadge)?.text = mode
         setTextOrHide(v.findViewById(R.id.pillTargetLabel), state.target, 0xFFFFFFFF.toInt())

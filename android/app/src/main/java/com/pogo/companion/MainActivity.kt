@@ -30,12 +30,14 @@ import org.json.JSONArray
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private var webViewGone = false
 
     companion object {
         private const val REQUEST_OVERLAY_PERMISSION = 101
         private const val REQUEST_MEDIA_PROJECTION = 102
         private const val PREFS = "pogo_overlay"
-        private const val PREF_CAPTURE_EXPLAINED = "capture_explained"
+        private const val PREF_CAPTURE_EXPLAINED = "capture_explained_v"
+        private const val CAPTURE_EXPLAINER_VERSION = 2   // bump whenever the explainer text changes
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +53,7 @@ class MainActivity : AppCompatActivity() {
             webView.evaluateJavascript("window.assessNativeOcr && window.assessNativeOcr($payloadJson);", null)
         }
 
-        handleIntent(intent)
+        if (savedInstanceState == null) handleIntent(intent)
         UpdateChecker.checkOnLaunch(this)
     }
 
@@ -67,7 +69,17 @@ class MainActivity : AppCompatActivity() {
 
         // Scans are evaluated here while the activity is in the background.
         webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false)
-        webView.webViewClient = WebViewClient()
+        webView.webViewClient = object : WebViewClient() {
+            // Android reclaims the WebView renderer under memory pressure (Pokémon GO in front for
+            // an hour). Returning false here would crash the whole app, pill and capture included.
+            override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                OverlayBus.ocrEvaluator = null              // the pill says "APP WAS CLOSED / TAP OPEN"
+                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                view.destroy()
+                webViewGone = true
+                return true
+            }
+        }
         webView.webChromeClient = WebChromeClient()
 
         webView.addJavascriptInterface(WebAppBridge(), "AndroidBridge")
@@ -76,18 +88,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == FloatingOverlayService.ACTION_REQUEST_PROJECTION) {
-            requestScreenCapture()
+            intent.action = null                                   // never replayed on recreation
+            if (FloatingOverlayService.isRunning && Settings.canDrawOverlays(this)) requestScreenCapture()
         }
     }
 
     // The pill only exists while the app is minimized.
     override fun onResume() {
         super.onResume()
+        if (webViewGone) recreate()   // rebuild the page after a renderer kill, now that we are visible
         OverlayBus.pillVisibility?.invoke(false)
     }
 
@@ -125,14 +140,14 @@ class MainActivity : AppCompatActivity() {
      */
     private fun requestScreenCapture() {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
-        if (!prefs.getBoolean(PREF_CAPTURE_EXPLAINED, false)) {
+        if (prefs.getInt(PREF_CAPTURE_EXPLAINED, 0) < CAPTURE_EXPLAINER_VERSION) {
             // First time only: say what the system dialog is for before it appears.
             AlertDialog.Builder(this)
                 .setTitle(R.string.capture_explainer_title)
                 .setMessage(R.string.capture_explainer_message)
                 .setCancelable(false)
                 .setPositiveButton(R.string.capture_explainer_ok) { _, _ ->
-                    prefs.edit().putBoolean(PREF_CAPTURE_EXPLAINED, true).apply()
+                    prefs.edit().putInt(PREF_CAPTURE_EXPLAINED, CAPTURE_EXPLAINER_VERSION).apply()
                     requestScreenCapture()
                 }
                 .show()
