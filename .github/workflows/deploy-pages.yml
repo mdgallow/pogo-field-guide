@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -46,11 +46,8 @@ jobs:
             echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
             echo "KEYSTORE_FILE=$RUNNER_TEMP/release-keystore.p12" >> "$GITHUB_ENV"
           else
-            echo "::warning::No signing secrets set (run tools/setup-signing.sh once). Using a throwaway key: this APK cannot be installed over any other build."
-            THROWAWAY=$(openssl rand -hex 16)
-            keytool -genkeypair -keystore "$RUNNER_TEMP/release-keystore.p12" -storetype PKCS12               -alias pogo-release -keyalg RSA -keysize 2048 -validity 10000               -storepass "$THROWAWAY" -keypass "$THROWAWAY"               -dname "CN=PoGo Companion, OU=Mobile, O=PoGo Field Guide, C=US"
-            echo "KEYSTORE_PASSWORD=$THROWAWAY" >> "$GITHUB_ENV"
-            echo "KEYSTORE_FILE=$RUNNER_TEMP/release-keystore.p12" >> "$GITHUB_ENV"
+            echo "::error::KEYSTORE_BASE64 / KEYSTORE_PASSWORD secrets are not set. A deploy signed with a throwaway key would be offered to every installed app as an update it cannot install. Run tools/setup-signing.sh once."
+            exit 1
           fi
 
       - name: Build Android Release APK
@@ -58,11 +55,13 @@ jobs:
           cd android
           gradle assembleRelease --no-daemon --stacktrace
 
-      - name: Stage APK for Pages & Direct Download
+      - name: Stage the site (only what the website needs)
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk ./pogo-companion.apk
-          echo "Official Signed Release APK successfully built and staged:"
-          ls -lh ./pogo-companion.apk
+          mkdir -p site
+          cp index.html sw.js manifest.json icon.svg icon-192.png icon-512.png apple-touch-icon.png pogo_qr_code.png version.json site/
+          cp android/app/build/outputs/apk/release/app-release.apk site/pogo-companion.apk
+          cp site/pogo-companion.apk ./pogo-companion.apk
+          ls -lh site
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -70,11 +69,9 @@ jobs:
           name: pogo-companion-apk
           path: ./pogo-companion.apk
 
-      - name: Make sure no secrets or build output are in the published tree
+      - name: Make sure no secrets are in the published tree
         run: |
-          rm -f android/release-keystore.p12 android/release-keystore.jks
-          rm -rf android/app/build android/.gradle
-          ! find . -name "*.p12" -o -name "*.jks" | grep .
+          ! find site -name "*.p12" -o -name "*.jks" -o -name "*.kt" | grep .
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -82,7 +79,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: 'site'
 
       - name: Deploy to GitHub Pages
         id: deployment

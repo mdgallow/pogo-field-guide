@@ -52,10 +52,10 @@ object UpdateChecker {
                 val notes = json.optString("notes", "")
                 val skipped = activity.getSharedPreferences(PREFS, Activity.MODE_PRIVATE).getInt(PREF_SKIPPED, -1)
                 main.post {
-                    if (activity.isFinishing) return@post
+                    if (activity.isFinishing || activity.isDestroyed) { checkedThisLaunch = false; return@post }
                     when {
                         code > BuildConfig.VERSION_CODE && (manual || code != skipped) ->
-                            offer(activity, code, name, BASE_URL + apk, notes)
+                            offer(activity, code, name, BASE_URL + apk + "?v=" + code, notes, code)
                         manual -> Toast.makeText(activity, "You have the latest version (v${BuildConfig.VERSION_NAME})", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -66,12 +66,12 @@ object UpdateChecker {
         }
     }
 
-    private fun offer(activity: Activity, code: Int, name: String, apkUrl: String, notes: String) {
+    private fun offer(activity: Activity, code: Int, name: String, apkUrl: String, notes: String, expectedCode: Int) {
         AlertDialog.Builder(activity)
             .setTitle("Update to v$name")
             .setMessage((if (notes.isBlank()) "" else notes + "\n\n") +
                 "You have v${BuildConfig.VERSION_NAME}. The update downloads (about 6 MB) and Android will ask you to confirm the install. Your log and settings are kept.")
-            .setPositiveButton("Update now") { _, _ -> download(activity, apkUrl) }
+            .setPositiveButton("Update now") { _, _ -> download(activity, apkUrl, expectedCode) }
             .setNegativeButton("Later", null)
             .setNeutralButton("Skip this version") { _, _ ->
                 activity.getSharedPreferences(PREFS, Activity.MODE_PRIVATE).edit().putInt(PREF_SKIPPED, code).apply()
@@ -79,7 +79,7 @@ object UpdateChecker {
             .show()
     }
 
-    private fun download(activity: Activity, apkUrl: String) {
+    private fun download(activity: Activity, apkUrl: String, expectedCode: Int) {
         Toast.makeText(activity, "Downloading update…", Toast.LENGTH_SHORT).show()
         io.execute {
             try {
@@ -88,12 +88,43 @@ object UpdateChecker {
                 conn.connectTimeout = 10000
                 conn.readTimeout = 30000
                 conn.inputStream.use { input -> file.outputStream().use { input.copyTo(it) } }
-                main.post { install(activity, file) }
+                val problem = validate(activity, file, expectedCode)
+                main.post {
+                    if (activity.isFinishing || activity.isDestroyed) return@post
+                    if (problem != null) Toast.makeText(activity, "Update not installed: $problem", Toast.LENGTH_LONG).show()
+                    else install(activity, file)
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Update download failed: $e")
                 main.post { Toast.makeText(activity, "Download failed: ${e.message}", Toast.LENGTH_LONG).show() }
             }
         }
+    }
+
+    /**
+     * Refuse anything that is not our package, an older/same versionCode, or signed with a
+     * different key: Android would fail those later with an unhelpful dialog (or a stale CDN
+     * copy would loop the "update" forever).
+     */
+    private fun validate(activity: Activity, file: File, expectedCode: Int): String? {
+        val pm = activity.packageManager
+        val info = (if (android.os.Build.VERSION.SDK_INT >= 28)
+            pm.getPackageArchiveInfo(file.path, android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES)
+        else @Suppress("DEPRECATION") pm.getPackageArchiveInfo(file.path, android.content.pm.PackageManager.GET_SIGNATURES))
+            ?: return "the download is not a valid app package"
+        if (info.packageName != activity.packageName) return "wrong package (${info.packageName})"
+        val code = if (android.os.Build.VERSION.SDK_INT >= 28) info.longVersionCode.toInt() else @Suppress("DEPRECATION") info.versionCode
+        if (code < expectedCode) return "the site served an older build (v$code); try again in a few minutes"
+        if (code <= BuildConfig.VERSION_CODE) return "not newer than the installed version"
+        try {
+            val mine = if (android.os.Build.VERSION.SDK_INT >= 28)
+                pm.getPackageInfo(activity.packageName, android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES).signingInfo?.apkContentsSigners
+            else @Suppress("DEPRECATION") pm.getPackageInfo(activity.packageName, android.content.pm.PackageManager.GET_SIGNATURES).signatures
+            val theirs = if (android.os.Build.VERSION.SDK_INT >= 28) info.signingInfo?.apkContentsSigners else @Suppress("DEPRECATION") info.signatures
+            if (mine != null && theirs != null && mine.map { it.toCharsString() }.toSet() != theirs.map { it.toCharsString() }.toSet())
+                return "signed with a different key; uninstall first"
+        } catch (_: Exception) {}
+        return null
     }
 
     private fun install(activity: Activity, file: File) {

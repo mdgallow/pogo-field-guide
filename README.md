@@ -21,11 +21,13 @@ Visit: **[https://mdgallow.github.io/pogo-field-guide/](https://mdgallow.github.
 4. The app is installed into your app drawer and home screen. Works 100% offline!
 
 ## 🤖 Native Android APK (floating pill overlay)
-The APK wraps the same `index.html` in a WebView and adds what a browser can't do: a pill that floats over Pokémon GO.
+The APK wraps the same `index.html` in a WebView and adds what a browser can't do: a pill that floats over Pokémon GO. The website itself is the reference guide (Pokédex, CP/IV tables, filters); scanning lives in the APK.
 
-- **▶ MINIMIZE TO PILL** (or any Mini Mode / Scan button in the app) hides the app behind the pill. *Display over other apps* is granted once, ever. Android's own screen-capture dialog can't be pre-approved by any app or T&C, so it's held to one "Start now" tap per play session (the grant lives until the pill is closed; on Android 14+ the single-app chooser is skipped), with a plain-language explainer shown the first time only. The pill docks to the right edge, drags vertically, and only exists while the app is minimized — **⛶ EXPAND** brings the full app back and the pill disappears.
-- **⚡ SCAN** grabs the current frame from the screen mirror held by `FloatingOverlayService` (the app is never brought forward), runs ML Kit OCR on-device, drops any text under the pill itself, and sends the text lines to the WebView's `assessNativeOcr()`. That shares `classifyScan()` / `applyScanResult()` with the browser's Tesseract path, and the verdict returns to the pill through `AndroidBridge.updatePill()`.
-- `android/app/src/main/assets/index.html` is not committed; Gradle's `syncWebAssets` task copies the repo-root file on every build.
+- **▶ MINIMIZE TO PILL** hides the app behind the pill. *Display over other apps* is granted once; Android's own screen-capture dialog can't be pre-approved, so it is one "Start now" tap per play session, with a plain-language explainer the first time. The pill docks right (drag it across the screen to dock left), drags vertically, and only exists while the app is minimized. **OPEN** brings the app back, **CLOSE** stops it.
+- **SCAN** blinks the pill out, captures one frame from the mirror held by `FloatingOverlayService`, runs ML Kit OCR plus pixel detectors (appraisal bars, favorite star, shadow haze, Dynamax badge) on-device, and hands the text lines to `assessNativeOcr()` in the page, which owns the Pokédex data and the verdict rules; the verdict returns through `AndroidBridge.updatePillEx()`.
+- **AUTO** keeps reading while you swipe through the appraisal view (a fresh frame every 1.2 s, OCR only when the card changes) and stops by itself when idle, off the storage page, or after 10 minutes. **GONE** marks the Pokémon on screen as transferred.
+- **My Log** (in the app) remembers every scanned Pokémon on the device: identity is scored across family, size, CP, IVs, catch date and place; appraised IVs are kept; RAID / PVP lanes with keep-N and quality floors decide keep / trade / transfer.
+- Build: `android/app/src/main/assets/index.html` is not committed; Gradle's `syncWebAssets` copies the repo-root file on every build and `writeVersionManifest` regenerates `version.json`. CI signs with the permanent key from the `KEYSTORE_BASE64` / `KEYSTORE_PASSWORD` secrets (`tools/setup-signing.sh`); the deploy job refuses to run without them.
 
 ## ⚡ Features
 - **1,401 Pokémon Complete Dataset**: All Gen 1 to 9 Pokémon (#1 to #1025) plus all Alolan, Galarian, Hisuian, and Paldean regional forms.

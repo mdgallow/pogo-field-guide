@@ -1,1 +1,1 @@
-{"versionCode": 34, "versionName": "2.3.11", "apk": "pogo-companion.apk", "notes": "Log identity is scored across species, size, CP, IVs, catch date and place; no duplicate entries when a clue is hidden or misread."}
+{"versionCode": 35, "versionName": "2.3.12", "apk": "pogo-companion.apk", "notes": "Review pass: AUTO reliability, manual-scan priority, lucky/trade/shadow/dynamax rules, form detection, GONE + sweep census, evolution tracking, short pill lines, web scanning code removed."}

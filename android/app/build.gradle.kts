@@ -11,8 +11,8 @@ android {
         applicationId = "com.pogo.companion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 34
-        versionName = "2.3.11"
+        versionCode = 35
+        versionName = "2.3.12"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -74,7 +74,10 @@ val writeVersionManifest by tasks.registering {
     val name = android.defaultConfig.versionName
     outputs.file(out)
     doLast {
-        out.writeText("{\"versionCode\": $code, \"versionName\": \"$name\", \"apk\": \"pogo-companion.apk\", \"notes\": \"\"}\n")
+        // Keep whatever notes were committed; only the version fields are generated.
+        val existing = if (out.exists()) out.readText() else ""
+        val notes = Regex("\"notes\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"").find(existing)?.groupValues?.get(1) ?: ""
+        out.writeText("{\"versionCode\": $code, \"versionName\": \"$name\", \"apk\": \"pogo-companion.apk\", \"notes\": \"$notes\"}\n")
     }
 }
 tasks.named("preBuild") { dependsOn(syncWebAssets, writeVersionManifest) }
