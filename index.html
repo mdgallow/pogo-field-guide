@@ -65,12 +65,18 @@
     border: 1px solid #38bdf8;
     border-radius: 12px;
     padding: 8px 14px;
+    /* Stacked rows (mode tabs / CP entry / button / result). As one row, the result banner and
+       the clear button squeezed the other rows sideways whenever a CP was entered or scanned. */
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
     width: 100%;
+    min-width: 0;
   }
+  .checker-box > * { min-width: 0; }
+  .mode-tab { min-height: 34px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .checker-box input {
     background: #0f172a;
     border: 1px solid var(--border);
@@ -115,9 +121,11 @@
   .search-row {
     display: flex;
     gap: 8px;
+    min-width: 0;
   }
   .search-input {
     flex: 1;
+    min-width: 0;
     background: var(--card-bg);
     border: 1px solid var(--border);
     color: #fff;
@@ -135,6 +143,8 @@
     border-radius: 10px;
     font-size: 12px;
     outline: none;
+    max-width: 46%;
+    min-width: 0;
   }
   
   .filter-toggle-btn {
@@ -461,21 +471,21 @@
   
   <div class="checker-box">
     <!-- 3 Evaluation Mode Points: Blank Standby / Catch Window / Storage Screen -->
-    <div style="display:flex; gap:6px; margin-bottom:8px; width:100%; overflow-x:auto;">
+    <div style="display:flex; gap:6px; margin-bottom:8px; width:100%;">
       <button id="modeCatchBtn" class="mode-tab active" onclick="setEvaluationMode('catch')" style="flex:1; background:rgba(56,189,248,0.2); border:1.5px solid #38bdf8; color:#38bdf8; border-radius:8px; padding:6px 6px; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap;">
-        🎯 Catch Window
+        🎯 Catch
       </button>
       <button id="modeStorageBtn" class="mode-tab" onclick="setEvaluationMode('storage')" style="flex:1; background:#0f172a; border:1px solid var(--border); color:var(--text-muted); border-radius:8px; padding:6px 6px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;">
-        🗑️ Storage (Delete vs Keep)
+        🗑️ Storage
       </button>
-      <button id="modeBlankBtn" class="mode-tab" onclick="setEvaluationMode('blank')" style="background:#0f172a; border:1px solid var(--border); color:var(--text-muted); border-radius:8px; padding:6px 9px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;" title="Blank / Standby Pill">
-        ⚪ Blank
+      <button id="modeBlankBtn" class="mode-tab" onclick="setEvaluationMode('blank')" style="flex:1; background:#0f172a; border:1px solid var(--border); color:var(--text-muted); border-radius:8px; padding:6px 9px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;" title="Blank / Standby Pill">
+        ⚪ Standby
       </button>
     </div>
 
     <div style="display:flex; gap:6px; align-items:center; width:100%; margin-bottom:6px;">
       <span id="inspectorModeLabel" style="font-size:12px; font-weight:800; color:var(--accent); white-space:nowrap;">🎯 Catch Screen:</span>
-      <input type="number" id="catchCpInput" placeholder="Enter encounter CP (e.g. 1035)" inputmode="numeric" oninput="checkCaughtCp()" onkeydown="if(event.key==='Enter') checkCaughtCp()" style="flex:1; min-width:120px;" />
+      <input type="number" id="catchCpInput" placeholder="Enter encounter CP (e.g. 1035)" inputmode="numeric" oninput="checkCaughtCp()" onkeydown="if(event.key==='Enter') checkCaughtCp()" style="flex:1; min-width:0;" />
       <button id="clearCpBtn" onclick="clearCpFilter()" style="display:none; background:#334155; color:#f87171; border:none; border-radius:8px; padding:7px 10px; font-weight:800; font-size:12px; cursor:pointer;" title="Clear CP Filter">✕</button>
     </div>
     <div style="display:flex; gap:8px; align-items:center; width:100%;">
@@ -1669,7 +1679,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.12';   // bumped by the release step together with versionName
+const APP_VERSION = 'v2.3.13';   // bumped by the release step together with versionName
 // True inside the Android APK's WebView: minimizing and scanning are handled by the native overlay pill.
 const isNativeApp = !!(window.AndroidBridge && window.AndroidBridge.minimizeToPill);
 let activeHudPokemon = null;
@@ -2225,7 +2235,7 @@ function slotCaptions() {
 
 // Mirrors the HUD slots onto the native Android overlay pill (no-op in the browser / PWA).
 function pushNativePill() {
-  if (!isNativeApp) return;
+  if (!isNativeApp || restoringPage) return;
   const txt = id => document.getElementById(id)?.innerText || '';
   const captions = slotCaptions();
   let target = '';
@@ -2635,8 +2645,35 @@ function applyScanResult(result, isSilent = false) {
 // Entry point for the native Android overlay: it screenshots + OCRs the game itself and hands
 // over the text lines ({t, x, y, w, h} as frame fractions); the verdict goes back via pushNativePill().
 let lastScanDebug = '';
+// Scans from the pill drive the inspector (mode tab, CP box, card filter) to work out a verdict.
+// That is scratch state: remember how the page looked before the first scan and put it back when
+// the app is opened again, without touching what the pill shows.
+let pageBeforePill = null;
+let restoringPage = false;
+window.appForegrounded = function () {
+  const st = pageBeforePill;
+  pageBeforePill = null;
+  if (!st) return;
+  restoringPage = true;
+  try {
+    const toast = document.getElementById('scanResultToast');
+    if (toast) toast.style.display = 'none';
+    const inp = document.getElementById('catchCpInput');
+    if (inp) inp.value = st.cp;
+    setEvaluationMode(st.mode);
+    checkCaughtCp();
+    window.scrollTo(0, st.scrollY);
+  } finally {
+    restoringPage = false;
+  }
+};
+document.addEventListener('visibilitychange', () => { if (!document.hidden) window.appForegrounded(); });
+
 window.assessNativeOcr = async function (payload) {
   try {
+    if (!pageBeforePill) {
+      pageBeforePill = { mode: evaluationMode, cp: document.getElementById('catchCpInput')?.value || '', scrollY: window.scrollY };
+    }
     const lines = (payload && payload.lines) || [];
     lastScanDebug = `${new Date().toLocaleTimeString()} storage=${!!payload.storage} favorite=${!!payload.favorite} ivs=${payload.ivs || '-'} auto=${!!payload.auto}\n` +
       lines.map(l => `${l.t}  @${l.x.toFixed(2)},${l.y.toFixed(2)}`).join('\n');
