@@ -3,6 +3,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+// version.json at the repo root is the single source of truth for the version (the site serves the
+// same file to the in-app updater). Change it with tools/release.py, never here.
+@Suppress("UNCHECKED_CAST")
+val appVersion = groovy.json.JsonSlurper().parse(rootProject.file("../version.json")) as Map<String, Any>
+
 android {
     namespace = "com.pogo.companion"
     compileSdk = 34
@@ -11,8 +16,8 @@ android {
         applicationId = "com.pogo.companion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 36
-        versionName = "2.3.13"
+        versionCode = (appVersion["versionCode"] as Number).toInt()
+        versionName = appVersion["versionName"] as String
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -68,19 +73,7 @@ val syncWebAssets by tasks.registering(Copy::class) {
     from(rootProject.file("../index.html"))
     into(layout.projectDirectory.dir("src/main/assets"))
 }
-val writeVersionManifest by tasks.registering {
-    val out = rootProject.file("../version.json")
-    val code = android.defaultConfig.versionCode
-    val name = android.defaultConfig.versionName
-    outputs.file(out)
-    doLast {
-        // Keep whatever notes were committed; only the version fields are generated.
-        val existing = if (out.exists()) out.readText() else ""
-        val notes = Regex("\"notes\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"").find(existing)?.groupValues?.get(1) ?: ""
-        out.writeText("{\"versionCode\": $code, \"versionName\": \"$name\", \"apk\": \"pogo-companion.apk\", \"notes\": \"$notes\"}\n")
-    }
-}
-tasks.named("preBuild") { dependsOn(syncWebAssets, writeVersionManifest) }
+tasks.named("preBuild") { dependsOn(syncWebAssets) }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")

@@ -1,1 +1,1 @@
-{"versionCode": 36, "versionName": "2.3.13", "apk": "pogo-companion.apk", "notes": "Fixes the top of the app shifting around when a CP is entered or after returning from the pill; the page is restored as you left it."}
+{"versionCode": 37, "versionName": "2.3.14", "apk": "pogo-companion.apk", "notes": "Groundwork for iPhone: one shared rule set with automated behaviour tests, one version source. Also includes the top-of-app layout fix."}
