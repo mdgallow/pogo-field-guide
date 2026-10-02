@@ -59,8 +59,8 @@ test('perfect IVs: KEEP, logged once', async t => {
 test('below the IV floor: not kept, GONE offered, pill line fits', async t => {
   await t.app.scan(card({ cp: 266, name: 'Charmander', kg: 8.5, m: 0.6, types: 'FIRE', ivs: [10, 12, 9] }));
   const s = t.last();
-  check(slot(s, 'VERDICT') !== 'KEEP', 'a 31-IV Charmander is not a KEEP');
-  has(slot(s, 'REASON'), 'FLOOR', 'reason names the floor');
+  eq(slot(s, 'VERDICT'), 'TRADE', 'a 31-IV Charmander is a trade (meta family, empty keeper slots)');
+  check(!slot(s, 'REASON').includes('FLOOR'), 'a trade line is about trade value, not the IVs that will re-roll');
   check(slot(s, 'REASON').length <= 40, `reason fits the pill (${slot(s, 'REASON').length} chars)`);
   eq(s.actions.join(), 'gone', 'GONE button offered');
 });
@@ -84,8 +84,7 @@ test('lucky: needs the label, and counts above its raw IVs', async t => {
 test('lucky: a 32-IV lucky clears the floor that a plain 32 fails', async t => {
   const dragonite = extra => card({ cp: 2400, name: 'Dragonite', kg: 210, m: 2.2, types: 'DRAGON / FLYING', ivs: [11, 10, 11], ...extra });
   await t.app.scan(dragonite({}));
-  const plain = slot(t.last(), 'REASON');
-  has(plain, 'FLOOR', 'plain 32 is below the floor');
+  eq(slot(t.last(), 'VERDICT'), 'TRADE', 'plain 32 is below the floor: not kept');
   const u = loadApp();
   await u.app.scan(dragonite({ lucky: true }));
   const lucky = slot(u.last(), 'REASON');
@@ -124,6 +123,78 @@ test('trade value: rarity lifts every level, and level + rarity goes first', asy
   await u.app.scan(card({ cp: 2900, name: 'Dragonite', kg: 210, m: 2.2, types: 'DRAGON / FLYING', ivs: [5, 5, 4] }));
   has(slot(u.last(), 'REASON'), 'TRADE 1ST', 'high level + meta family is first in line');
   check(slot(u.last(), 'REASON').length <= 40, `fits the pill (${slot(u.last(), 'REASON').length})`);
+});
+
+test('trade value: the IVs being traded away do not change the score', async t => {
+  const score = s => (slot(s, 'REASON').match(/TRADE(?: 1ST)? (\d+)/) || [])[1];
+  await t.app.scan(card({ cp: 1384, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [1, 1, 1] }));
+  const low = score(t.last());
+  const u = loadApp();
+  // Both are level 30 (1384 CP at 1/1/1, 1577 CP at 12/12/11): same trade.
+  await u.app.scan(card({ cp: 1577, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [12, 12, 11] }));
+  const high = score(u.last());
+  check(low && high && Math.abs(low - high) <= 3, `scores match within rounding (got ${low} vs ${high})`);
+});
+
+test('trade value: an old catch is worth more (better lucky odds)', async t => {
+  const score = s => Number((slot(s, 'REASON').match(/(?:TRADE(?: 1ST)?|VALUE) (\d+)/) || [])[1]);
+  await t.app.scan(card({ cp: 700, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 5], date: '8/4/2026' }));
+  const fresh = score(t.last());
+  const u = loadApp();
+  await u.app.scan(card({ cp: 700, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 5], date: '8/4/2017' }));
+  eq(score(u.last()), fresh + 10, 'a 9-year-old catch scores 10 higher');
+});
+
+test('trade value: only the best few of a family are held for trading', async t => {
+  // Seven surplus Charmanders, all tradeable on their own; the two lowest levels make room.
+  for (let i = 0; i < 7; i++) {
+    await t.app.scan(card({ cp: 300 + i * 100, name: 'Charmander', kg: 8 + i * 0.3, m: 0.6, types: 'FIRE', ivs: [5, 5, 4], date: `7/${10 + i}/2026` }));
+  }
+  eq(t.app.log().length, 7, 'seven different Charmanders');
+  await t.app.scan(card({ cp: 300, name: 'Charmander', kg: 8, m: 0.6, types: 'FIRE', ivs: [5, 5, 4], date: '7/10/2026' }));
+  eq(slot(t.last(), 'VERDICT'), 'SURPLUS', 'the lowest-level one is transferred');
+  has(slot(t.last(), 'REASON'), 'BETTER TRADES', 'and the pill says why');
+  await t.app.scan(card({ cp: 900, name: 'Charmander', kg: 9.8, m: 0.6, types: 'FIRE', ivs: [5, 5, 4], date: '7/16/2026' }));
+  eq(slot(t.last(), 'VERDICT'), 'TRADE', 'the highest-level one is held for a trade');
+});
+
+// ---------------------------------------------------------------- moves (TM advice)
+const movesSlot = s => s.slots.find(x => /^(MOVES|AS )/.test(x.caption));
+
+test('moves: a raid keeper gets its raid moveset, Elite TM moves starred', async t => {
+  await t.app.scan(card({ cp: 3900, name: 'Metagross', kg: 550, m: 1.6, types: 'STEEL / PSYCHIC', ivs: [15, 15, 15] }));
+  const m = movesSlot(t.last());
+  check(m, 'a MOVES slot is shown'); eq(m.caption, 'MOVES (RAID)', 'caption');
+  eq(m.value, 'BULLET PUNCH + METEOR MASH★', 'moveset');
+});
+
+test('moves: a league pick gets the moveset of its best league', async t => {
+  await t.app.scan(card({ cp: 1490, name: 'Azumarill', kg: 28.5, m: 0.8, types: 'WATER / FAIRY', ivs: [15, 15, 15] }));
+  const m = movesSlot(t.last());
+  check(m, 'a MOVES slot is shown'); eq(m.caption, 'MOVES (GREAT)', 'caption');
+  has(m.value, 'BUBBLE + ', 'fast move'); has(m.value, ' / ', 'two charged moves');
+});
+
+test('moves: an unevolved keeper is advised on its final form', async t => {
+  await t.app.scan(card({ cp: 900, name: 'Beldum', kg: 95, m: 0.6, types: 'STEEL / PSYCHIC', ivs: [15, 15, 15] }));
+  const m = movesSlot(t.last());
+  check(m, 'a MOVES slot is shown'); eq(m.caption, 'AS METAGROSS (RAID)', 'caption names the final form');
+});
+
+test('moves: nothing is shown on a Pokémon that is not being kept', async t => {
+  await t.app.scan(card({ cp: 266, name: 'Charmander', kg: 8.5, m: 0.6, types: 'FIRE', ivs: [10, 12, 9] }));
+  check(!movesSlot(t.last()), 'no MOVES slot on a trade');
+});
+
+// ---------------------------------------------------------------- search builder
+test('search builder: OR inside a group, AND between groups, ! to exclude', async t => {
+  const build = (state, extra) => require('vm').runInContext(`buildSearch(${JSON.stringify(state)}, ${JSON.stringify(extra || {})})`, t.ctx);
+  eq(build({ '3*': 1, '4*': 1 }), '3*,4*', 'stars');
+  eq(build({ '0attack': 1, '1attack': 1, '4defense': 1, '3hp': 1, '4hp': 1 }), '0attack,1attack&4defense&3hp,4hp', 'IV buckets');
+  eq(build({ '4*': 1, shiny: -1, lucky: 1, fire: 1, water: 1 }), '4*&lucky&fire,water&!shiny', 'mixed');
+  eq(build({}, { cpMin: '1000', cpMax: '', age: '7', family: 'Pikachu' }), 'cp1000-&age0-7&+pikachu', 'numbers and family');
+  eq(build({}, { cpMin: '', cpMax: '1500' }), 'cp-1500', 'max CP only');
+  eq(build({}), '', 'nothing picked');
 });
 
 // ---------------------------------------------------------------- identity
