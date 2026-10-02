@@ -722,7 +722,7 @@
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #ec4899;">
           <b>2. Tap SCAN.</b> The pill blinks out for a moment, reads the screen on your phone (nothing is saved or sent anywhere) and tells you what it saw: <b>CATCH</b>, <b>STORAGE</b> or <b>STANDBY</b>, then the Pokémon and its CP.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #fbbf24;">
-          <b>3. On a wild or raid Pokémon</b> it answers four things: <b>BERRY</b> (Pinap only when the catch can afford it), <b>BALL</b> (Poké / Great / Ultra from the game’s real catch rates), <b>IV CHECK</b> (could this CP be perfect?) and <b>AFTER CATCH</b> (keep, trade, evolve or transfer). Raid legendaries get a firm PERFECT / 98% / NOT PERFECT and honest Master Ball advice.</div>
+          <b>3. On a wild or raid Pokémon</b> it answers four things: <b>BERRY</b> (Pinap only when the catch can afford it), <b>BALL</b> (Poké / Great / Ultra by the colour the catch ring should be: Poké Ball while it is green to yellow, Great Ball on orange, Ultra Ball on deep orange or red; from the game’s catch rates), <b>IV CHECK</b> (could this CP be perfect?) and <b>AFTER CATCH</b> (keep, trade, evolve or transfer). Raid legendaries get a firm PERFECT / 98% / NOT PERFECT and honest Master Ball advice.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #34d399;">
           <b>4. On a Pokémon in your storage</b> it answers <b>VERDICT</b> (DELETE, KEEP, TRADE, KEEP BEST, CHECK FIRST), <b>IV CHECK</b> and <b>REASON</b>. Nicknames do not matter: with the appraisal open it reads the “This Sandslash was caught…” banner (which always names the real species and the catch date); otherwise the candy name, the CP and the EVOLVE button. So “Robot 39” or a Charizard still called “Charmander 44” are identified correctly.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #7dd3fc;">
@@ -942,22 +942,33 @@ function estimateBaseCatchRate(p) {
 // The game's catch formula: chance = 1 - (1 - baseRate / (2 x CPM)) ^ (ball x berry x throw bonuses).
 // CPM rises with level; level is read off how close the CP is to the species' level-50 maximum.
 function catchChance(p, cpVal, multiplier = 1) {
-  const share = (cpVal && p.max_cp) ? Math.min(1, cpVal / p.max_cp) : 0.5;
+  // A wild Pokémon has middling IVs on average, which puts its CP ~6% under a perfect one of the
+  // same level; without that correction the level (and so the difficulty) reads a little low.
+  const share = (cpVal && p.max_cp) ? Math.min(1, cpVal / p.max_cp / 0.94) : 0.5;
   const cpm = Math.max(0.1, 0.84 * Math.sqrt(share));
   const perThrow = Math.min(1, baseCatchRate(p) / (2 * cpm));
   return 1 - Math.pow(1 - perThrow, multiplier);
 }
 
 const BALLS = [
-  { text: 'POKÉ BALL (EASY)',    color: '#cbd5e1', multiplier: 1 },
-  { text: 'GREAT BALL (MEDIUM)', color: '#38bdf8', multiplier: 1.5 },
-  { text: 'ULTRA BALL (HARD)',   color: '#fbbf24', multiplier: 2 }
+  { name: 'POKÉ BALL',  color: '#cbd5e1', multiplier: 1 },
+  { name: 'GREAT BALL', color: '#38bdf8', multiplier: 1.5 },
+  { name: 'ULTRA BALL', color: '#fbbf24', multiplier: 2 }
 ];
-
-// Difficulty bucket from the plain Poké Ball chance at this CP.
+// The game's own ring colour for a plain Poké Ball: green ~100%, lime ~75%, yellow ~50%,
+// orange ~25%, red ~5%.
+function ringColor(chance) {
+  return chance >= 0.85 ? 'GREEN' : chance >= 0.62 ? 'LIME' : chance >= 0.45 ? 'YELLOW' : chance >= 0.15 ? 'ORANGE' : 'RED';
+}
+// Ball by ring colour: a Poké Ball only while the ring is yellow or greener (an even chance or
+// better per throw); orange gets a Great Ball, deep orange / red an Ultra Ball.
+const POKE_BALL_MIN = 0.45, GREAT_BALL_MIN = 0.27;
 function pickBall(p, cpVal) {
   const chance = catchChance(p, cpVal);
-  return chance >= 0.30 ? BALLS[0] : chance >= 0.15 ? BALLS[1] : BALLS[2];
+  const ball = chance >= POKE_BALL_MIN ? BALLS[0] : chance >= GREAT_BALL_MIN ? BALLS[1] : BALLS[2];
+  // Without a CP the level is a guess: say so and let the ring on screen decide.
+  const text = cpVal ? `${ball.name} · ${ringColor(chance)} RING` : 'GREEN RING: POKÉ · ORANGE: GREAT · RED: ULTRA';
+  return { ...ball, text, chance };
 }
 
 // A Pinap gives no catch bonus, so on a hard catch it means more breakouts and more balls
@@ -983,9 +994,10 @@ function getBallAdvice(p, cpVal, matchInfo) {
     return { text: 'IN A RAID: SAVE MASTER BALL. WILD GALARIAN: USE IT NOW', color: '#fbbf24' };
   }
   if (p.isLegendary) {
+    // Raid boss: two answers only. A perfect is the one thing a Master Ball is for.
     return (matchInfo && matchInfo.type === '45')
-      ? { text: 'MASTER BALL ONLY IF ON YOUR LAST BALLS', color: '#fbbf24' }
-      : { text: 'SAVE YOUR MASTER BALL', color: '#94a3b8' };
+      ? { text: 'PERFECT! USE MASTER BALL', color: '#34d399' }
+      : { text: 'SAVE MASTER BALL', color: '#94a3b8' };
   }
   // A possible perfect is not worth losing to a cheap ball.
   if (matchInfo) return { text: 'ULTRA BALL', color: '#fbbf24' };
@@ -1856,7 +1868,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.22';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.23';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
