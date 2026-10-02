@@ -1,1 +1,1 @@
-{"versionCode": 43, "versionName": "2.3.20", "apk": "pogo-companion.apk", "notes": "Fix: the type filter (and type search) in the reference list works again."}
+{"versionCode": 44, "versionName": "2.3.21", "apk": "pogo-companion.apk", "notes": "AUTO fixes: steady pace on a still screen, and Pokemon of the same species are told apart even when the top bar covers the CP."}
