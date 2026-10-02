@@ -1,1 +1,1 @@
-{"versionCode": 40, "versionName": "2.3.17", "apk": "pogo-companion.apk", "notes": "New MOVES line on keepers: the raid or league moveset to aim your TMs at (star = Elite TM). Move data rebuilt from current game data. Trade advice is a 0-100 trade score."}
+{"versionCode": 41, "versionName": "2.3.18", "apk": "pogo-companion.apk", "notes": "Faster AUTO: the pill stays visible while it watches, reads each new card as soon as it settles, and buzzes when it is logged so you can keep swiping."}
