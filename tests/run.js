@@ -186,6 +186,20 @@ test('moves: nothing is shown on a Pokémon that is not being kept', async t => 
   check(!movesSlot(t.last()), 'no MOVES slot on a trade');
 });
 
+// ---------------------------------------------------------------- reference page filters
+test('reference page: the type and region filters return matching species', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  const fire = JSON.parse(run(`filters.type = 'Fire'; applyFilters(); JSON.stringify({ n: currentFiltered.length, ok: currentFiltered.every(p => p.types.includes('Fire')), has: currentFiltered.some(p => p.name === 'Charizard') })`));
+  check(fire.n > 50 && fire.ok && fire.has, `Fire filter: ${JSON.stringify(fire)}`);
+  const both = JSON.parse(run(`filters.type = 'Dragon'; filters.region = 'Kanto'; applyFilters(); JSON.stringify(currentFiltered.map(p => p.name))`));
+  check(both.includes('Dragonite') && !both.includes('Charizard'), `Dragon + Kanto: ${both.join(', ')}`);
+  const all = run(`filters.type = 'ALL'; filters.region = 'ALL'; applyFilters(); currentFiltered.length`);
+  eq(all, 1401, 'no filter shows everything');
+  for (const key of ['evoStage', 'tier', 'action', 'berry']) {
+    eq(run(`filters.${key}`), 'ALL', `${key} filter starts open`);
+  }
+});
+
 // ---------------------------------------------------------------- search builder
 test('search builder: OR inside a group, AND between groups, ! to exclude', async t => {
   const build = (state, extra) => require('vm').runInContext(`buildSearch(${JSON.stringify(state)}, ${JSON.stringify(extra || {})})`, t.ctx);
