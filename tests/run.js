@@ -119,6 +119,38 @@ test('favorite star does not force a KEEP', async t => {
   check(slot(t.last(), 'VERDICT') !== 'KEEP', 'a favorited 12-IV Charmander is still not a KEEP');
 });
 
+// ---------------------------------------------------------------- keeper slots
+// A legendary catch at ~level 20-25; CP scales with the IVs so every card is a different Pokémon.
+const lunala = (ivs, i) => card({ cp: 2200 + ivs[0] + ivs[1] + ivs[2] + i, name: 'Lunala', kg: 120 + i, m: 4, types: 'PSYCHIC / GHOST', ivs, date: `9/${10 + i}/2026` });
+
+test('keeper slots: the best of a raid/PvP species are KEEP, whatever its old "trade" tag says', async t => {
+  const ivSets = [[14, 14, 14], [15, 13, 13], [13, 13, 14], [12, 13, 14], [12, 12, 14], [13, 12, 12], [11, 13, 12], [12, 12, 11], [10, 13, 12], [11, 11, 12], [10, 12, 11], [10, 10, 12]];
+  for (let i = 0; i < ivSets.length; i++) await t.app.scan(lunala(ivSets[i], i));
+  eq(t.app.log().length, 12, 'twelve Lunala logged');
+  await t.app.scan(lunala(ivSets[0], 0));
+  let s = t.last();
+  eq(slot(s, 'VERDICT'), 'KEEP', 'the 42 is a keeper'); has(slot(s, 'REASON'), '#1/12', 'ranked first');
+  check(slot(s, 'ROLE') && movesSlots(s).length >= 1, 'a keeper gets its role and moves');
+  await t.app.scan(lunala(ivSets[5], 5));
+  eq(slot(t.last(), 'VERDICT'), 'KEEP', '#6 still holds a slot');
+  await t.app.scan(lunala(ivSets[6], 6));
+  eq(slot(t.last(), 'VERDICT'), 'TRADE', '#7 is outside the six slots'); has(slot(t.last(), 'REASON'), 'LEGENDARY', 'traded as a legendary');
+});
+
+test('keeper slots: a single good one of a role species is KEEP too', async t => {
+  await t.app.scan(lunala([14, 14, 14], 0));
+  eq(slot(t.last(), 'VERDICT'), 'KEEP', 'alone and above the floor');
+});
+
+test('keeper slots: a low-use species keeps only its single best', async t => {
+  const rat = (ivs, i) => card({ cp: 900 + i * 10, name: 'Raticate', kg: 18 + i * 0.5, m: 0.7, types: 'NORMAL', ivs, date: `9/${10 + i}/2026` });
+  await t.app.scan(rat([14, 13, 14], 0)); await t.app.scan(rat([13, 13, 13], 1)); await t.app.scan(rat([13, 12, 13], 2));
+  await t.app.scan(rat([14, 13, 14], 0));
+  eq(slot(t.last(), 'VERDICT'), 'KEEP BEST', 'the best one is kept'); has(slot(t.last(), 'REASON'), 'LOW USE', 'and says why only one');
+  await t.app.scan(rat([13, 13, 13], 1));
+  check(['TRADE', 'SURPLUS'].includes(slot(t.last(), 'VERDICT')), `the second-best (39 IV) is not kept (got ${slot(t.last(), 'VERDICT')})`);
+});
+
 // ---------------------------------------------------------------- trade value
 test('trade value: a high-level common beats a low-level one with better IVs', async t => {
   // Rattata family is common and not a meta pick: only the level makes it worth a trade.
