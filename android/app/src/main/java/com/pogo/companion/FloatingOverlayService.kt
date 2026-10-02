@@ -156,7 +156,7 @@ class FloatingOverlayService : Service() {
         private const val PREF_BAR_Y = "bar_y"
         private const val BAR_MARGIN_DP = 6
         /** The pill's own fixed labels: seeing one in a frame means the pill was captured too. */
-        private val PILL_OWN_TEXT = Regex("^(OPEN|CLOSE|SCAN|VERDICT|IV CHECK|REASON|LOGGED|BERRY|BALL|AFTER CATCH|GONE.*|AUTO( .*)?|READING.*)$")
+        private val PILL_OWN_TEXT = Regex("^(OPEN|CLOSE|SCAN|VERDICT|IV CHECK|REASON|LOGGED|BERRY|BALL|AFTER CATCH|MOVES.*|GONE.*|AUTO( .*)?|READING.*)$")
         private const val PREF_PILL_SIDE = "pill_side"   // "right" (default) or "left"
         /** Default vertical position: where testing settled on, top of the pill ~57% down the screen. */
         private const val DEFAULT_PILL_Y_FRACTION = 0.57f
@@ -952,8 +952,10 @@ class FloatingOverlayService : Service() {
         val inflater = LayoutInflater.from(this)
         val container = v.findViewById<LinearLayout>(R.id.pillSlots)
         container.removeAllViews()
-        for (slot in state.slots) {
-            if (slot.value.isBlank()) continue
+        // The bar has room for four answers side by side; the log count is the one to give up.
+        val shown = state.slots.filter { it.value.isNotBlank() }
+        val slots = if (barStyle && shown.size > 4) shown.filter { it.caption != "LOGGED" } else shown
+        for (slot in slots) {
             val row = inflater.inflate(R.layout.pill_slot, container, false)
             setTextOrHide(row.findViewById(R.id.pillSlotCaption), slot.caption, CAPTION_COLOR)
             val valueView = row.findViewById<TextView>(R.id.pillSlotValue)
@@ -961,7 +963,7 @@ class FloatingOverlayService : Service() {
             if (barStyle) {
                 // Side by side: the sentence-like answers get more of the width than the short ones.
                 val weight = when {
-                    slot.caption.isBlank() || slot.caption == "REASON" -> 2.4f
+                    slot.caption.isBlank() || slot.caption == "REASON" || slot.caption.startsWith("MOVES") || slot.caption.startsWith("AS ") -> 2.4f
                     slot.caption == "VERDICT" || slot.caption == "BALL" -> 1f
                     else -> 1.4f
                 }

@@ -158,6 +158,34 @@ test('trade value: only the best few of a family are held for trading', async t 
   eq(slot(t.last(), 'VERDICT'), 'TRADE', 'the highest-level one is held for a trade');
 });
 
+// ---------------------------------------------------------------- moves (TM advice)
+const movesSlot = s => s.slots.find(x => /^(MOVES|AS )/.test(x.caption));
+
+test('moves: a raid keeper gets its raid moveset, Elite TM moves starred', async t => {
+  await t.app.scan(card({ cp: 3900, name: 'Metagross', kg: 550, m: 1.6, types: 'STEEL / PSYCHIC', ivs: [15, 15, 15] }));
+  const m = movesSlot(t.last());
+  check(m, 'a MOVES slot is shown'); eq(m.caption, 'MOVES (RAID)', 'caption');
+  eq(m.value, 'BULLET PUNCH + METEOR MASH★', 'moveset');
+});
+
+test('moves: a league pick gets the moveset of its best league', async t => {
+  await t.app.scan(card({ cp: 1490, name: 'Azumarill', kg: 28.5, m: 0.8, types: 'WATER / FAIRY', ivs: [15, 15, 15] }));
+  const m = movesSlot(t.last());
+  check(m, 'a MOVES slot is shown'); eq(m.caption, 'MOVES (GREAT)', 'caption');
+  has(m.value, 'BUBBLE + ', 'fast move'); has(m.value, ' / ', 'two charged moves');
+});
+
+test('moves: an unevolved keeper is advised on its final form', async t => {
+  await t.app.scan(card({ cp: 900, name: 'Beldum', kg: 95, m: 0.6, types: 'STEEL / PSYCHIC', ivs: [15, 15, 15] }));
+  const m = movesSlot(t.last());
+  check(m, 'a MOVES slot is shown'); eq(m.caption, 'AS METAGROSS (RAID)', 'caption names the final form');
+});
+
+test('moves: nothing is shown on a Pokémon that is not being kept', async t => {
+  await t.app.scan(card({ cp: 266, name: 'Charmander', kg: 8.5, m: 0.6, types: 'FIRE', ivs: [10, 12, 9] }));
+  check(!movesSlot(t.last()), 'no MOVES slot on a trade');
+});
+
 // ---------------------------------------------------------------- identity
 test('the same Pokémon scanned again is one log entry', async t => {
   const c = card({ cp: 1200, name: 'Charmeleon', kg: 19.2, m: 1.1, types: 'FIRE', ivs: [14, 13, 15] });

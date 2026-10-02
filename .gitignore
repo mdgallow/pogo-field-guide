@@ -7,3 +7,4 @@ start_mobile_server.py
 # Signing keys never belong in the repo
 *.p12
 *.jks
+tools/.cache/
