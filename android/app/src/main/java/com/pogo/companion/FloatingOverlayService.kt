@@ -80,21 +80,26 @@ class FloatingOverlayService : Service() {
     private val scanRequested = AtomicBoolean(false)
 
     // AUTO (catalogue) mode: log Pokémon as the player swipes through the appraisal view.
-    // The player does all the swiping; AUTO only watches. Every AUTO_TICK_MS one frame is
-    // fingerprinted (text bands of the card, skipping anything under the pill, so the pill stays
-    // visible). When the fingerprint differs from the last card READ and has stopped moving, the
-    // pill blinks out once, that clean frame is OCR'd, and a short buzz says "logged, swipe on".
-    // Any change on screen counts as activity; AUTO stops after AUTO_IDLE_STOP_MS without
-    // activity, after AUTO_OFF_PAGE_MS off the storage page, or at AUTO_MAX_MS, and says why.
+    // The player does all the swiping; AUTO only watches, and it is driven by the screen itself:
+    // every frame the game draws (throttled to one look per AUTO_SAMPLE_GAP_MS) is fingerprinted
+    // on the parts of the card that only change when the Pokémon changes: the appraisal bars, the
+    // "caught on ..." banner, the HP line and the weight. The Pokémon model, shadow flames, the
+    // team leader and the background are never sampled, so their animation cannot trigger or
+    // stall a read. A swipe makes the fingerprint differ from the card last READ; when it then
+    // holds still (bars finished filling) the pill blinks once, that clean frame is OCR'd and a
+    // short buzz says "logged, swipe on". If it never holds still, it is read anyway after
+    // AUTO_FORCE_READ_MS. AUTO stops after AUTO_IDLE_STOP_MS without a change, after
+    // AUTO_OFF_PAGE_MS off the storage page, or at AUTO_MAX_MS, and says why on the pill.
     @Volatile private var autoMode = false
-    @Volatile private var autoWantFrame = false
+    @Volatile private var autoLastSampleAt = 0L
+    private var autoUnsettledSince = 0L
+    private var autoForced = false
     private var autoLastReadSig: IntArray? = null
     private var autoLastSeenSig: IntArray? = null
     /** The pill has been blinked out for a read; [autoReadReady] flips once the mirror shows it gone. */
     @Volatile private var autoReadPending = false
     @Volatile private var autoReadReady = false
     private var autoBlinkAt = 0L
-    private var autoMoving = false
     private var autoNudge = false
     /** An AUTO read is being evaluated; its result gets the "logged" buzz. */
     @Volatile private var autoAwaitingResult = false
@@ -112,22 +117,29 @@ class FloatingOverlayService : Service() {
             if (now - autoStartedAt > AUTO_MAX_MS) { stopAuto("10 min: off", "AUTO OFF: 10 MIN LIMIT", "TAP AUTO TO CONTINUE"); return }
             if (now - autoLastActiveAt > AUTO_IDLE_STOP_MS) { stopAuto("idle 30s: off", "AUTO OFF: NOTHING NEW FOR 30 S", "TAP AUTO TO CONTINUE"); return }
             if (autoOffPageSince != 0L && now - autoOffPageSince > AUTO_OFF_PAGE_MS) { stopAuto("left storage page: off", "AUTO OFF: LEFT THE STORAGE PAGE", "TAP AUTO TO CONTINUE"); return }
-            if (autoReadPending) {
-                // Waiting for the clean frame. A completely still screen sends none: give up and retry.
-                if (now - autoBlinkAt > AUTO_READ_TIMEOUT_MS) {
-                    autoReadPending = false
-                    autoReadReady = false
-                    trail("no frame")
-                    pillView?.alpha = 1f
-                }
-            } else {
-                autoWantFrame = true          // peek: the pill stays on screen
-                // A still game screen sends no new frame; an invisible opacity change makes one.
-                autoNudge = !autoNudge
-                pillView?.alpha = if (autoNudge) 0.99f else 1f
+            if (autoReadPending && now - autoBlinkAt > AUTO_READ_TIMEOUT_MS) {
+                // The clean frame never came (a completely still screen sends none): retry.
+                autoReadPending = false
+                autoReadReady = false
+                trail("no frame")
+                pillView?.alpha = 1f
+                requestFrameSoon()
             }
             mainHandler.postDelayed(this, AUTO_TICK_MS)
         }
+    }
+
+    /** One invisible opacity change: makes the mirror send a frame even if the game is still. */
+    private val autoNudgeRunnable = Runnable {
+        if (autoMode && !autoReadPending) {
+            autoNudge = !autoNudge
+            pillView?.alpha = if (autoNudge) 0.99f else 1f
+        }
+    }
+
+    private fun requestFrameSoon() {
+        mainHandler.removeCallbacks(autoNudgeRunnable)
+        mainHandler.postDelayed(autoNudgeRunnable, AUTO_SAMPLE_GAP_MS + 40)
     }
 
     private fun stopAuto(trailMsg: String, line1: String, line2: String) {
@@ -184,15 +196,16 @@ class FloatingOverlayService : Service() {
         private const val SCAN_TIMEOUT_MS = 1500L
         private const val PILL_HIDE_MS = 150L
         private const val EVAL_TIMEOUT_MS = 4000L
-        private const val AUTO_TICK_MS = 350L
+        private const val AUTO_TICK_MS = 1000L          // stop-rule check only; sampling follows the frames
+        private const val AUTO_SAMPLE_GAP_MS = 200L     // at most one look per this long
+        private const val AUTO_FORCE_READ_MS = 2500L    // changed but never still: read anyway
         private const val AUTO_READ_TIMEOUT_MS = 1500L
         private const val AUTO_IDLE_STOP_MS = 30_000L
         private const val AUTO_OFF_PAGE_MS = 5_000L
         private const val AUTO_MAX_MS = 10 * 60_000L
-        private const val AUTO_CHANGED_MIN = 6 // text-band samples (of 400) that must flip to count as a new card
-        private const val AUTO_DETAIL_MIN = 10 // or this many of the same-species detail samples
-        private const val SIG_TEXT = 400
-        private const val SIG_DETAIL = 4 * 20 + 50 * 12 + 3 * 40
+        private const val AUTO_CHANGED_MIN = 8 // fingerprint points that must flip to count as a change
+        private const val AUTO_BIG_CHANGE = 60 // a real swipe flips far more than any stray animation
+        private const val SIG_SIZE = 3 * 24 + 3 * 16 + 31 * 24 + 8 * 40
 
         @Volatile var isRunning = false
             private set
@@ -481,8 +494,8 @@ class FloatingOverlayService : Service() {
                 val frame = imageToBitmap(image)
                 mainHandler.post { showPillReading() }
                 runOcr(frame)
-            } else if (autoMode && (autoWantFrame || autoReadReady)) {
-                autoSample(image)
+            } else if (autoMode) {
+                autoSample(image)      // throttles itself
             }
         } catch (e: Exception) {
             Log.e(TAG, "Frame processing failed", e)
@@ -497,11 +510,13 @@ class FloatingOverlayService : Service() {
     private fun setAutoMode(on: Boolean) {
         if (on && mediaProjection == null) { requestScan(); return }
         autoMode = on
-        autoWantFrame = false
+        autoLastSampleAt = 0L
+        autoUnsettledSince = 0L
+        autoForced = false
+        mainHandler.removeCallbacks(autoNudgeRunnable)
         autoReadPending = false
         autoReadReady = false
         autoAwaitingResult = false
-        autoMoving = false
         autoLastReadSig = null
         autoLastSeenSig = null
         autoReads = 0
@@ -513,7 +528,8 @@ class FloatingOverlayService : Service() {
         if (on) {
             trail("on")
             rememberPillRect()
-            mainHandler.postDelayed(autoTick, 300)
+            mainHandler.postDelayed(autoTick, AUTO_TICK_MS)
+            requestFrameSoon()             // first look, even if nothing on screen is moving
         }
         mainHandler.post {
             pillView?.let { if (it.alpha < 1f && !scanRequested.get()) it.alpha = 1f }
@@ -542,13 +558,15 @@ class FloatingOverlayService : Service() {
      * sample per AUTO_SAMPLE_MS, each a 24x8 luminance grid over the CP arc and name band.
      */
     /**
-     * Brightness at fixed points of the card. Points under the pill are marked -1 and ignored, so
-     * the fingerprint is the same whether the pill is showing or blinked out.
-     *
-     * The first [SIG_TEXT] points sit on the text bands in the middle of the card (CP digits,
-     * name, HP line, type row): they move during a swipe and differ between species. The rest
-     * tell two Pokémon of the SAME species apart, which matters when the top bar covers the CP:
-     * the weight / height numbers, the appraisal bars and the "caught on ... around ..." banner.
+     * Brightness at fixed points of the card that are still unless the Pokémon changes, all on
+     * flat white panels well away from the 3D model, shadow flames, the team leader (who stands
+     * over the right half of the card during an appraisal) and the animated background:
+     *  - the HP line under the name,
+     *  - the weight number on the left,
+     *  - the appraisal panel with its three IV bars (they refill on every swipe),
+     *  - the "This X was caught on <date> around <place>" banner.
+     * With the appraisal closed the same spots hold the power-up costs and move list, which are
+     * just as still. Points under the pill are marked -1 and ignored.
      */
     private fun fingerprint(image: Image): IntArray {
         val plane = image.planes[0]
@@ -559,7 +577,7 @@ class FloatingOverlayService : Service() {
         val h = image.height
         val pill = pillRectOnScreen
         val toScreen = screenWidth.toFloat() / w
-        val sig = IntArray(SIG_TEXT + SIG_DETAIL)
+        val sig = IntArray(SIG_SIZE)
         var i = 0
         fun sample(fx: Double, fy: Double) {
             val x = (w * fx).toInt().coerceIn(0, w - 1)
@@ -571,28 +589,16 @@ class FloatingOverlayService : Service() {
             val b = buf.get(o + 2).toInt() and 0xFF
             sig[i++] = (r * 3 + g * 6 + b) / 10
         }
-        // Text bands, 40 columns across the centre.
-        for (fy in doubleArrayOf(0.045, 0.058, 0.405, 0.415, 0.425, 0.452, 0.565, 0.58, 0.595, 0.61)) {
-            for (gx in 0 until 40) sample(0.28 + 0.011 * gx, fy)
-        }
-        // Weight (left) and height (right) numbers beside the type row.
-        for (fy in doubleArrayOf(0.542, 0.549, 0.556, 0.563)) {
-            for (gx in 0 until 10) { sample(0.09 + 0.02 * gx, fy); sample(0.71 + 0.02 * gx, fy) }
-        }
-        // Appraisal panel: the three IV bars (a filled block is far darker than the empty rail).
-        for (gy in 0 until 50) {
-            for (gx in 0 until 12) sample(0.10 + 0.037 * gx, 0.70 + 0.004 * gy)
-        }
-        // Catch banner under the appraisal (date and place differ from one Pokémon to the next).
-        for (fy in doubleArrayOf(0.905, 0.915, 0.925)) {
-            for (gx in 0 until 40) sample(0.05 + 0.0225 * gx, fy)
-        }
+        // HP line ("113 / 113 HP"), centred under the name.
+        for (fy in doubleArrayOf(0.468, 0.4725, 0.477)) for (gx in 0 until 24) sample(0.38 + 0.01 * gx, fy)
+        // Weight number, left of the type icons.
+        for (fy in doubleArrayOf(0.538, 0.545, 0.552)) for (gx in 0 until 16) sample(0.10 + 0.012 * gx, fy)
+        // Appraisal panel: labels and the three bars (left half of the card only).
+        for (gy in 0 until 31) for (gx in 0 until 24) sample(0.10 + 0.0155 * gx, 0.705 + 0.005 * gy)
+        // Catch banner: three lines of text.
+        for (fy in doubleArrayOf(0.903, 0.908, 0.913, 0.928, 0.933, 0.938, 0.953, 0.958)) for (gx in 0 until 40) sample(0.07 + 0.022 * gx, fy)
         return sig
     }
-
-    /** Is [b] a different card from [a]? Text bands, or enough of the same-species detail. */
-    private fun isOtherCard(a: IntArray, b: IntArray): Boolean =
-        changedCount(a, b, 0, SIG_TEXT) >= AUTO_CHANGED_MIN || changedCount(a, b, SIG_TEXT, a.size) >= AUTO_DETAIL_MIN
 
     private fun rememberPillRect() {
         val v = pillView ?: return
@@ -631,31 +637,43 @@ class FloatingOverlayService : Service() {
             return
         }
 
-        if (!autoWantFrame || autoReadPending) return
-        autoWantFrame = false
+        if (autoReadPending || now - autoLastSampleAt < AUTO_SAMPLE_GAP_MS) return
+        autoLastSampleAt = now
         val sig = fingerprint(image)
 
-        // Any change on screen is activity, whether or not the card is new (swiping back and
-        // forth over cards already read must not count as idle).
+        // Holding still = same as the look before. Any change is activity (swiping back over
+        // cards already read must not count as idle).
         val seen = autoLastSeenSig
-        // Movement is judged on the text bands only: they slide during a swipe and sit still otherwise.
-        val stillMoving = seen == null || changedCount(seen, sig, 0, SIG_TEXT) >= AUTO_CHANGED_MIN
-        if (stillMoving || (seen != null && isOtherCard(seen, sig))) autoLastActiveAt = now
+        val still = seen != null && changedCount(seen, sig) < AUTO_CHANGED_MIN
+        if (!still) autoLastActiveAt = now
         autoLastSeenSig = sig
 
-        // "Changed" = how many samples moved sharply (text appearing / vanishing), not the average.
         val last = autoLastReadSig
-        if (last != null && !isOtherCard(last, sig)) { autoMoving = false; return }   // still the card already read
-
-        if (stillMoving) {
-            // Mid-swipe: wait for two matching samples before spending a read on it.
-            if (!autoMoving) { autoMoving = true; trail("swiping") }
+        val diff = if (last == null) 999 else changedCount(last, sig)
+        if (diff < AUTO_CHANGED_MIN) {              // still (or back on) the card already read
+            autoUnsettledSince = 0L
+            autoForced = false
             return
         }
-        autoMoving = false
 
-        // Settled on a card that has not been read: blink the pill out and read the next frame.
-        if (last != null) trail("settled (text ${changedCount(last, sig, 0, SIG_TEXT)}, detail ${changedCount(last, sig, SIG_TEXT, sig.size)})")
+        if (!still) {
+            // Mid-swipe, or the appraisal bars are still filling. Look again shortly even if the
+            // screen then goes quiet; if it never settles, read anyway (once per swipe).
+            if (autoUnsettledSince == 0L) { autoUnsettledSince = now; trail("swipe ($diff changed)") }
+            val waited = now - autoUnsettledSince
+            if (waited < AUTO_FORCE_READ_MS || (autoForced && diff < AUTO_BIG_CHANGE)) {
+                mainHandler.post { requestFrameSoon() }
+                return
+            }
+            autoForced = true
+            trail("never settled: reading anyway")
+        } else {
+            autoForced = false
+            trail("settled ($diff changed)")
+        }
+        autoUnsettledSince = 0L
+
+        // A card that has not been read: blink the pill out and read the next frame.
         autoReadPending = true
         autoBlinkAt = now
         mainHandler.post {
@@ -672,7 +690,7 @@ class FloatingOverlayService : Service() {
 
     private fun changedCount(a: IntArray, b: IntArray, from: Int = 0, to: Int = a.size): Int {
         var n = 0
-        for (i in from until to) if (a[i] >= 0 && b[i] >= 0 && abs(a[i] - b[i]) > 40) n++
+        for (i in from until to) if (a[i] >= 0 && b[i] >= 0 && abs(a[i] - b[i]) > 30) n++
         return n
     }
 

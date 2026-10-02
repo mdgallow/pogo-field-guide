@@ -1,1 +1,1 @@
-{"versionCode": 47, "versionName": "2.3.24", "apk": "pogo-companion.apk", "notes": "Fix: your best Pokemon of a raid or PvP species are now KEEP even when the species used to be tagged trade or transfer (e.g. Lunala). Low-use species keep only their single best."}
+{"versionCode": 48, "versionName": "2.3.25", "apk": "pogo-companion.apk", "notes": "AUTO now triggers on the swipe itself (appraisal bars, catch banner, HP, weight) and ignores animated models, shadow flames and the team leader, so it no longer re-reads or stalls."}
