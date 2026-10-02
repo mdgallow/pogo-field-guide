@@ -48,6 +48,22 @@ test('anything that is not a Pokémon page: standby, nothing logged', async t =>
   eq(t.last().mode, 'STANDBY', 'mode'); eq(t.app.log().length, 0, 'log size');
 });
 
+test('catch: the ball follows the ring colour (Poké on green/yellow, Great on orange, Ultra on red)', async t => {
+  const ball = (name, cp) => require('vm').runInContext(`(() => { const p = POKEMON_DATA.find(x => x.name === ${JSON.stringify(name)}); const b = pickBall(p, ${cp}); return b.text + ' | ' + Math.round(b.chance * 100); })()`, t.ctx);
+  has(ball('Pidgey', 60), 'POKÉ BALL', 'low-level common');
+  has(ball('Pidgey', 60), 'GREEN', 'ring named');
+  has(ball('Charmander', 700), 'ULTRA BALL', 'high-level starter');
+  check(/GREAT|ULTRA/.test(ball('Pidgey', 700)), `a near-max common is not a Poké Ball catch (${ball('Pidgey', 700)})`);
+  has(ball('Pidgey', 0), 'GREEN RING: POKÉ', 'no CP read: follow the ring');
+});
+
+test('raid boss: SAVE MASTER BALL, or PERFECT! USE MASTER BALL', async t => {
+  const advice = (cp) => require('vm').runInContext(`(() => { const p = POKEMON_DATA.find(x => x.name === 'Mewtwo'); return getBallAdvice(p, ${cp}, evaluateCpMatch(p, ${cp})).text; })()`, t.ctx);
+  const perfect = require('vm').runInContext(`POKEMON_DATA.find(x => x.name === 'Mewtwo').cps[19]`, t.ctx);   // level 20 = raid catch
+  eq(advice(perfect), 'PERFECT! USE MASTER BALL', 'perfect raid CP');
+  eq(advice(perfect - 40), 'SAVE MASTER BALL', 'anything else');
+});
+
 // ---------------------------------------------------------------- verdicts
 test('perfect IVs: KEEP, logged once', async t => {
   await t.app.scan(card({ cp: 3000, name: 'Charizard', kg: 90.5, m: 1.7, types: 'FIRE / FLYING', ivs: [15, 15, 15] }));
