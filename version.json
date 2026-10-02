@@ -1,1 +1,1 @@
-{"versionCode": 44, "versionName": "2.3.21", "apk": "pogo-companion.apk", "notes": "AUTO fixes: steady pace on a still screen, and Pokemon of the same species are told apart even when the top bar covers the CP."}
+{"versionCode": 45, "versionName": "2.3.22", "apk": "pogo-companion.apk", "notes": "Keepers now show their ROLE (RAID, PVP or both) with the matching movesets, and the IV line leads with the total out of 45."}
