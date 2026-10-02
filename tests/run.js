@@ -186,6 +186,17 @@ test('moves: nothing is shown on a Pokémon that is not being kept', async t => 
   check(!movesSlot(t.last()), 'no MOVES slot on a trade');
 });
 
+// ---------------------------------------------------------------- search builder
+test('search builder: OR inside a group, AND between groups, ! to exclude', async t => {
+  const build = (state, extra) => require('vm').runInContext(`buildSearch(${JSON.stringify(state)}, ${JSON.stringify(extra || {})})`, t.ctx);
+  eq(build({ '3*': 1, '4*': 1 }), '3*,4*', 'stars');
+  eq(build({ '0attack': 1, '1attack': 1, '4defense': 1, '3hp': 1, '4hp': 1 }), '0attack,1attack&4defense&3hp,4hp', 'IV buckets');
+  eq(build({ '4*': 1, shiny: -1, lucky: 1, fire: 1, water: 1 }), '4*&lucky&fire,water&!shiny', 'mixed');
+  eq(build({}, { cpMin: '1000', cpMax: '', age: '7', family: 'Pikachu' }), 'cp1000-&age0-7&+pikachu', 'numbers and family');
+  eq(build({}, { cpMin: '', cpMax: '1500' }), 'cp-1500', 'max CP only');
+  eq(build({}), '', 'nothing picked');
+});
+
 // ---------------------------------------------------------------- identity
 test('the same Pokémon scanned again is one log entry', async t => {
   const c = card({ cp: 1200, name: 'Charmeleon', kg: 19.2, m: 1.1, types: 'FIRE', ivs: [14, 13, 15] });

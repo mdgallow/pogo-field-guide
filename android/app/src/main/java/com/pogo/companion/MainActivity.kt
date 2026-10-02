@@ -221,6 +221,15 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun autoTrail(): String = OverlayBus.autoTrail
 
+        /** Search builder: puts a search string on the clipboard for the player to paste into the game. */
+        @JavascriptInterface
+        fun copyText(text: String) {
+            runOnUiThread {
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Pokémon GO search", text))
+            }
+        }
+
         @JavascriptInterface
         fun checkForUpdate() {
             runOnUiThread { UpdateChecker.check(this@MainActivity, manual = true) }

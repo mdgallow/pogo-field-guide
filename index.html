@@ -422,6 +422,20 @@
     line-height: 1.5;
   }
 
+  /* Search builder */
+  .sb-group { margin-top: 10px; }
+  .sb-title { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
+  .sb-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .sb-chip { background: #0f172a; border: 1px solid var(--border); color: var(--text-main); border-radius: 14px; padding: 6px 10px; font-size: 11.5px; font-weight: 700; cursor: pointer; min-height: 30px; }
+  .sb-chip.on { background: rgba(56,189,248,0.2); border-color: #38bdf8; color: #38bdf8; }
+  .sb-chip.not { background: rgba(248,113,113,0.15); border-color: #f87171; color: #f87171; text-decoration: line-through; }
+  .sb-preset { display: flex; align-items: center; gap: 8px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; margin-top: 5px; }
+  .sb-preset b { font-size: 12px; }
+  .sb-preset code { display: block; font-size: 10.5px; color: var(--text-muted); word-break: break-all; margin-top: 2px; }
+  .sb-copy { background: #38bdf8; color: #0f172a; border: none; border-radius: 8px; padding: 7px 10px; font-weight: 800; font-size: 11px; cursor: pointer; white-space: nowrap; }
+  .sb-out { width: 100%; min-height: 54px; background: #020617; border: 1px solid #38bdf8; color: #e2e8f0; border-radius: 8px; padding: 8px; font-family: monospace; font-size: 12px; resize: vertical; }
+  .sb-num { width: 74px; background: #0f172a; border: 1px solid var(--border); color: #fff; border-radius: 8px; padding: 6px 8px; font-size: 12px; }
+
 </style>
 </head>
 <body>
@@ -452,6 +466,7 @@
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
       <button onclick="openLogModal()" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer;">My Log</button>
+      <button onclick="openSearchModal()" style="background:linear-gradient(135deg, #14b8a6, #0d9488); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer;">Search</button>
       <button onclick="openGuideModal()" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; border:none; border-radius:10px; padding:7px 11px; font-weight:800; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(59,130,246,0.3);">
         📖 Guide
       </button>
@@ -639,6 +654,55 @@
 </div>
 
 <!-- Trainer Field Guide & Update Sync Modal -->
+<!-- Search builder: makes text for Pokémon GO's own search bar. The player pastes it themselves. -->
+<div id="searchOverlay" class="modal-overlay" onclick="closeSearchModal()">
+  <div class="modal-content" onclick="event.stopPropagation()" style="max-width:620px;">
+    <button class="modal-close" onclick="closeSearchModal()">✕</button>
+    <h2 style="font-size:18px; font-weight:800; color:#38bdf8;">Search builder</h2>
+    <p style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Pick what you want, tap COPY, then paste into the search bar of your Pokémon storage in Pokémon GO. These are the game’s own search words.</p>
+
+    <div class="sb-group">
+      <div class="sb-title">Your search</div>
+      <textarea id="sbOutput" class="sb-out" readonly placeholder="Tap choices below, or use a ready-made search"></textarea>
+      <div style="display:flex; gap:6px; margin-top:6px; align-items:center;">
+        <button class="sb-copy" style="flex:1; padding:9px;" onclick="copySearch(document.getElementById('sbOutput').value)">COPY</button>
+        <button class="sb-chip" onclick="resetSearchBuilder()">Clear</button>
+      </div>
+      <div id="sbStatus" style="font-size:11px; color:#34d399; min-height:15px; margin-top:4px;"></div>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-title">Ready-made: log a big collection fast</div>
+      <div style="font-size:11px; color:var(--text-muted);">Only these can be keepers, so only these need the appraisal swipe with AUTO. Everything else is a trade or a transfer.</div>
+      <div id="sbLogPresets"></div>
+    </div>
+    <div class="sb-group">
+      <div class="sb-title">Ready-made: tidy up</div>
+      <div id="sbTidyPresets"></div>
+    </div>
+
+    <div class="sb-group"><div class="sb-title">Build your own · tap once to include, twice to exclude</div></div>
+    <div class="sb-group"><div class="sb-title">Appraisal stars</div><div class="sb-row" id="sbStars"></div></div>
+    <div class="sb-group"><div class="sb-title">Attack · Defense · HP (0 = worst, 4 = perfect 15)</div>
+      <div class="sb-row" id="sbAttack"></div><div class="sb-row" id="sbDefense" style="margin-top:5px;"></div><div class="sb-row" id="sbHp" style="margin-top:5px;"></div></div>
+    <div class="sb-group"><div class="sb-title">Kind</div><div class="sb-row" id="sbFlags"></div></div>
+    <div class="sb-group"><div class="sb-title">Type</div><div class="sb-row" id="sbTypes"></div></div>
+    <div class="sb-group"><div class="sb-title">Region</div><div class="sb-row" id="sbRegions"></div></div>
+    <div class="sb-group"><div class="sb-title">Numbers</div>
+      <div class="sb-row" style="align-items:center; font-size:12px;">
+        CP <input class="sb-num" id="sbCpMin" type="number" inputmode="numeric" placeholder="min" oninput="renderSearch()"> to
+        <input class="sb-num" id="sbCpMax" type="number" inputmode="numeric" placeholder="max" oninput="renderSearch()">
+      </div>
+      <div class="sb-row" style="align-items:center; font-size:12px; margin-top:5px;">
+        Caught in the last <input class="sb-num" id="sbAge" type="number" inputmode="numeric" placeholder="days" oninput="renderSearch()"> days
+      </div>
+      <div class="sb-row" style="align-items:center; font-size:12px; margin-top:5px;">
+        Family of <input class="sb-num" id="sbFamily" type="text" placeholder="e.g. pikachu" style="width:130px;" oninput="renderSearch()">
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="guideOverlay" class="modal-overlay" onclick="closeGuideModal(event)">
   <div class="modal-content" onclick="event.stopPropagation()" style="max-width:620px;">
     <button class="modal-close" onclick="closeGuideModal()">✕</button>
@@ -1787,7 +1851,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.18';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.19';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -1804,9 +1868,11 @@ const Native = (() => {
       autoTrail: () => (a.autoTrail ? a.autoTrail() : ''),
       canSelfUpdate: !!a.checkForUpdate,
       checkForUpdate: () => a.checkForUpdate(),
+      // true when the shell put the text on the clipboard
+      copyText: text => { if (!a.copyText) return false; a.copyText(text); return true; },
     };
   }
-  return { present: false, updatePill() {}, autoTrail: () => '', canSelfUpdate: false, checkForUpdate() {} };
+  return { present: false, updatePill() {}, autoTrail: () => '', canSelfUpdate: false, checkForUpdate() {}, copyText: () => false };
 })();
 // True inside a native shell: minimizing and scanning are handled by the native overlay pill.
 const isNativeApp = Native.present;
@@ -2345,6 +2411,119 @@ function renderModalContent() {
 
 function closeModal(e) {
   document.getElementById('modalOverlay').style.display = 'none';
+}
+
+// --- Search builder -------------------------------------------------------------------------
+// Builds text for Pokémon GO's own storage search (terms as documented in the game's help
+// centre). The app never types into the game: the player copies and pastes. "," means OR and
+// is read before "&" (AND); "!" excludes.
+const SB_STARS = ['0*', '1*', '2*', '3*', '4*'];
+const SB_FLAGS = ['shiny', 'lucky', 'shadow', 'purified', 'legendary', 'mythical', 'ultra beasts', 'costume', 'traded', 'favorite',
+  'defender', 'dynamax', 'gigantamax', 'evolve', 'tradeevolve', 'megaevolve', 'hatched', 'xxl', 'xxs'];
+const SB_TYPES = ['normal', 'fire', 'water', 'grass', 'electric', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
+const SB_REGIONS = ['kanto', 'johto', 'hoenn', 'sinnoh', 'unova', 'kalos', 'alola', 'galar', 'hisui', 'paldea'];
+const SB_NOT_PVP = '3attack,4attack,0defense,1defense,2defense,0hp,1hp,2hp';   // = not (low attack & high defense & high HP)
+const SB_PROTECT = '!shiny&!lucky&!legendary&!mythical&!ultra beasts&!shadow&!purified&!favorite&!costume&!dynamax&!gigantamax&!defender';
+const SB_LOG_PRESETS = [
+  ['1 · Every possible keeper (3★ and 4★)', '3*,4*'],
+  ['2 · Legendaries from 2★', '2*&legendary,mythical,ultra beasts'],
+  ['3 · Luckies at 1–2★ (a lucky plays 8 IV points higher)', 'lucky&1*,2*'],
+  ['4 · PvP candidates (low attack, high defense and HP)', '0attack,1attack,2attack&3defense,4defense&3hp,4hp'],
+];
+const SB_TIDY_PRESETS = [
+  ['Transfer candidates: 0–1★ commons (look through before transferring)', `0*,1*&${SB_PROTECT}&!traded&${SB_NOT_PVP}`],
+  ['Trade pile: caught 100 km+ away (most candy per trade)', `distance100-&0*,1*,2*&!shiny&!lucky&!traded&!shadow&!favorite&!mythical`],
+  ['Trade evolutions (evolve free after a trade)', 'tradeevolve&!traded'],
+  ['Shadows still carrying Frustration', 'shadow&@frustration'],
+  ['Perfect (4★)', '4*'],
+  ['Ready to evolve', 'evolve'],
+  ['Evolving gives a new Pokédex entry', 'evolvenew'],
+  ['Caught today', 'age0'],
+];
+// state: term -> 1 (include) | -1 (exclude)
+let sbState = {};
+
+// groups: [[terms of one OR-group], ...]; every group is AND-ed, excluded terms are AND-ed singly.
+function buildSearch(state, extra = {}) {
+  const group = terms => terms.filter(t => state[t] === 1).join(',');
+  const parts = [
+    group(SB_STARS),
+    group(['0attack', '1attack', '2attack', '3attack', '4attack']),
+    group(['0defense', '1defense', '2defense', '3defense', '4defense']),
+    group(['0hp', '1hp', '2hp', '3hp', '4hp']),
+    ...SB_FLAGS.filter(t => state[t] === 1),
+    group(SB_TYPES),
+    group(SB_REGIONS),
+  ].filter(Boolean);
+  for (const t of Object.keys(state)) if (state[t] === -1) parts.push('!' + t);
+  const num = v => (v === '' || v == null || isNaN(parseInt(v, 10)) ? null : Math.max(0, parseInt(v, 10)));
+  const lo = num(extra.cpMin), hi = num(extra.cpMax), age = num(extra.age);
+  if (lo != null || hi != null) parts.push(`cp${lo != null ? lo : ''}-${hi != null ? hi : ''}`);
+  if (age != null) parts.push(age === 0 ? 'age0' : `age0-${age}`);
+  const fam = String(extra.family || '').trim().toLowerCase().replace(/[^a-z0-9 .'\-]/g, '');
+  if (fam) parts.push('+' + fam);
+  return parts.join('&');
+}
+
+function sbChip(term, label, allowExclude) {
+  const st = sbState[term] || 0;
+  return `<button class="sb-chip${st === 1 ? ' on' : st === -1 ? ' not' : ''}" onclick="toggleSearchTerm('${term}', ${allowExclude})">${label || term}</button>`;
+}
+function toggleSearchTerm(term, allowExclude) {
+  const st = sbState[term] || 0;
+  const next = st === 0 ? 1 : (st === 1 && allowExclude ? -1 : 0);
+  if (next) sbState[term] = next; else delete sbState[term];
+  renderSearch();
+}
+function renderSearch() {
+  const row = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  row('sbStars', SB_STARS.map(t => sbChip(t, t.replace('*', '★'), false)).join(''));
+  row('sbAttack', [0, 1, 2, 3, 4].map(n => sbChip(n + 'attack', 'ATK ' + n, false)).join(''));
+  row('sbDefense', [0, 1, 2, 3, 4].map(n => sbChip(n + 'defense', 'DEF ' + n, false)).join(''));
+  row('sbHp', [0, 1, 2, 3, 4].map(n => sbChip(n + 'hp', 'HP ' + n, false)).join(''));
+  row('sbFlags', SB_FLAGS.map(t => sbChip(t, t, true)).join(''));
+  row('sbTypes', SB_TYPES.map(t => sbChip(t, t, false)).join(''));
+  row('sbRegions', SB_REGIONS.map(t => sbChip(t, t, false)).join(''));
+  const val = id => (document.getElementById(id) ? document.getElementById(id).value : '');
+  const out = document.getElementById('sbOutput');
+  if (out) out.value = buildSearch(sbState, { cpMin: val('sbCpMin'), cpMax: val('sbCpMax'), age: val('sbAge'), family: val('sbFamily') });
+}
+function resetSearchBuilder() {
+  sbState = {};
+  ['sbCpMin', 'sbCpMax', 'sbAge', 'sbFamily'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  renderSearch();
+}
+function renderSearchPresets() {
+  const html = list => list.map(([label, q], i) => `<div class="sb-preset"><div style="flex:1; min-width:0;"><b>${label}</b><code>${esc(q)}</code></div>` +
+    `<button class="sb-copy" data-q="${esc(q)}" onclick="copySearch(this.dataset.q)">COPY</button></div>`).join('');
+  document.getElementById('sbLogPresets').innerHTML = html(SB_LOG_PRESETS);
+  document.getElementById('sbTidyPresets').innerHTML = html(SB_TIDY_PRESETS);
+}
+function copySearch(text) {
+  const status = document.getElementById('sbStatus');
+  const say = (msg, ok = true) => { if (status) { status.style.color = ok ? '#34d399' : '#f87171'; status.innerText = msg; } };
+  if (!text) { say('Nothing to copy yet: pick something first.', false); return; }
+  const done = () => say(`Copied. Paste it into the search bar in Pokémon GO: ${text.length > 60 ? text.slice(0, 60) + '…' : text}`);
+  if (Native.copyText(text)) { done(); return; }
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    if (ok) done(); else say('Could not copy automatically: press and hold the text above and copy it.', false);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+  else fallback();
+}
+function openSearchModal() {
+  renderSearchPresets();
+  renderSearch();
+  document.getElementById('searchOverlay').style.display = 'flex';
+}
+function closeSearchModal() {
+  document.getElementById('searchOverlay').style.display = 'none';
 }
 
 function openGuideModal() {
