@@ -104,6 +104,28 @@ test('favorite star does not force a KEEP', async t => {
   check(slot(t.last(), 'VERDICT') !== 'KEEP', 'a favorited 12-IV Charmander is still not a KEEP');
 });
 
+// ---------------------------------------------------------------- trade value
+test('trade value: a high-level common beats a low-level one with better IVs', async t => {
+  // Rattata family is common and not a meta pick: only the level makes it worth a trade.
+  await t.app.scan(card({ cp: 1300, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [2, 3, 2] }));
+  const high = t.last();
+  eq(slot(high, 'VERDICT'), 'TRADE', 'level ~30 with 15% IVs is a trade');
+  has(slot(high, 'REASON'), 'SAVES', 'pill says what the receiver saves');
+  const u = loadApp();
+  await u.app.scan(card({ cp: 100, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 4] }));
+  eq(slot(u.last(), 'VERDICT'), 'SURPLUS', 'level ~2 with 31% IVs is transfer fodder');
+  has(slot(u.last(), 'REASON'), 'TRANSFER', 'pill says transfer');
+});
+
+test('trade value: rarity lifts every level, and level + rarity goes first', async t => {
+  await t.app.scan(card({ cp: 120, name: 'Dratini', kg: 3.3, m: 1.8, types: 'DRAGON', ivs: [5, 5, 4] }));
+  eq(slot(t.last(), 'VERDICT'), 'TRADE', 'a low-level meta-family Pokémon is still a trade');
+  const u = loadApp();
+  await u.app.scan(card({ cp: 2900, name: 'Dragonite', kg: 210, m: 2.2, types: 'DRAGON / FLYING', ivs: [5, 5, 4] }));
+  has(slot(u.last(), 'REASON'), 'TRADE 1ST', 'high level + meta family is first in line');
+  check(slot(u.last(), 'REASON').length <= 40, `fits the pill (${slot(u.last(), 'REASON').length})`);
+});
+
 // ---------------------------------------------------------------- identity
 test('the same Pokémon scanned again is one log entry', async t => {
   const c = card({ cp: 1200, name: 'Charmeleon', kg: 19.2, m: 1.1, types: 'FIRE', ivs: [14, 13, 15] });
@@ -153,6 +175,11 @@ test('returning to the app restores the page; the pill keeps its result', async 
   const before = t.pill.length;
   t.app.foreground();
   eq(t.app.mode(), 'catch', 'page mode restored'); eq(t.pill.length, before, 'no pill update from the restore');
+});
+
+test('trade value: power-up costs match the game (L40 = 270k dust, 304 candy)', async t => {
+  const inv = require('vm').runInContext('JSON.stringify([investedAt(20), investedAt(30), investedAt(40)])', t.ctx);
+  eq(inv, JSON.stringify([{ dust: 45000, candy: 56 }, { dust: 120000, candy: 122 }, { dust: 270000, candy: 304 }]), 'cumulative cost');
 });
 
 test('privacy: scanning never touches the network', async t => {

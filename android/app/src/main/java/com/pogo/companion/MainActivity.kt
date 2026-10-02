@@ -47,6 +47,21 @@ class MainActivity : AppCompatActivity() {
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName
         findViewById<TextView>(R.id.appTitle).text = "${getString(R.string.app_name)} v$versionName"
         findViewById<Button>(R.id.btnLaunchOverlay).setOnClickListener { minimizeToPill() }
+        // Pill style: narrow pill on the side, or a strip across the top. Remembered on the phone.
+        val styleBtn = findViewById<Button>(R.id.btnPillStyle)
+        val overlayPrefs = getSharedPreferences(FloatingOverlayService.PREFS, MODE_PRIVATE)
+        fun showStyle() {
+            val bar = overlayPrefs.getString(FloatingOverlayService.PREF_PILL_STYLE, "side") == "bar"
+            styleBtn.text = getString(if (bar) R.string.pill_style_bar else R.string.pill_style_side)
+        }
+        showStyle()
+        styleBtn.setOnClickListener {
+            val bar = overlayPrefs.getString(FloatingOverlayService.PREF_PILL_STYLE, "side") == "bar"
+            overlayPrefs.edit().putString(FloatingOverlayService.PREF_PILL_STYLE, if (bar) "side" else "bar").apply()
+            showStyle()
+            OverlayBus.pillStyleChanged?.invoke()
+            Toast.makeText(this, getString(if (bar) R.string.pill_style_side_hint else R.string.pill_style_bar_hint), Toast.LENGTH_SHORT).show()
+        }
 
         setupWebView()
         OverlayBus.ocrEvaluator = { payloadJson ->

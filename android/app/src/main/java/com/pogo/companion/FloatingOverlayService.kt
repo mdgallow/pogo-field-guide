@@ -57,6 +57,9 @@ class FloatingOverlayService : Service() {
     private lateinit var params: WindowManager.LayoutParams
     private var pillView: View? = null
     @Volatile private var dockLeft = false
+    /** true = top bar (two short rows across the screen), false = side pill. */
+    @Volatile private var barStyle = false
+    private var lastState: PillState? = null
     /** Pill bounds in screen pixels, refreshed before each AUTO read; its text is not the game's. */
     @Volatile private var pillRectOnScreen = android.graphics.Rect()
 
@@ -146,8 +149,14 @@ class FloatingOverlayService : Service() {
         const val EXTRA_RESULT_CODE = "resultCode"
         const val EXTRA_RESULT_DATA = "resultData"
 
-        private const val PREFS = "pogo_overlay"
+        const val PREFS = "pogo_overlay"
+        /** "side" (default: narrow pill on the left/right edge) or "bar" (strip across the top). */
+        const val PREF_PILL_STYLE = "pill_style"
         private const val PREF_PILL_Y = "pill_y"
+        private const val PREF_BAR_Y = "bar_y"
+        private const val BAR_MARGIN_DP = 6
+        /** The pill's own fixed labels: seeing one in a frame means the pill was captured too. */
+        private val PILL_OWN_TEXT = Regex("^(OPEN|CLOSE|SCAN|VERDICT|IV CHECK|REASON|LOGGED|BERRY|BALL|AFTER CATCH|GONE.*|AUTO( .*)?|READING.*)$")
         private const val PREF_PILL_SIDE = "pill_side"   // "right" (default) or "left"
         /** Default vertical position: where testing settled on, top of the pill ~57% down the screen. */
         private const val DEFAULT_PILL_Y_FRACTION = 0.57f
@@ -183,6 +192,7 @@ class FloatingOverlayService : Service() {
             pillView?.visibility = if (visible) View.VISIBLE else View.GONE
             if (!visible) setAutoMode(false)
         }
+        OverlayBus.pillStyleChanged = { rebuildPill() }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -256,7 +266,9 @@ class FloatingOverlayService : Service() {
     }
 
     private fun createFloatingPill() {
-        val view = LayoutInflater.from(this).inflate(R.layout.floating_pill, null)
+        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+        barStyle = prefs.getString(PREF_PILL_STYLE, "side") == "bar"
+        val view = LayoutInflater.from(this).inflate(if (barStyle) R.layout.floating_pill_bar else R.layout.floating_pill, null)
         pillView = view
 
         val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -267,7 +279,8 @@ class FloatingOverlayService : Service() {
         }
 
         // inflate(…, null) drops the root's layout_width, so the pill width is set on the window.
-        val pillWidthPx = (PILL_WIDTH_DP * resources.displayMetrics.density).toInt()
+        val density = resources.displayMetrics.density
+        val pillWidthPx = if (barStyle) screenWidth - (2 * BAR_MARGIN_DP * density).toInt() else (PILL_WIDTH_DP * density).toInt()
         params = WindowManager.LayoutParams(
             pillWidthPx,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -276,13 +289,19 @@ class FloatingOverlayService : Service() {
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
-            // Docked to one edge (right by default, left for left-handed players: drag it across).
-            // Vertical position is draggable and remembered.
-            val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
-            dockLeft = prefs.getString(PREF_PILL_SIDE, "right") == "left"
-            gravity = Gravity.TOP or (if (dockLeft) Gravity.START else Gravity.END)
-            x = 10
-            y = prefs.getInt(PREF_PILL_Y, (screenHeight * DEFAULT_PILL_Y_FRACTION).toInt())
+            if (barStyle) {
+                // A strip across the top, just under the status bar; drag it up or down.
+                gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                x = 0
+                y = prefs.getInt(PREF_BAR_Y, statusBarHeight())
+            } else {
+                // Docked to one edge (right by default, left for left-handed players: drag it across).
+                // Vertical position is draggable and remembered.
+                dockLeft = prefs.getString(PREF_PILL_SIDE, "right") == "left"
+                gravity = Gravity.TOP or (if (dockLeft) Gravity.START else Gravity.END)
+                x = 10
+                y = prefs.getInt(PREF_PILL_Y, (screenHeight * DEFAULT_PILL_Y_FRACTION).toInt())
+            }
         }
 
         // Dragging works from anywhere on the pill; a touch that doesn't move is a tap.
@@ -301,7 +320,23 @@ class FloatingOverlayService : Service() {
             stopSelf()
             return
         }
-        finishScan(PillState.message("STANDBY", "TAP SCAN ON A POKÉMON"))
+        finishScan(lastState ?: PillState.message("STANDBY", "TAP SCAN ON A POKÉMON"))
+    }
+
+    private fun statusBarHeight(): Int {
+        val id = resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (id > 0) resources.getDimensionPixelSize(id) else (24 * resources.displayMetrics.density).toInt()
+    }
+
+    /** The player switched between the side pill and the top bar: same state, other layout. */
+    private fun rebuildPill() {
+        val old = pillView ?: return
+        val wasVisible = old.visibility
+        setAutoMode(false)
+        try { windowManager.removeView(old) } catch (_: Exception) {}
+        pillView = null
+        createFloatingPill()
+        pillView?.visibility = wasVisible
     }
 
     private fun attachDragOrTap(view: View, onTap: (() -> Unit)?) {
@@ -348,11 +383,11 @@ class FloatingOverlayService : Service() {
                     v.isPressed = false
                     if (dragging) {
                         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
-                        prefs.edit().putInt(PREF_PILL_Y, params.y).apply()
+                        prefs.edit().putInt(if (barStyle) PREF_BAR_Y else PREF_PILL_Y, params.y).apply()
                         // Dragged well past the middle of the screen: dock on the other side.
                         val toLeft = event.rawX < screenWidth * 0.4f
                         val toRight = event.rawX > screenWidth * 0.6f
-                        if ((toLeft && !dockLeft) || (toRight && dockLeft)) {
+                        if (!barStyle && ((toLeft && !dockLeft) || (toRight && dockLeft))) {
                             dockLeft = toLeft
                             params.gravity = Gravity.TOP or (if (dockLeft) Gravity.START else Gravity.END)
                             pillView?.let { windowManager.updateViewLayout(it, params) }
@@ -462,7 +497,7 @@ class FloatingOverlayService : Service() {
 
     private fun updateAutoButton() {
         pillView?.findViewById<TextView>(R.id.pillAutoBtn)?.apply {
-            text = if (autoMode) "AUTO · $autoReads read" else "AUTO"
+            text = if (!autoMode) "AUTO" else if (barStyle) "AUTO · $autoReads" else "AUTO · $autoReads read"
             setTextColor(if (autoMode) 0xFF34D399.toInt() else 0xFF94A3B8.toInt())
         }
     }
@@ -621,6 +656,8 @@ class FloatingOverlayService : Service() {
     /** Frame is in hand: bring the pill back, showing that it is working. */
     private fun showPillReading() {
         val view = pillView ?: return
+        val loc = IntArray(2); view.getLocationOnScreen(loc)
+        pillRectOnScreen = android.graphics.Rect(loc[0], loc[1], loc[0] + view.width, loc[1] + view.height)
         view.alpha = 1f
         view.findViewById<TextView>(R.id.pillScanBtn)?.text = "READING…"
     }
@@ -830,10 +867,18 @@ class FloatingOverlayService : Service() {
         val scale = width.toFloat() / screenWidth
         val pr = pillRectOnScreen
         val pillRect = android.graphics.Rect((pr.left * scale).toInt(), (pr.top * scale).toInt(), (pr.right * scale).toInt(), (pr.bottom * scale).toInt())
+        // The side pill covers nothing the scanner needs, so anything under it is dropped. The top
+        // bar sits over the CP line: there, text under it is dropped only when the pill itself was
+        // caught in the frame (the blink did not take), recognised by its own labels.
+        val pillCaptured = text.textBlocks.any { b -> b.lines.any { l ->
+            val box = l.boundingBox
+            box != null && android.graphics.Rect.intersects(box, pillRect) && PILL_OWN_TEXT.matches(l.text.trim().uppercase())
+        } }
+        val maskPill = if (barStyle) pillCaptured else auto
         for (block in text.textBlocks) {
             for (line in block.lines) {
                 val box = line.boundingBox ?: continue
-                if (auto && android.graphics.Rect.intersects(box, pillRect)) continue
+                if (maskPill && android.graphics.Rect.intersects(box, pillRect)) continue
                 plainText.append(line.text).append('\n')
                 lines.put(
                     JSONObject()
@@ -883,6 +928,7 @@ class FloatingOverlayService : Service() {
             return
         }
         mainHandler.removeCallbacks(evalTimeout)
+        lastState = state
         val v = pillView ?: return
         v.alpha = 1f
         val mode = state.mode.uppercase()
@@ -894,7 +940,14 @@ class FloatingOverlayService : Service() {
         }
         updateAutoButton()
         v.findViewById<TextView>(R.id.pillModeBadge)?.text = mode
-        setTextOrHide(v.findViewById(R.id.pillTargetLabel), state.target, 0xFFFFFFFF.toInt())
+        val targetView = v.findViewById<TextView>(R.id.pillTargetLabel)
+        if (barStyle) {
+            // One line; kept in the layout when empty so the buttons on the right do not jump.
+            targetView.text = state.target.replace("\n", " · ")
+            targetView.visibility = if (state.target.isBlank()) View.INVISIBLE else View.VISIBLE
+        } else {
+            setTextOrHide(targetView, state.target, 0xFFFFFFFF.toInt())
+        }
 
         val inflater = LayoutInflater.from(this)
         val container = v.findViewById<LinearLayout>(R.id.pillSlots)
@@ -903,7 +956,21 @@ class FloatingOverlayService : Service() {
             if (slot.value.isBlank()) continue
             val row = inflater.inflate(R.layout.pill_slot, container, false)
             setTextOrHide(row.findViewById(R.id.pillSlotCaption), slot.caption, CAPTION_COLOR)
-            setTextOrHide(row.findViewById(R.id.pillSlotValue), slot.value, slot.color ?: DEFAULT_VALUE_COLOR)
+            val valueView = row.findViewById<TextView>(R.id.pillSlotValue)
+            setTextOrHide(valueView, slot.value, slot.color ?: DEFAULT_VALUE_COLOR)
+            if (barStyle) {
+                // Side by side: the sentence-like answers get more of the width than the short ones.
+                val weight = when {
+                    slot.caption.isBlank() || slot.caption == "REASON" -> 2.4f
+                    slot.caption == "VERDICT" || slot.caption == "BALL" -> 1f
+                    else -> 1.4f
+                }
+                row.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
+                row.background = null
+                row.setPadding((2 * resources.displayMetrics.density).toInt(), 0, (2 * resources.displayMetrics.density).toInt(), 0)
+                valueView.maxLines = 2
+                valueView.ellipsize = android.text.TextUtils.TruncateAt.END
+            }
             container.addView(row)
         }
         v.findViewById<View>(R.id.pillGoneBtn)?.visibility = if (state.actions.contains("gone")) View.VISIBLE else View.GONE
@@ -934,6 +1001,7 @@ class FloatingOverlayService : Service() {
         isRunning = false
         OverlayBus.pillUpdater = null
         OverlayBus.pillVisibility = null
+        OverlayBus.pillStyleChanged = null
         releaseCapture()
         recognizer.close()
         pillView?.let {

@@ -33,4 +33,7 @@ object OverlayBus {
 
     /** Set by the service: hides the pill while the full app is on screen. */
     @Volatile var pillVisibility: ((Boolean) -> Unit)? = null
+
+    /** Set by the service: the player picked the other pill style (side pill / top bar). */
+    @Volatile var pillStyleChanged: (() -> Unit)? = null
 }
