@@ -1310,11 +1310,12 @@ function tradeValue(p, cp, ivs, date, need = 0) {
 // Who holds a keeper slot in this pool (RAID top-N above the floor, plus the PVP lane).
 function poolKeepers(species, dynamax) {
   const P = name => POKEMON_DATA.find(x => x.name === name);
-  const slots = dynamax ? keepNDynamax() : keepN();
+  const ks = keepSlots(species, dynamax);
+  const slots = ks.raid;
   const ranked = speciesRanking(species, dynamax);
   const raid = ranked.slice(0, slots).filter(e => e.ivs && meetsRaidFloor(e.ivs, P(e.species), dynamax, !!e.lucky));
   const pvp = !dynamax && pvpRelevant(P(species))
-    ? speciesRanking(species, false, 'pvp').slice(0, keepNPvp()).filter(e => e.ivs && meetsPvpFloor(e.ivs)) : [];
+    ? speciesRanking(species, false, 'pvp').slice(0, ks.pvp).filter(e => e.ivs && meetsPvpFloor(e.ivs)) : [];
   return { ranked, slots, raid, ids: new Set([...raid, ...pvp].map(e => e.id)) };
 }
 // This entry's place among the family's tradeable surplus, best trade first (1-based; 0 = not in it).
@@ -1331,7 +1332,23 @@ const kDust = d => (d >= 1000 ? Math.round(d / 1000) + 'K' : String(d));
 
 // A family has a PVP lane when any stage is a league pick (dataset tag or a top-100 PvP rank).
 function pvpRelevant(p) {
-  return !!p && POKEMON_DATA.some(q => q.familyRoot === p.familyRoot && (q.act.includes('PvP') || (q.pvp_n || 9999) <= 100));
+  return !!p && candyFamily(p).some(q => roleOf(q).pvp);
+}
+
+// How many keeper slots a pool gets. A family with a RAID or PVP use keeps the player's chosen
+// number (default 6 raid + 3 PvP). A low-use family (no stage is a raid or league pick, e.g.
+// Raticate) keeps only its single best. Dynamax has its own count.
+const roleCache = new Map();
+function familyHasRole(species) {
+  const p = POKEMON_DATA.find(x => x.name === species);
+  if (!p) return false;
+  const key = baseSpecies(p.familyRoot || p.name);
+  if (!roleCache.has(key)) roleCache.set(key, candyFamily(p).some(q => !!roleOf(q).role));
+  return roleCache.get(key);
+}
+function keepSlots(species, dynamax) {
+  if (dynamax) return { raid: keepNDynamax(), pvp: 0, lowUse: false };
+  return familyHasRole(species) ? { raid: keepN(), pvp: keepNPvp(), lowUse: false } : { raid: 1, pvp: 0, lowUse: true };
 }
 
 const KEEP_N_PVP_KEY = 'pogo_keep_n_pvp';
@@ -1468,21 +1485,25 @@ let lastGuidance = null;
 function applyLogContext(g, p) {
   const c = scanContext;
   if (!c || c.species !== p.name) return g;
-  const n = c.dynamax ? keepNDynamax() : keepN();
-  const np = keepNPvp();
+  const ks = keepSlots(p.name, c.dynamax);
+  const n = ks.raid;
+  const np = ks.pvp;
   const lucky = c.marks.includes('lucky');
   const shadow = c.marks.includes('shadow');
-  const ranked = c.rank && c.ofSpecies >= 2 && c.appraised;
+  const slotted = !!c.rank && c.appraised;                    // has a place in its pool, even a pool of one
+  const ranked = slotted && c.ofSpecies >= 2;                 // worth showing "#2 of 5"
   const total = c.ivs ? c.ivs[0] + c.ivs[1] + c.ivs[2] : 0;
   const eff = c.ivs ? effectiveTotal(c.ivs, p, lucky) : 0;
   const natural44 = c.ivs && total >= 44 && !lucky;           // never traded, never surplus
-  const inRaid = ranked && c.rank <= n && meetsRaidFloor(c.ivs, p, c.dynamax, lucky);
-  const inPvp = ranked && c.pvpLane && c.rankPvp > 0 && c.rankPvp <= np && meetsPvpFloor(c.ivs);
+  const inRaid = slotted && c.rank <= n && meetsRaidFloor(c.ivs, p, c.dynamax, lucky);
+  const inPvp = slotted && c.pvpLane && c.rankPvp > 0 && c.rankPvp <= np && meetsPvpFloor(c.ivs);
+  // Holds a keeper slot and clears the floor: kept whatever the species' old action tag says.
+  const keeper = inRaid || inPvp;
   const belowFloor = c.ivs && !meetsRaidFloor(c.ivs, p, c.dynamax, lucky) && !(c.pvpLane && meetsPvpFloor(c.ivs));
-  const surplus = c.appraised && !natural44 && ((ranked && !inRaid && !inPvp) || belowFloor);
+  const surplus = c.appraised && !natural44 && ((slotted && !keeper) || belowFloor);
   const better = ranked ? Math.max(0, c.rank - 1) : 0;
   const floor = c.dynamax ? 30 : raidFloor(p);
-  const pvpDecided = ranked && c.pvpLane && !inRaid && inPvp;
+  const pvpDecided = slotted && c.pvpLane && !inRaid && inPvp;
   scanLane = pvpDecided ? 'PVP' : '';
 
   // Rank tags: full for the card, short for the pill.
@@ -1492,7 +1513,7 @@ function applyLogContext(g, p) {
     : inRaid || !c.pvpLane ? `#${c.rank}${c.pvpLane ? ' RAID' : ''} OF ${c.ofSpecies} ${pool}`
     : `#${c.rankPvp} PVP OF ${c.ofSpecies} ${pool}`;
   const rk = !ranked ? '' : pvpDecided ? `#${c.rankPvp} PVP/${c.ofSpecies}` : `#${c.rank}/${c.ofSpecies}`;
-  const why = belowFloor ? `BELOW ${floor}-IV FLOOR` : better ? `${better} BETTER` : '';
+  const why = belowFloor ? `BELOW ${floor}-IV FLOOR` : better ? (ks.lowUse ? 'LOW-USE SPECIES, 1 KEPT' : `${better} BETTER`) : '';
   const finalName = p.finals.length ? p.finals.map(f => baseSpecies(f.name)).join('/').toUpperCase() : '';
   const set = (verdict, color, icon, reason, short) => ({ ...g, verdict, color, icon, reason, short });
 
@@ -1508,7 +1529,7 @@ function applyLogContext(g, p) {
       ? set('SURPLUS', '#f87171', '🗑️', `${rankTag || c.species.toUpperCase()} – LUCKY ${total} (≈${eff}), BUT ${why || 'NOT WORTH A SLOT'}. TRANSFER`, `TRANSFER · LUCKY · ${why || rk}`)
       : set('KEEP', '#fbbf24', '🍀', (rankTag ? rankTag + ' · ' : '') + `LUCKY ${total} PLAYS LIKE A ${Math.min(45, eff)} (HALF DUST) · POWER UP FIRST`,
           `LUCKY ${total}≈${Math.min(45, eff)} · POWER UP${rk ? ' · ' + rk : ''}`);
-  } else if (p.plan === 'trade_evolve' && !c.dynamax && !shadow && (surplus || g.verdict === 'TRADE')) {
+  } else if (p.plan === 'trade_evolve' && !c.dynamax && !shadow && !keeper && (surplus || g.verdict === 'TRADE')) {
     // 3. Machoke & co: a trade re-rolls IVs AND makes the evolution free; always worth a trade.
     g = set('TRADE', '#c084fc', '🔄', `${rankTag || c.species.toUpperCase()} – TRADE IT: FREE EVOLUTION AFTER TRADE, IVs RE-ROLL${finalName ? ' (→ ' + finalName + ')' : ''}`,
       `TRADE: FREE EVO → ${finalName}`);
@@ -1549,7 +1570,7 @@ function applyLogContext(g, p) {
       g = set('TRADE', '#c084fc', '🔄', `${tag} – ${notKept}${first ? 'TRADE FIRST' : 'TRADE'}${special}. TRADE VALUE ${tv.score}/100: ${bits}. IVs RE-ROLL IN A TRADE, THE LEVEL STAYS${goal ? '. ' + goal : ''}`,
         `${first ? 'TRADE 1ST' : 'TRADE'} ${tv.score} · ${lead}`);
     }
-  } else if (c.ivs && total >= 41 && g.verdict === 'DELETE') {
+  } else if (c.ivs && total >= 41 && g.verdict === 'DELETE' && !keeper) {
     g = set('CHECK FIRST', '#fbbf24', '🔎', `${ivPercent(c.ivs)}% IVs – WORTH A LOOK`, `${ivPercent(c.ivs)}% · CHECK FIRST`);
   } else if (!c.ivs && c.logged >= 2 && g.verdict === 'DELETE' && c.isStrongest) {
     g = set('CHECK FIRST', '#fbbf24', '🔎', `STRONGEST ${c.root.toUpperCase()} FAMILY OF ${c.logged} YOU SCANNED`, `CHECK FIRST · STRONGEST SEEN`);
@@ -1562,6 +1583,13 @@ function applyLogContext(g, p) {
              (p.plan === 'grow' || p.finals.some(f => !f.act.includes('Transfer')))) {
     // 6. A lower stage holding a slot in a family worth evolving.
     g = set('KEEP', '#c084fc', '🌱', `${rankTag} · EVOLVE TO ${finalName} WHEN CANDY ALLOWS`, `EVOLVE → ${finalName} · ${rk}`);
+  } else if (keeper && g.verdict !== 'KEEP') {
+    // 6b. Holds a keeper slot: the species' old tag (trade for XL candy, low utility...) does not
+    // get to send your best ones away.
+    g = ks.lowUse
+      ? set('KEEP BEST', '#e2e8f0', '⭐', `${rankTag ? rankTag + ' · ' : ''}YOUR BEST ${c.poolLabel} (${total}/45). LOW-USE SPECIES: KEEP THIS ONE, TRADE OR TRANSFER THE REST`, `KEEP BEST 1 · LOW USE`)
+      : set('KEEP', '#c084fc', '⭐', `${rankTag ? rankTag + ' · ' : ''}${total}/45 HOLDS ONE OF YOUR ${n} ${c.dynamax ? 'DYNAMAX ' : ''}KEEPER SLOTS`,
+          ranked ? `KEEP · TOP ${n}` : `KEEP · YOUR BEST`);
   } else if (rankTag) {
     g = { ...g, reason: `${rankTag} · ${g.reason}`, short: `${g.verdict} · ${rk}` };
   }
@@ -1636,8 +1664,9 @@ function renderSpeciesSummary() {
     const isFamily = !poolOf(sp, isD).perSpecies;
     const best = ranked[0];
     const p0 = POKEMON_DATA.find(x => x.name === sp);
-    const pvpKeep = new Set(!isD && pvpRelevant(p0) ? speciesRanking(sp, false, 'pvp').filter(e => e.ivs && meetsPvpFloor(e.ivs)).slice(0, keepNPvp()).map(e => e.id) : []);
-    const keepers = new Set(ranked.slice(0, isD ? nd : n).filter(e => e.ivs && meetsRaidFloor(e.ivs, POKEMON_DATA.find(x => x.name === e.species), isD)).map(e => e.id));
+    const kslots = keepSlots(sp, isD);
+    const pvpKeep = new Set(!isD && pvpRelevant(p0) ? speciesRanking(sp, false, 'pvp').slice(0, kslots.pvp).filter(e => e.ivs && meetsPvpFloor(e.ivs)).map(e => e.id) : []);
+    const keepers = new Set(ranked.slice(0, kslots.raid).filter(e => e.ivs && meetsRaidFloor(e.ivs, POKEMON_DATA.find(x => x.name === e.species), isD, !!e.lucky)).map(e => e.id));
     const surplus = ranked.filter(e => e.ivs && !e.shiny && !keepers.has(e.id) && !pvpKeep.has(e.id) && e.ivs[0] + e.ivs[1] + e.ivs[2] < 44).length;
     const bestText = best.ivs ? `${best.ivs.join('/')} (${ivPercent(best.ivs)}%)` : `${best.cp || '?'} CP, not appraised`;
     return `<tr style="border-top:1px solid var(--border);"><td style="padding:5px 4px;"><b>${label}</b>${isFamily ? ' <span style="color:#94a3b8;">family</span>' : ''}${isD ? ' <span style="color:#ec4899;">Dynamax</span>' : ''}</td><td style="padding:5px 4px; text-align:right;">${ranked.length}</td><td style="padding:5px 4px; text-align:right;">${bestText}</td><td style="padding:5px 4px; text-align:right; color:${surplus ? '#f87171' : '#34d399'};">${surplus ? surplus + ' surplus' : 'ok'}</td></tr>`;
@@ -1868,7 +1897,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.23';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.24';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
