@@ -591,7 +591,6 @@
           <div class="chip active" onclick="setFilter('berry', 'ALL', this)">All Berries</div>
           <div class="chip" onclick="setFilter('berry', 'Pinap Berry', this)">🍍 Pinap Berry</div>
           <div class="chip" onclick="setFilter('berry', 'Silver Pinap Berry', this)">🥈 Silver Pinap</div>
-          <div class="chip" onclick="setFilter('berry', 'Golden Razz Berry', this)">🥇 Golden Razz</div>
           <div class="chip" onclick="setFilter('berry', 'None', this)">🚫 No Berry</div>
         </div>
       </div>
@@ -827,6 +826,12 @@ let filters = {
   berry: 'ALL'
 };
 
+// The dataset carries the game's raw type ids (POKEMON_TYPE_GRASS). Everything in the page - the
+// type filter, search, the cards, form matching - works with plain names ("Grass").
+for (const p of POKEMON_DATA) {
+  p.types = (p.types || []).map(t => { const n = String(t).replace('POKEMON_TYPE_', '').toLowerCase(); return n.charAt(0).toUpperCase() + n.slice(1); });
+}
+
 function initTypePills() {
   const row = document.getElementById('typesFilterRow');
   let html = `<div class="type-pill active" onclick="setFilter('type', 'ALL', this)">All Types</div>`;
@@ -1027,7 +1032,7 @@ function readTypeWords(text) {
   return TYPE_WORDS.filter(t => new RegExp('\\b' + t + '\\b').test(up));
 }
 function hasTypes(p, words) {
-  const own = (p.types || []).map(t => t.replace('POKEMON_TYPE_', ''));
+  const own = (p.types || []).map(t => t.replace('POKEMON_TYPE_', '').toUpperCase());
   return words.every(w => own.includes(w));
 }
 // Narrow candidates by the type words read: an exact type set wins outright (Rattata is NORMAL,
@@ -1851,7 +1856,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.19';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.20';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
