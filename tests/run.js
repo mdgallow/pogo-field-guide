@@ -159,31 +159,56 @@ test('trade value: only the best few of a family are held for trading', async t 
 });
 
 // ---------------------------------------------------------------- moves (TM advice)
-const movesSlot = s => s.slots.find(x => /^(MOVES|AS )/.test(x.caption));
+const movesSlots = s => s.slots.filter(x => /MOVES/.test(x.caption));
 
-test('moves: a raid keeper gets its raid moveset, Elite TM moves starred', async t => {
+test('role + moves: a raid-and-PvP pick is labelled BOTH and gets both movesets', async t => {
   await t.app.scan(card({ cp: 3900, name: 'Metagross', kg: 550, m: 1.6, types: 'STEEL / PSYCHIC', ivs: [15, 15, 15] }));
-  const m = movesSlot(t.last());
-  check(m, 'a MOVES slot is shown'); eq(m.caption, 'MOVES (RAID)', 'caption');
-  eq(m.value, 'BULLET PUNCH + METEOR MASH★', 'moveset');
+  const s = t.last();
+  has(slot(s, 'ROLE'), 'RAID + PVP', 'role');
+  const m = movesSlots(s);
+  eq(m.length, 2, 'two movesets');
+  eq(m[0].caption, 'RAID MOVES', 'raid first'); eq(m[0].value, 'BULLET PUNCH + METEOR MASH★', 'raid set');
+  has(m[1].caption, 'LEAGUE MOVES', 'league second'); has(m[1].value, ' / ', 'two charged moves');
 });
 
-test('moves: a league pick gets the moveset of its best league', async t => {
+test('role + moves: a PvP-only pick gets only its league set', async t => {
   await t.app.scan(card({ cp: 1490, name: 'Azumarill', kg: 28.5, m: 0.8, types: 'WATER / FAIRY', ivs: [15, 15, 15] }));
-  const m = movesSlot(t.last());
-  check(m, 'a MOVES slot is shown'); eq(m.caption, 'MOVES (GREAT)', 'caption');
-  has(m.value, 'BUBBLE + ', 'fast move'); has(m.value, ' / ', 'two charged moves');
+  const s = t.last();
+  eq(slot(s, 'ROLE'), 'PVP (GREAT)', 'role');
+  const m = movesSlots(s);
+  eq(m.length, 1, 'one moveset'); eq(m[0].caption, 'GREAT LEAGUE MOVES', 'caption'); has(m[0].value, 'BUBBLE + ', 'fast move');
 });
 
-test('moves: an unevolved keeper is advised on its final form', async t => {
+test('role + moves: a raid-only pick gets only its raid set', async t => {
+  await t.app.scan(card({ cp: 3000, name: 'Machamp', kg: 130, m: 1.6, types: 'FIGHTING', ivs: [15, 15, 15] }));
+  const s = t.last();
+  eq(slot(s, 'ROLE'), 'RAID', 'role');
+  const m = movesSlots(s);
+  eq(m.length, 1, 'one moveset'); eq(m[0].caption, 'RAID MOVES', 'caption');
+});
+
+test('role + moves: the reason no longer contradicts the role', async t => {
+  await t.app.scan(card({ cp: 1572, name: 'Marshadow', kg: 33.06, m: 0.85, types: 'FIGHTING / GHOST', ivs: [15, 10, 13] }));
+  const s = t.last();
+  has(slot(s, 'ROLE'), 'RAID + PVP', 'Marshadow is both');
+  check(!/PVP IVs/.test(slot(s, 'REASON')), `reason is not the old "PVP IVs" (${slot(s, 'REASON')})`);
+  eq(movesSlots(s).length, 2, 'both movesets');
+});
+
+test('role + moves: an unevolved keeper is advised on its final form', async t => {
   await t.app.scan(card({ cp: 900, name: 'Beldum', kg: 95, m: 0.6, types: 'STEEL / PSYCHIC', ivs: [15, 15, 15] }));
-  const m = movesSlot(t.last());
-  check(m, 'a MOVES slot is shown'); eq(m.caption, 'AS METAGROSS (RAID)', 'caption names the final form');
+  const m = movesSlots(t.last());
+  eq(m[0].caption, 'RAID MOVES AS METAGROSS', 'caption names the final form');
+});
+
+test('IV line: the total players quote comes first', async t => {
+  await t.app.scan(card({ cp: 1572, name: 'Marshadow', kg: 33.06, m: 0.85, types: 'FIGHTING / GHOST', ivs: [15, 10, 13] }));
+  eq(slot(t.last(), 'IV CHECK'), '38/45 · 84%\n15/10/13', 'IV text');
 });
 
 test('moves: nothing is shown on a Pokémon that is not being kept', async t => {
   await t.app.scan(card({ cp: 266, name: 'Charmander', kg: 8.5, m: 0.6, types: 'FIRE', ivs: [10, 12, 9] }));
-  check(!movesSlot(t.last()), 'no MOVES slot on a trade');
+  eq(movesSlots(t.last()).length, 0, 'no MOVES slot on a trade'); eq(slot(t.last(), 'ROLE'), '', 'no ROLE slot on a trade');
 });
 
 // ---------------------------------------------------------------- reference page filters

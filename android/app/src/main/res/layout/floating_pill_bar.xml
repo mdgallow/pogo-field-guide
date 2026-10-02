@@ -150,4 +150,12 @@
         android:orientation="horizontal"
         android:layout_marginTop="2dp" />
 
+    <!-- Movesets get a row of their own (one or two, side by side) -->
+    <LinearLayout
+        android:id="@+id/pillSlotsMoves"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="1dp" />
+
 </LinearLayout>

@@ -20,7 +20,9 @@ What is written per species
   mv              {"f": [...], "c": [...], "e": [...], "x": [...]} move pool: fast, charged,
                   elite-only, not-TM-able (display names), so the app can tell a wrong move
                   from a fine one
-Ranks (pvp_r / pve_r / pvp_n / pve_n) and the action tags are left untouched.
+  rr / rt / rty   raid rank overall, rank among attackers of the same move type, and that type
+                  (used to say whether a species is a RAID pick, a PVP pick, or BOTH)
+The older ranks (pvp_r / pve_r / pvp_n / pve_n) and the action tags are left untouched.
 """
 import json
 import math
@@ -173,6 +175,16 @@ def best_raid(sp, gm):
     return scored[0][1:], (plain[0][1:] if plain else None)
 
 
+def raid_score(sp, best, gm):
+    """How good a raid attacker the species is with its best set: (DPS^3 x TDO)^(1/4), the usual
+    blend of damage and staying power. Returns (score, type of the charged move)."""
+    dps = raid_dps(sp, best[0], best[1], gm)
+    hp = (sp["sta"] + 15) * CPM_40
+    dfn = (sp["def"] + 15) * CPM_40
+    tdo = dps * hp / (900.0 / dfn)
+    return (dps ** 3 * tdo) ** 0.25, gm.moves[best[1]]["type"]
+
+
 def tag(move_id, sp, gm, alt=None):
     """Display name with the markers the page already understands."""
     bare = move_id
@@ -240,6 +252,7 @@ def main():
     data = json.loads(m.group(1))
 
     changed_pve = changed_pvp = no_gm = no_pvp = 0
+    raid_scores = []
     examples = []
     for p in data:
         sp = gm.find(p["id"], p["name"])
@@ -257,6 +270,8 @@ def main():
         # ---- raids
         best, plain = best_raid(sp, gm)
         if best:
+            score, mtype = raid_score(sp, best, gm)
+            raid_scores.append((score, mtype, p["id"], round(score, 3), p))
             q = tag(best[0], sp, gm, plain[0] if plain else None)
             c = tag(best[1], sp, gm, plain[1] if plain else None)
             if (q, c) != (p.get("pve_q"), p.get("pve_c")):
@@ -289,6 +304,27 @@ def main():
         else:
             p.pop("lg", None)
             no_pvp += 1
+
+    # ---- raid ranks: overall (rr) and among attackers of the same charged-move type (rt).
+    # Cosmetic forms share one place (same dex + same score), so 20 Vivillon patterns count once.
+    for p in data:
+        p.pop("rr", None); p.pop("rt", None); p.pop("rty", None)
+    raid_scores.sort(key=lambda x: -x[0])
+    seen, place, per_type_seen, per_type_place = {}, 0, {}, {}
+    for score, mtype, dex, key, p in raid_scores:
+        k = (dex, key)
+        if k not in seen:
+            place += 1
+            seen[k] = place
+        p["rr"] = seen[k]
+        tk = (mtype, dex, key)
+        if tk not in per_type_seen:
+            per_type_place[mtype] = per_type_place.get(mtype, 0) + 1
+            per_type_seen[tk] = per_type_place[mtype]
+        p["rt"] = per_type_seen[tk]
+        p["rty"] = mtype.capitalize()
+    top = [x[4]["name"] for x in raid_scores[:12]]
+    print("top raid attackers by this measure:", ", ".join(top))
 
     print(f"{len(data)} species: raid moveset changed for {changed_pve}, league moveset changed for {changed_pvp}")
     print(f"not in the game master: {no_gm}; not ranked in any league: {no_pvp}")
