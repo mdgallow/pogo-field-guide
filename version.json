@@ -1,1 +1,1 @@
-{"versionCode": 38, "versionName": "2.3.15", "apk": "pogo-companion.apk", "notes": "New: top-bar pill style (tap PILL: SIDE in the app to switch). Trade advice now weighs level (dust and candy the receiver saves) and rarity."}
+{"versionCode": 39, "versionName": "2.3.16", "apk": "pogo-companion.apk", "notes": "Trade advice is now a 0-100 trade score: level (dust already in it), rarity, your empty keeper slots and catch age. IVs no longer count, since a trade re-rolls them."}

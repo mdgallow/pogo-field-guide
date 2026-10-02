@@ -1200,13 +1200,49 @@ function rarityTier(p) {
   const root = POKEMON_DATA.find(x => x.name === p.familyRoot) || p;
   return baseCatchRate(root) <= 0.2 ? 1 : 0;
 }
-// { level, dust, candy, rarity, score, tier: 'FIRST' | 'TRADE' | 'LOW' }
-function tradeValue(p, cp, ivs) {
+// Trade score, 0-100. The Pokémon's own IVs are NOT part of it: a trade re-rolls them, so a
+// 15% and a 95% are the same trade. What survives the trade, and what makes a re-roll worth a
+// daily trade slot:
+//   level   0-40  stardust already in it (the receiver keeps the level); full marks at L35
+//   rarity  0-35  legendary 35 · meta family 25 · scarce 12 · common 0
+//   need    0-15  share of your own keeper slots in this family still empty (a mirror trade is
+//                 your re-roll too); only for families worth keeping
+//   age     0-10  years since it was caught (older Pokémon turn lucky more often)
+// 55+ = trade first · 25+ = trade · below = transfer for room.
+const TRADE_STACK = 5;   // trade candidates worth holding per family; the rest make room
+function tradeValue(p, cp, ivs, date, need = 0) {
   const level = estimateLevel(p, cp, ivs);
-  const levelTier = level >= 30 ? 3 : level >= 25 ? 2 : level >= 20 ? 1 : 0;
+  const inv = investedAt(level);
   const rarity = rarityTier(p);
-  const score = levelTier + rarity;
-  return { level, ...investedAt(level), rarity, levelTier, score, tier: score >= 4 ? 'FIRST' : score >= 2 ? 'TRADE' : 'LOW' };
+  const years = date && !isNaN(Date.parse(date)) ? (Date.now() - Date.parse(date)) / 31557600000 : 0;
+  const parts = {
+    level: Math.round(40 * Math.min(1, inv.dust / investedAt(35).dust)),
+    rarity: [0, 12, 25, 35][rarity],
+    need: rarity >= 2 ? Math.round(15 * Math.max(0, Math.min(1, need))) : 0,
+    age: years >= 3 ? 10 : years >= 2 ? 6 : years >= 1 ? 3 : 0,
+  };
+  const score = parts.level + parts.rarity + parts.need + parts.age;
+  return { level, ...inv, rarity, years: Math.floor(years), parts, score, tier: score >= 55 ? 'FIRST' : score >= 25 ? 'TRADE' : 'LOW' };
+}
+// Who holds a keeper slot in this pool (RAID top-N above the floor, plus the PVP lane).
+function poolKeepers(species, dynamax) {
+  const P = name => POKEMON_DATA.find(x => x.name === name);
+  const slots = dynamax ? keepNDynamax() : keepN();
+  const ranked = speciesRanking(species, dynamax);
+  const raid = ranked.slice(0, slots).filter(e => e.ivs && meetsRaidFloor(e.ivs, P(e.species), dynamax, !!e.lucky));
+  const pvp = !dynamax && pvpRelevant(P(species))
+    ? speciesRanking(species, false, 'pvp').slice(0, keepNPvp()).filter(e => e.ivs && meetsPvpFloor(e.ivs)) : [];
+  return { ranked, slots, raid, ids: new Set([...raid, ...pvp].map(e => e.id)) };
+}
+// This entry's place among the family's tradeable surplus, best trade first (1-based; 0 = not in it).
+function tradeStackPosition(entryId, species, need) {
+  const P = name => POKEMON_DATA.find(x => x.name === name);
+  const k = poolKeepers(species, false);
+  const stack = k.ranked
+    .filter(e => e.ivs && !k.ids.has(e.id) && e.ivs[0] + e.ivs[1] + e.ivs[2] < 44 && !e.lucky && !e.shiny && !e.shadow)
+    .map(e => ({ id: e.id, score: tradeValue(P(e.species), e.cp, e.ivs, e.date, need).score, cp: e.cp || 0 }))
+    .sort((x, y) => y.score - x.score || y.cp - x.cp);
+  return { position: stack.findIndex(e => e.id === entryId) + 1, size: stack.length };
 }
 const kDust = d => (d >= 1000 ? Math.round(d / 1000) + 'K' : String(d));
 
@@ -1401,19 +1437,34 @@ function applyLogContext(g, p) {
     const goal = candyGoal(p);
     const tag = rankTag || c.species.toUpperCase();
     const wh = why ? ` – ${why}` : '';
-    const tv = tradeValue(p, c.cp, c.ivs);
-    const rare = ['', 'SCARCE', 'META FAMILY', 'LEGENDARY'][tv.rarity];
-    const saved = tv.levelTier ? `~L${tv.level} SAVES THE RECEIVER ${kDust(tv.dust)} DUST + ${tv.candy} CANDY` : '';
-    const special = tv.rarity === 3 ? ' (SPECIAL TRADE, 1 A DAY)' : '';
-    if (tv.tier === 'LOW' || c.dynamax || shadow) {
-      const lowWhy = tv.level ? ` (LOW TRADE VALUE: ~L${tv.level}, COMMON)` : '';
-      g = set('SURPLUS', '#f87171', '🗑️', `${tag}${wh} – TRANSFER${goal ? ' FOR CANDY' : ''}${c.dynamax || shadow ? '' : lowWhy}`, `TRANSFER · ${why || rk}`);
-    } else if (tv.tier === 'FIRST') {
-      g = set('TRADE', '#c084fc', '🔄', `${tag}${wh} – TRADE FIRST${special}: ${[rare, saved].filter(Boolean).join(', ')}. RE-ROLL / LUCKY CHANCE${goal ? '. ' + goal : ''}`,
-        saved ? `TRADE 1ST · L${tv.level} SAVES ${kDust(tv.dust)}` : `TRADE 1ST · ${rare}`);
+    const keepers = poolKeepers(p.name, c.dynamax);
+    const need = (keepers.slots - keepers.raid.length) / keepers.slots;
+    const entry = pokeLog.find(e => e.id === c.entryId);
+    const tv = tradeValue(p, c.cp, c.ivs, entry && entry.date, need);
+    const rare = ['', 'SCARCE', 'META', 'LEGENDARY'][tv.rarity];
+    const stack = c.dynamax || shadow ? { position: 0, size: 0 } : tradeStackPosition(c.entryId, p.name, need);
+    const crowded = tv.tier !== 'LOW' && stack.position > TRADE_STACK;
+    // What the score is made of, for the card / toast.
+    const bits = [
+      tv.parts.level ? `LEVEL ~${tv.level}: ${kDust(tv.dust)} DUST + ${tv.candy} CANDY ALREADY IN IT (+${tv.parts.level})` : `LEVEL ~${tv.level} (+0)`,
+      rare ? `${rare}${tv.rarity === 2 ? ' FAMILY' : ''} (+${tv.parts.rarity})` : 'COMMON (+0)',
+      tv.parts.need ? `${keepers.slots - keepers.raid.length} OF YOUR ${keepers.slots} KEEPER SLOTS STILL EMPTY (+${tv.parts.need})` : '',
+      tv.parts.age ? `CAUGHT ${tv.years}+ YEARS AGO, BETTER LUCKY ODDS (+${tv.parts.age})` : '',
+    ].filter(Boolean).join(' · ');
+    const notKept = why ? `NOT A KEEPER (${why}). ` : '';
+    const special = tv.rarity === 3 ? ' · SPECIAL TRADE (1 A DAY)' : '';
+    if (c.dynamax || shadow) {
+      g = set('SURPLUS', '#f87171', '🗑️', `${tag}${wh} – TRANSFER${goal ? ' FOR CANDY' : ''}`, `TRANSFER · ${why || rk}`);
+    } else if (tv.tier === 'LOW') {
+      g = set('SURPLUS', '#f87171', '🗑️', `${tag} – ${notKept}TRANSFER FOR ROOM. TRADE VALUE ${tv.score}/100: ${bits}`, `TRANSFER · TRADE VALUE ${tv.score}`);
+    } else if (crowded) {
+      g = set('SURPLUS', '#f87171', '🗑️', `${tag} – ${notKept}TRANSFER: YOU ALREADY HOLD ${TRADE_STACK} BETTER TRADES IN THIS FAMILY (THIS IS #${stack.position} OF ${stack.size}). TRADE VALUE ${tv.score}/100`,
+        `TRANSFER · ${TRADE_STACK} BETTER TRADES HELD`);
     } else {
-      g = set('TRADE', '#c084fc', '🔄', `${tag}${wh} – TRADE${special}: ${[rare, saved].filter(Boolean).join(', ')}. RE-ROLL / LUCKY CHANCE${goal ? ' + CANDY. ' + goal : ''}`,
-        tv.rarity >= 2 ? `TRADE (RE-ROLL) · ${why || rk}` : `TRADE · L${tv.level} SAVES ${kDust(tv.dust)}`);
+      const first = tv.tier === 'FIRST';
+      const lead = tv.parts.level >= tv.parts.rarity || !rare ? `L${tv.level} SAVES ${kDust(tv.dust)}` : `${rare} RE-ROLL`;
+      g = set('TRADE', '#c084fc', '🔄', `${tag} – ${notKept}${first ? 'TRADE FIRST' : 'TRADE'}${special}. TRADE VALUE ${tv.score}/100: ${bits}. IVs RE-ROLL IN A TRADE, THE LEVEL STAYS${goal ? '. ' + goal : ''}`,
+        `${first ? 'TRADE 1ST' : 'TRADE'} ${tv.score} · ${lead}`);
     }
   } else if (c.ivs && total >= 41 && g.verdict === 'DELETE') {
     g = set('CHECK FIRST', '#fbbf24', '🔎', `${ivPercent(c.ivs)}% IVs – WORTH A LOOK`, `${ivPercent(c.ivs)}% · CHECK FIRST`);
@@ -1734,7 +1785,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.15';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.16';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
