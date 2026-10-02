@@ -107,6 +107,8 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         if (webViewGone) recreate()   // rebuild the page after a renderer kill, now that we are visible
         OverlayBus.pillVisibility?.invoke(false)
+        // Pill scans use the page's inspector as scratch state; hand the page back as it was left.
+        webView.evaluateJavascript("window.appForegrounded && window.appForegrounded();", null)
     }
 
     override fun onPause() {

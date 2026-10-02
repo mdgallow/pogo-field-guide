@@ -1,1 +1,1 @@
-{"versionCode": 35, "versionName": "2.3.12", "apk": "pogo-companion.apk", "notes": "Review pass: AUTO reliability, manual-scan priority, lucky/trade/shadow/dynamax rules, form detection, GONE + sweep census, evolution tracking, short pill lines, web scanning code removed."}
+{"versionCode": 37, "versionName": "2.3.14", "apk": "pogo-companion.apk", "notes": "Groundwork for iPhone: one shared rule set with automated behaviour tests, one version source. Also includes the top-of-app layout fix."}
