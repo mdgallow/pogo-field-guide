@@ -57,6 +57,20 @@ test('catch: the ball follows the ring colour (Poké on green/yellow, Great on o
   has(ball('Pidgey', 0), 'GREEN RING: POKÉ', 'no CP read: follow the ring');
 });
 
+test('catch: CP-only IV checks state their odds instead of "maybe"', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  // The CP maths reproduces the game's own perfect-CP table.
+  eq(run(`cpOf(POKEMON_DATA.find(x => x.name === 'Bulbasaur').bs, 20, 15, 15, 15)`), 637, 'Bulbasaur hundo at L20 is 637');
+  await t.app.scan(catchScreen('Bulbasaur', 637));
+  const wild = slot(t.last(), 'IV CHECK');
+  check(/1 IN \d+/.test(wild) && !/MAYBE/.test(wild), `wild hundo CP gives odds, not "maybe" (${wild})`);
+  await t.app.scan(catchScreen('Bulbasaur', 300));
+  const other = slot(t.last(), 'IV CHECK');
+  check(!/100%/.test(other) || /1 IN/.test(other), `a CP with no hundo combination never claims 100% (${other})`);
+  const o = JSON.parse(run(`JSON.stringify(perfectOdds(POKEMON_DATA.find(x => x.name === 'Mewtwo'), POKEMON_DATA.find(x => x.name === 'Mewtwo').cps[19], true))`));
+  check(o.perfect >= 1, 'raid hundo CP contains the perfect combination');
+});
+
 test('raid boss: SAVE MASTER BALL, or PERFECT! USE MASTER BALL', async t => {
   const advice = (cp) => require('vm').runInContext(`(() => { const p = POKEMON_DATA.find(x => x.name === 'Mewtwo'); return getBallAdvice(p, ${cp}, evaluateCpMatch(p, ${cp})).text; })()`, t.ctx);
   const perfect = require('vm').runInContext(`POKEMON_DATA.find(x => x.name === 'Mewtwo').cps[19]`, t.ctx);   // level 20 = raid catch
@@ -215,7 +229,8 @@ test('role + moves: a raid-and-PvP pick is labelled BOTH and gets both movesets'
   has(slot(s, 'ROLE'), 'RAID + PVP', 'role');
   const m = movesSlots(s);
   eq(m.length, 2, 'two movesets');
-  eq(m[0].caption, 'RAID MOVES', 'raid first'); eq(m[0].value, 'BULLET PUNCH + METEOR MASH★', 'raid set');
+  eq(m[0].caption, 'RAID MOVES', 'raid first');
+  eq(m[0].value, 'FAST: BULLET PUNCH · CHARGED: PSYCHIC · BEST: METEOR MASH (ELITE TM)', 'normal-TM pick first, the Elite move as a note');
   has(m[1].caption, 'LEAGUE MOVES', 'league second'); has(m[1].value, ' / ', 'two charged moves');
 });
 
@@ -224,7 +239,7 @@ test('role + moves: a PvP-only pick gets only its league set', async t => {
   const s = t.last();
   eq(slot(s, 'ROLE'), 'PVP (GREAT)', 'role');
   const m = movesSlots(s);
-  eq(m.length, 1, 'one moveset'); eq(m[0].caption, 'GREAT LEAGUE MOVES', 'caption'); has(m[0].value, 'BUBBLE + ', 'fast move');
+  eq(m.length, 1, 'one moveset'); eq(m[0].caption, 'GREAT LEAGUE MOVES', 'caption'); has(m[0].value, 'FAST: BUBBLE · CHARGED: ', 'fast and charged named');
 });
 
 test('role + moves: a raid-only pick gets only its raid set', async t => {

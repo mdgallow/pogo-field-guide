@@ -20,6 +20,7 @@ What is written per species
   mv              {"f": [...], "c": [...], "e": [...], "x": [...]} move pool: fast, charged,
                   elite-only, not-TM-able (display names), so the app can tell a wrong move
                   from a fine one
+  bs              base attack / defense / stamina (for CP and IV-odds maths)
   rr / rt / rty   raid rank overall, rank among attackers of the same move type, and that type
                   (used to say whether a species is a RAID pick, a PVP pick, or BOTH)
 The older ranks (pvp_r / pve_r / pvp_n / pve_n) and the action tags are left untouched.
@@ -261,6 +262,7 @@ def main():
             print("  not in the game master:", p["name"])
             continue
         elite = set(sp["elite_fast"] + sp["elite_charged"])
+        p["bs"] = [sp["atk"], sp["def"], sp["sta"]]     # base stats: exact CP maths in the page
         p["mv"] = {
             "f": [gm.display(x) for x in sp["fast"]],
             "c": [gm.display(x) for x in sp["charged"]],

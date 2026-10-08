@@ -1090,7 +1090,7 @@ class FloatingOverlayService : Service() {
                 row.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
                 row.background = null
                 row.setPadding((2 * resources.displayMetrics.density).toInt(), 0, (2 * resources.displayMetrics.density).toInt(), 0)
-                valueView.maxLines = 2
+                valueView.maxLines = if (isMoves(slot)) 3 else 2
                 valueView.ellipsize = android.text.TextUtils.TruncateAt.END
             }
             target.addView(row)
