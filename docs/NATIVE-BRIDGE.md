@@ -25,12 +25,14 @@ when it sends the same payloads and renders the same pill states.
   "shadow": false,          // dark-violet haze around the body
   "dynamax": false,         // Dynamax badge
   "auto": false,            // true for AUTO reads (no vibration, sweep bookkeeping)
+  "blocked": ["appraisal"], // detector regions the shell's own overlay was covering (skipped, not guessed)
   "lines": [ { "t": "CP3000", "x": 0.34, "y": 0.05, "w": 0.26, "h": 0.04 } ]
 }
 ```
 
 `lines` are OCR text lines with their box as fractions of the frame (0–1, origin top-left).
-Lines under the shell's own overlay must be left out.
+Lines under the shell's own overlay must be left out. The overlay is never hidden or blinked
+(photosensitivity): the shell masks its own rectangle out of every read instead.
 
 ## Page → shell
 
