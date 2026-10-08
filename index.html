@@ -1572,6 +1572,10 @@ function applyLogContext(g, p) {
     }
   } else if (c.ivs && total >= 41 && g.verdict === 'DELETE' && !keeper) {
     g = set('CHECK FIRST', '#fbbf24', '🔎', `${ivPercent(c.ivs)}% IVs – WORTH A LOOK`, `${ivPercent(c.ivs)}% · CHECK FIRST`);
+  } else if (!c.ivs && roleOf(p).role && (g.verdict === 'TRADE' || g.verdict === 'DELETE')) {
+    // A raid / PvP species scanned without the appraisal open: its IVs decide, so ask for them
+    // instead of repeating the species tag ("XL CANDY", "+1 CANDY").
+    g = set('CHECK FIRST', '#fbbf24', '🔎', `${roleLabel(p)} PICK · OPEN THE APPRAISAL AND SCAN AGAIN TO RANK IT`, 'APPRAISE TO RANK');
   } else if (!c.ivs && c.logged >= 2 && g.verdict === 'DELETE' && c.isStrongest) {
     g = set('CHECK FIRST', '#fbbf24', '🔎', `STRONGEST ${c.root.toUpperCase()} FAMILY OF ${c.logged} YOU SCANNED`, `CHECK FIRST · STRONGEST SEEN`);
   } else if (!c.ivs && c.logged >= 2 && g.verdict === 'KEEP BEST') {
@@ -1919,7 +1923,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.26';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.27';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.

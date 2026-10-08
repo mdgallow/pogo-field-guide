@@ -1,1 +1,1 @@
-{"versionCode": 49, "versionName": "2.3.26", "apk": "pogo-companion.apk", "notes": "Moves now say FAST and CHARGED separately with the normal-TM pick first (Elite moves as a BEST note). Catch IV check states real odds (e.g. 100% POSSIBLE - 1 IN 149) instead of MAYBE. My Log shows each Pokemon's current standing."}
+{"versionCode": 50, "versionName": "2.3.27", "apk": "pogo-companion.apk", "notes": "A raid or PvP species scanned without the appraisal open now says APPRAISE TO RANK instead of an old trade/transfer tag."}
