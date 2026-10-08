@@ -640,6 +640,15 @@
       Every Pokémon you scan in your storage is remembered on this device, recognised by its family and its exact height and weight, so renaming, powering up or favoriting it never confuses the pill. A favorited Pokémon is never marked DELETE, and neither is the strongest one you have scanned in a family. <span id="logCount" style="color:#38bdf8; font-weight:800;"></span>
     </div>
     <div style="font-size:12px; margin-bottom:8px;">Keep the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> of each evolution family , and only if they meet the floor (37+ IVs for the raid list, real bulk for the league list; 30+ for legendaries and Dynamax): a slot is earned, never filled to make up the number. The rest are marked <b style="color:#f87171;">SURPLUS</b>. Natural 44/45s are never surplus and never traded. Trades are limited per day, so surplus in rare or meta families says <b>TRADE PRIORITY HIGH</b> and common ones just transfer. Shinies are kept and encouraged to evolve. Great/Ultra League families also keep their best <input id="keepNPvpInput" type="number" min="1" max="20" value="3" onchange="setKeepNPvp(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by bulk (low attack, high defense and HP: the league build); a Pokémon is surplus only when it is outside both lists. Dynamax Pokémon are a separate pool (only they can enter Max Battles): keep the best <input id="keepNDmaxInput" type="number" min="1" max="20" value="3" onchange="setKeepNDynamax(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> Dynamax of each species. Luckies count as about 6 IV points better (half-price power-ups); a favorited surplus says <b style="color:#fbbf24;">FAVORITE?</b> instead of transfer; shinies are never surplus.</div>
+    <!-- TEST BUILDS ONLY: tester diagnostics. Hidden unless the shell reports testSharing. -->
+    <div id="testShareBox" style="display:none; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12px;">
+      <div style="font-weight:800; color:#fbbf24;">Testing: share diagnostics with the developer</div>
+      <div style="color:var(--text-muted); font-size:11px; margin:4px 0 6px;">Builds a file with this phone’s My Log (species, CP, IVs, size, catch date), the AUTO trail and the last scan’s text, plus the app version. Catch places are left out. Nothing is sent on its own: tap the button and pick where the file goes (email, Drive…). Test builds only; this is removed before the public release.</div>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <button onclick="sendDiagnostics(true)" style="flex:1; background:#f59e0b; color:#0f172a; border:none; border-radius:8px; padding:7px; font-weight:800; font-size:12px; cursor:pointer;">Share diagnostics file…</button>
+      </div>
+      <div id="testShareStatus" style="font-size:11px; color:#94a3b8; min-height:14px; margin-top:4px;"></div>
+    </div>
     <div id="logSpecies"></div>
     <div id="logBody" style="max-height:40vh; overflow-y:auto;"></div>
     <details style="margin-top:8px; font-size:11px; color:var(--text-muted);"><summary style="cursor:pointer;">Last scan details (for troubleshooting)</summary><pre id="lastScanDebug" style="white-space:pre-wrap; background:#0f172a; padding:6px; border-radius:6px; max-height:30vh; overflow:auto;"></pre></details>
@@ -1729,7 +1738,27 @@ function entryStanding(e) {
   return { text: `${tv.tier === 'FIRST' ? 'trade first' : 'trade'} · ${tv.score}`, color: '#c084fc' };
 }
 
+// --- TEST BUILDS ONLY: diagnostics sharing -----------------------------------------------------
+function diagnosticsBundle() {
+  const entries = pokeLog.map(e => { const { where, ...rest } = e; return rest; });   // no catch places
+  return JSON.stringify({
+    app: APP_VERSION, at: new Date().toISOString(), ua: navigator.userAgent,
+    settings: { keepN: keepN(), keepNPvp: keepNPvp(), keepNDynamax: keepNDynamax() },
+    lastScan: lastScanDebug, autoTrail: Native.autoTrail(),
+    log: entries,
+  });
+}
+function sendDiagnostics() {
+  const status = document.getElementById('testShareStatus');
+  if (!Native.testSharing) { if (status) status.innerText = 'Not available in this build.'; return; }
+  const json = diagnosticsBundle();
+  if (status) status.innerText = `Sharing ${Math.round(json.length / 1024)} KB…`;
+  Native.shareDiagnostics(json, true);
+}
+
 function renderLogModal() {
+  const box = document.getElementById('testShareBox');
+  if (box) box.style.display = Native.testSharing ? 'block' : 'none';
   const trail = Native.autoTrail();
   document.getElementById('lastScanDebug').innerText = (lastScanDebug || 'No native scan yet.') + (trail ? '\n\nAUTO trail:\n' + trail : '');
   document.getElementById('keepNInput').value = keepN();
@@ -1950,7 +1979,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.28';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.29';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -1969,9 +1998,12 @@ const Native = (() => {
       checkForUpdate: () => a.checkForUpdate(),
       // true when the shell put the text on the clipboard
       copyText: text => { if (!a.copyText) return false; a.copyText(text); return true; },
+      // Test builds only: diagnostics sharing (removed before the public release).
+      testSharing: !!(a.testSharing && a.testSharing()),
+      shareDiagnostics: (json, viaSheet) => { if (a.shareDiagnostics) a.shareDiagnostics(json, !!viaSheet); },
     };
   }
-  return { present: false, updatePill() {}, autoTrail: () => '', canSelfUpdate: false, checkForUpdate() {}, copyText: () => false };
+  return { present: false, updatePill() {}, autoTrail: () => '', canSelfUpdate: false, checkForUpdate() {}, copyText: () => false, testSharing: false, shareDiagnostics() {} };
 })();
 // True inside a native shell: minimizing and scanning are handled by the native overlay pill.
 const isNativeApp = Native.present;

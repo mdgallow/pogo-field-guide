@@ -311,6 +311,15 @@ test('reference page: the type and region filters return matching species', asyn
   }
 });
 
+// ---------------------------------------------------------------- tester diagnostics (test builds)
+test('diagnostics file: log without catch places, plus trail and last scan; off in non-test shells', async t => {
+  await t.app.scan(card({ cp: 3000, name: 'Charizard', kg: 90.5, m: 1.7, types: 'FIRE / FLYING', ivs: [15, 15, 15] }));
+  const bundle = JSON.parse(require('vm').runInContext('diagnosticsBundle()', t.ctx));
+  eq(bundle.log.length, 1, 'log included'); eq(bundle.log[0].where, undefined, 'no catch place'); eq(bundle.log[0].ivs.join('/'), '15/15/15', 'IVs included');
+  check(typeof bundle.lastScan === 'string' && bundle.lastScan.length > 0, 'last scan text included');
+  eq(require('vm').runInContext('Native.testSharing', t.ctx), false, 'the stub shell does not offer sharing');
+});
+
 // ---------------------------------------------------------------- search builder
 test('search builder: OR inside a group, AND between groups, ! to exclude', async t => {
   const build = (state, extra) => require('vm').runInContext(`buildSearch(${JSON.stringify(state)}, ${JSON.stringify(extra || {})})`, t.ctx);

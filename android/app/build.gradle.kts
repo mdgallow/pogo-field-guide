@@ -8,6 +8,11 @@ plugins {
 @Suppress("UNCHECKED_CAST")
 val appVersion = groovy.json.JsonSlurper().parse(rootProject.file("../version.json")) as Map<String, Any>
 
+// TEST BUILDS ONLY. "Share diagnostics" in My Log hands a file (My Log without catch places,
+// AUTO trail, last scan text) to the Android share sheet; the tester picks where it goes each
+// time, nothing is sent on its own. Set TEST_SHARING to false for the public release
+// (docs/PLAY-LAUNCH-CHECKLIST.md).
+
 android {
     namespace = "com.pogo.companion"
     compileSdk = 34
@@ -18,6 +23,8 @@ android {
         targetSdk = 34
         versionCode = (appVersion["versionCode"] as Number).toInt()
         versionName = appVersion["versionName"] as String
+
+        buildConfigField("boolean", "TEST_SHARING", "true")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
