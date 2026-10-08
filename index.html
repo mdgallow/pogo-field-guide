@@ -999,8 +999,13 @@ function getBallAdvice(p, cpVal, matchInfo) {
       ? { text: 'PERFECT! USE MASTER BALL', color: '#34d399' }
       : { text: 'SAVE MASTER BALL', color: '#94a3b8' };
   }
-  // A possible perfect is not worth losing to a cheap ball.
-  if (matchInfo) return { text: 'ULTRA BALL', color: '#fbbf24' };
+  // A possible perfect is not worth losing to a cheap ball, but only when the odds are real: a
+  // 10 CP Duskull "could be" a level-1 hundo along with hundreds of other combinations.
+  if (matchInfo) {
+    const o = perfectOdds(p, cpVal, false);
+    const share = o && o.combos ? (o.perfect || o.near) / o.combos : 0;
+    if (!o || share >= 1 / 8) return { text: `ULTRA BALL · COULD BE ${matchInfo.type === '45' ? '100%' : '98%'}`, color: '#fbbf24' };
+  }
   return pickBall(p, cpVal);
 }
 
@@ -1135,8 +1140,10 @@ function parseStorageDetails(statsText, dateText) {
   const num = m => (m ? parseFloat(m[1].replace(',', '.')) : null);
   const date = (dateText || '').match(/\b(20[12]\d)\b[\s\S]{0,6}?(\d{2})\/(\d{2})/);
   return {
-    weight: num((statsText || '').match(/(\d{1,4}(?:[.,]\d{1,2})?)\s*k[gq]/i)),
-    height: num((statsText || '').match(/(\d{1,2}(?:[.,]\d{1,2})?)\s*m\b/i)),
+    // The game always prints two decimals; the appraisal leader can cover the integer part
+    // (".41m" was read as 41 m and broke the identity match). No integer part = unknown.
+    weight: num((statsText || '').match(/(?:^|[^\d.,])(\d{1,4}[.,]\d{1,2})\s*k[gq]/i)),
+    height: num((statsText || '').match(/(?:^|[^\d.,])(\d{1,2}[.,]\d{1,2})\s*m\b/i)),
     date: date ? `${date[1]}-${date[2]}-${date[3]}` : null
   };
 }
@@ -1380,6 +1387,16 @@ function isEvolutionOf(fromName, to) {
   return candyFamily(from).includes(to) && (to.max_cp || 0) > (from.max_cp || 0);
 }
 
+// Entries saved with a truncated height (".41m" read as 41) would never match again: forget it.
+(function repairLogSizes() {
+  let changed = false;
+  for (const e of pokeLog) {
+    if (e.height != null && e.height >= 25) { e.height = null; changed = true; }
+    if (e.weight != null && e.weight >= 1000) { e.weight = null; changed = true; }
+  }
+  if (changed) savePokeLog();
+})();
+
 function findLogEntry(pokemon, cp, details, ivs) {
   const sized = !!(details && details.weight && details.height);
   const near = (a, b, tol) => a != null && b != null && Math.abs(a - b) <= tol;
@@ -1523,6 +1540,9 @@ function applyLogContext(g, p) {
     const note = c.luckySibling && !lucky ? ' · YOUR L50 BUILD, POWER UP THE LUCKY FIRST' : '';
     g = set('KEEP', '#34d399', total === 45 ? '👑' : '⭐', (rankTag ? rankTag + ' · ' : '') + label + note,
       `${total === 45 ? 'PERFECT' : '98%'} · KEEP${rk ? ' · ' + rk : ''}`);
+  } else if (lucky && !c.ivs) {
+    // 2a. Lucky but never appraised: the lucky discount is only worth something on decent IVs.
+    g = set('KEEP', '#fbbf24', '🍀', `LUCKY · OPEN THE APPRAISAL AND SCAN AGAIN TO RANK IT`, 'LUCKY · APPRAISE TO RANK');
   } else if (lucky) {
     // 2. Lucky: cannot be traded again; half-price power-ups make a lucky 37 play like a 45.
     g = surplus
@@ -1546,6 +1566,12 @@ function applyLogContext(g, p) {
     const entry = pokeLog.find(e => e.id === c.entryId);
     const tv = tradeValue(p, c.cp, c.ivs, entry && entry.date, need);
     const rare = ['', 'SCARCE', 'META', 'LEGENDARY'][tv.rarity];
+    const drivers = [
+      tv.parts.level ? `L${tv.level} +${tv.parts.level}` : `L${tv.level} +0`,
+      tv.parts.rarity ? `${rare} +${tv.parts.rarity}` : 'COMMON',
+      tv.parts.need ? `NEED +${tv.parts.need}` : '',
+      tv.parts.age ? `${tv.years}Y OLD +${tv.parts.age}` : 'NEW',
+    ].filter(Boolean);
     const stack = c.dynamax || shadow ? { position: 0, size: 0 } : tradeStackPosition(c.entryId, p.name, need);
     const crowded = tv.tier !== 'LOW' && stack.position > TRADE_STACK;
     // What the score is made of, for the card / toast.
@@ -1560,13 +1586,14 @@ function applyLogContext(g, p) {
     if (c.dynamax || shadow) {
       g = set('SURPLUS', '#f87171', '🗑️', `${tag}${wh} – TRANSFER${goal ? ' FOR CANDY' : ''}`, `TRANSFER · ${why || rk}`);
     } else if (tv.tier === 'LOW') {
-      g = set('SURPLUS', '#f87171', '🗑️', `${tag} – ${notKept}TRANSFER FOR ROOM. TRADE VALUE ${tv.score}/100: ${bits}`, `TRANSFER · TRADE VALUE ${tv.score}`);
+      g = set('SURPLUS', '#f87171', '🗑️', `${tag} – ${notKept}TRANSFER FOR ROOM. TRADE VALUE ${tv.score}/100: ${bits}`, `TRANSFER · ${tv.score} (${drivers.slice(0, 3).join(', ')})`);
     } else if (crowded) {
       g = set('SURPLUS', '#f87171', '🗑️', `${tag} – ${notKept}TRANSFER: YOU ALREADY HOLD ${TRADE_STACK} BETTER TRADES IN THIS FAMILY (THIS IS #${stack.position} OF ${stack.size}). TRADE VALUE ${tv.score}/100`,
         `TRANSFER · ${TRADE_STACK} BETTER TRADES HELD`);
     } else {
       const first = tv.tier === 'FIRST';
-      const lead = tv.parts.level >= tv.parts.rarity || !rare ? `L${tv.level} SAVES ${kDust(tv.dust)}` : `${rare} RE-ROLL`;
+      // The two biggest contributors, compact, so two Pokémon at the same CP read differently.
+      const lead = drivers.filter(d => /\+\d/.test(d)).sort((a, b) => Number(b.match(/\+(\d+)/)[1]) - Number(a.match(/\+(\d+)/)[1])).slice(0, 2).join(' · ') || `L${tv.level}`;
       g = set('TRADE', '#c084fc', '🔄', `${tag} – ${notKept}${first ? 'TRADE FIRST' : 'TRADE'}${special}. TRADE VALUE ${tv.score}/100: ${bits}. IVs RE-ROLL IN A TRADE, THE LEVEL STAYS${goal ? '. ' + goal : ''}`,
         `${first ? 'TRADE 1ST' : 'TRADE'} ${tv.score} · ${lead}`);
     }
@@ -1923,7 +1950,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.27';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.28';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.

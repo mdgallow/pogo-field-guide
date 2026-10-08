@@ -71,6 +71,13 @@ test('catch: CP-only IV checks state their odds instead of "maybe"', async t => 
   check(o.perfect >= 1, 'raid hundo CP contains the perfect combination');
 });
 
+test('catch: a "could be perfect" with hopeless odds does not demand an Ultra Ball', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  const ball = (n, cp) => run(`(() => { const p = POKEMON_DATA.find(x => x.name === ${JSON.stringify(n)}); return getBallAdvice(p, ${cp}, evaluateCpMatch(p, ${cp})).text; })()`);
+  check(!/ULTRA/.test(ball('Duskull', 10)), `10 CP Duskull is a Poké Ball catch (${ball('Duskull', 10)})`);
+  has(ball('Bulbasaur', 1035), 'ULTRA BALL', 'a CP only a hundo can have gets the Ultra Ball');
+});
+
 test('raid boss: SAVE MASTER BALL, or PERFECT! USE MASTER BALL', async t => {
   const advice = (cp) => require('vm').runInContext(`(() => { const p = POKEMON_DATA.find(x => x.name === 'Mewtwo'); return getBallAdvice(p, ${cp}, evaluateCpMatch(p, ${cp})).text; })()`, t.ctx);
   const perfect = require('vm').runInContext(`POKEMON_DATA.find(x => x.name === 'Mewtwo').cps[19]`, t.ctx);   // level 20 = raid catch
@@ -187,7 +194,7 @@ test('trade value: a high-level common beats a low-level one with better IVs', a
   await t.app.scan(card({ cp: 1300, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [2, 3, 2] }));
   const high = t.last();
   eq(slot(high, 'VERDICT'), 'TRADE', 'level ~30 with 15% IVs is a trade');
-  has(slot(high, 'REASON'), 'SAVES', 'pill says what the receiver saves');
+  has(slot(high, 'REASON'), 'L31 +', 'pill names the level as the driver');
   const u = loadApp();
   await u.app.scan(card({ cp: 100, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 4] }));
   eq(slot(u.last(), 'VERDICT'), 'SURPLUS', 'level ~2 with 31% IVs is transfer fodder');
@@ -200,7 +207,7 @@ test('trade value: rarity lifts every level, and level + rarity goes first', asy
   const u = loadApp();
   await u.app.scan(card({ cp: 2900, name: 'Dragonite', kg: 210, m: 2.2, types: 'DRAGON / FLYING', ivs: [5, 5, 4] }));
   has(slot(u.last(), 'REASON'), 'TRADE 1ST', 'high level + meta family is first in line');
-  check(slot(u.last(), 'REASON').length <= 40, `fits the pill (${slot(u.last(), 'REASON').length})`);
+  check(slot(u.last(), 'REASON').length <= 40, `fits the pill (${slot(u.last(), 'REASON').length}: ${slot(u.last(), 'REASON')})`);
 });
 
 test('trade value: the IVs being traded away do not change the score', async t => {
@@ -215,7 +222,7 @@ test('trade value: the IVs being traded away do not change the score', async t =
 });
 
 test('trade value: an old catch is worth more (better lucky odds)', async t => {
-  const score = s => Number((slot(s, 'REASON').match(/(?:TRADE(?: 1ST)?|VALUE) (\d+)/) || [])[1]);
+  const score = s => Number((slot(s, 'REASON').match(/(?:TRADE(?: 1ST)?|TRANSFER ·) (\d+)/) || [])[1]);
   await t.app.scan(card({ cp: 700, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 5], date: '8/4/2026' }));
   const fresh = score(t.last());
   const u = loadApp();
@@ -326,6 +333,18 @@ test('same IVs, different body: two Pokémon', async t => {
   await t.app.scan(card({ cp: 500, name: 'Charmander', kg: 8.5, m: 0.6, types: 'FIRE', ivs: [12, 12, 12] }));
   await t.app.scan(card({ cp: 500, name: 'Charmander', kg: 9.9, m: 0.7, types: 'FIRE', ivs: [12, 12, 12], date: '9/1/2026' }));
   eq(t.app.log().length, 2, 'log size');
+});
+
+test('identity: a height hidden behind the appraisal leader (".41m") is unknown, not 41 m', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  eq(run(`JSON.stringify(parseStorageDetails('8.81kg WEIGHT ROCK / .41m', ''))`), '{"weight":8.81,"height":null,"date":null}', 'truncated height dropped');
+  eq(run(`JSON.stringify(parseStorageDetails('8.81kg WEIGHT ROCK / WATER 0.41m HEIGHT', ''))`), '{"weight":8.81,"height":0.41,"date":null}', 'full height kept');
+  // Appraised with the leader covering the height, then scanned again with the appraisal closed.
+  const base = (ivs, extra) => card({ cp: 1329, name: 'Omanyte 42', species: 'Omanyte', kg: 8.81, m: extra, types: 'ROCK / WATER', ivs, lucky: true, date: '7/27/2023' });
+  const first = base([14, 14, 14], '.41'); first.lines = first.lines.filter(l => l.t !== '.41m'); first.lines.push(line('.41m', 0.78, 0.545, 0.08, 0.02));
+  await t.app.scan(first);
+  await t.app.scan({ ...base(null, 0.41), lines: base(null, 0.41).lines.filter(l => !/caught on/.test(l.t)) });
+  eq(t.app.log().length, 1, 'same Omanyte, not a second entry'); has(slot(t.last(), 'IV CHECK'), '(SAVED)', 'saved IVs reused');
 });
 
 test('nickname on the card: species comes from the catch banner', async t => {
