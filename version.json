@@ -1,1 +1,1 @@
-{"versionCode": 54, "versionName": "2.3.31", "apk": "pogo-companion.apk", "notes": "The pill never blinks or hides any more: scans ignore what is under it and say if it covers the appraisal box. New SHOTS: PILL ON/OFF button chooses whether the pill appears in your screenshots (default on)."}
+{"versionCode": 55, "versionName": "2.3.32", "apk": "pogo-companion.apk", "notes": "Removed the hide-from-screenshots option (an overlay hidden from screen recording is a pattern Play Protect flags). The pill is always visible, never blinks, and shows in screenshots."}
