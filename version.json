@@ -1,1 +1,1 @@
-{"versionCode": 50, "versionName": "2.3.27", "apk": "pogo-companion.apk", "notes": "A raid or PvP species scanned without the appraisal open now says APPRAISE TO RANK instead of an old trade/transfer tag."}
+{"versionCode": 51, "versionName": "2.3.28", "apk": "pogo-companion.apk", "notes": "Fixes from your screenshots: a height hidden behind the appraisal leader no longer breaks matching (Omanyte), no Ultra Ball on hopeless 'could be perfect' catches (10 CP Duskull), lucky with no IVs asks to appraise, and trade lines show what drove the score."}
