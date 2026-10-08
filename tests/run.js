@@ -151,6 +151,22 @@ test('keeper slots: the best of a raid/PvP species are KEEP, whatever its old "t
   eq(slot(t.last(), 'VERDICT'), 'TRADE', '#7 is outside the six slots'); has(slot(t.last(), 'REASON'), 'LEGENDARY', 'traded as a legendary');
 });
 
+test('keeper slots: a better one scanned after six takes the slot; the old #6 becomes a trade', async t => {
+  const machamp = (ivs, i, cp) => card({ cp, name: 'Machamp', kg: 130 + i, m: 1.6, types: 'FIGHTING', ivs, date: `9/${10 + i}/2026` });
+  const sets = [[15, 14, 13], [14, 14, 13], [14, 13, 13], [13, 13, 13], [13, 13, 12], [13, 12, 12]];
+  for (let i = 0; i < sets.length; i++) await t.app.scan(machamp(sets[i], i, 2500 + i * 20));
+  has(slot(t.last(), 'REASON'), '#6/6', 'the sixth is #6 of 6');
+  await t.app.scan(machamp([15, 15, 13], 9, 2800));
+  eq(slot(t.last(), 'VERDICT'), 'KEEP', 'the better seventh is a keeper'); has(slot(t.last(), 'REASON'), '#1/7', 'and ranks first');
+  await t.app.scan(machamp(sets[5], 5, 2600));
+  check(slot(t.last(), 'VERDICT') !== 'KEEP', `the old #6 lost its slot (got ${slot(t.last(), 'VERDICT')})`); has(slot(t.last(), 'REASON'), '#7/7', 'now #7 of 7');
+});
+
+test('keeper slots: a role species scanned without appraisal asks for it instead of the old tag', async t => {
+  await t.app.scan(card({ cp: 2290, name: 'Lunala', kg: 130, m: 4, types: 'PSYCHIC / GHOST', ivs: null }));
+  eq(slot(t.last(), 'VERDICT'), 'CHECK FIRST', 'verdict'); has(slot(t.last(), 'REASON'), 'APPRAISE', 'asks for the appraisal');
+});
+
 test('keeper slots: a single good one of a role species is KEEP too', async t => {
   await t.app.scan(lunala([14, 14, 14], 0));
   eq(slot(t.last(), 'VERDICT'), 'KEEP', 'alone and above the floor');
