@@ -221,6 +221,36 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun autoTrail(): String = OverlayBus.autoTrail
 
+        /** Test builds only: diagnostics sharing is available (see build.gradle.kts). */
+        @JavascriptInterface
+        fun testSharing(): Boolean = BuildConfig.TEST_SHARING
+
+        /**
+         * Test builds only. Hands the diagnostics bundle (My Log without places, AUTO trail, last
+         * scan) to the Android share sheet; the tester chooses the destination every time. Only
+         * runs when the tester taps the button in My Log.
+         */
+        @JavascriptInterface
+        fun shareDiagnostics(json: String, viaShareSheet: Boolean) {
+            if (!BuildConfig.TEST_SHARING) return
+            val toast = { msg: String -> runOnUiThread { Toast.makeText(this@MainActivity, msg, Toast.LENGTH_LONG).show() } }
+            try {
+                val dir = java.io.File(cacheDir, "diagnostics").apply { mkdirs() }
+                val file = java.io.File(dir, "pogo-diagnostics-${System.currentTimeMillis()}.json")
+                file.writeText(json)
+                val uri = androidx.core.content.FileProvider.getUriForFile(this@MainActivity, "$packageName.fileprovider", file)
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, "PoGo Companion diagnostics ${BuildConfig.VERSION_NAME}")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                runOnUiThread { startActivity(Intent.createChooser(send, "Share diagnostics")) }
+            } catch (e: Exception) {
+                toast("Could not share diagnostics: ${e.message}")
+            }
+        }
+
         /** Search builder: puts a search string on the clipboard for the player to paste into the game. */
         @JavascriptInterface
         fun copyText(text: String) {

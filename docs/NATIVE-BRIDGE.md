@@ -41,6 +41,7 @@ All calls go through the `Native` object in `index.html`; nothing else touches a
 | `updatePill(mode, target, slots, actions)` | `AndroidBridge.updatePillEx` (JSON strings) | Show this state. `target` is `"Name\nCP"`, `slots` is `[[caption, value, colour], …]`, `actions` is a list of buttons to offer (`"gone"`). |
 | `autoTrail()` | `AndroidBridge.autoTrail` | Text log of the last AUTO session, for My Log's diagnostics. |
 | `copyText(text)` | `AndroidBridge.copyText` | Put a search string on the clipboard (the player pastes it into the game). Returns false when the shell has no clipboard call; the page then uses the browser clipboard. |
+| `shareDiagnostics(json, viaSheet)` / `testSharing` | `AndroidBridge.shareDiagnostics` | Test builds only: hand the My Log (no places) + AUTO trail bundle to the share sheet; the tester picks the destination. Removed for the public release. |
 | `checkForUpdate()` / `canSelfUpdate` | `AndroidBridge.checkForUpdate` | Sideload builds only; a store build sets `canSelfUpdate` false. |
 
 ## What stays native (per platform)
