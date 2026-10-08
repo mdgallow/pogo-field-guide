@@ -96,14 +96,15 @@ class FloatingOverlayService : Service() {
     private var autoForced = false
     private var autoForcedAt = 0L
     /**
-     * Flicker control. The pill must not appear in the frames we read. Preferred: the pill window
-     * is FLAG_SECURE, which keeps it out of the screen mirror entirely (its rectangle captures as
-     * black) while it stays perfectly visible to the player: no blinking at all. If this device
-     * blanks the whole capture instead, the flag is dropped and the pill falls back to a short
-     * blink, rate-limited to one per BLINK_MIN_GAP_MS so it can never strobe.
+     * The pill is never hidden or blinked (photosensitivity). Reads simply ignore whatever is
+     * under it: OCR lines in its rectangle are dropped, the detectors skip regions it covers (the
+     * page then says to move it), and the AUTO fingerprint masks it. Two modes:
+     *  - "visible" (default): the pill is in the capture and in the player's own screenshots.
+     *  - "secure": the window is FLAG_SECURE, so it never appears in any capture or screenshot
+     *    (its rectangle is black). If a device blanks the whole capture for secure windows, the
+     *    flag is dropped and remembered.
      */
     @Volatile private var secureCapture = false
-    private var lastBlinkAt = 0L
     private var autoLastReadSig: IntArray? = null
     private var autoLastSeenSig: IntArray? = null
     /** The pill has been blinked out for a read; [autoReadReady] flips once the mirror shows it gone. */
@@ -195,10 +196,10 @@ class FloatingOverlayService : Service() {
         private const val PREF_BAR_Y = "bar_y"
         /** "untested" | "ok" | "no": does FLAG_SECURE on the pill leave the rest of the capture intact? */
         private const val PREF_SECURE_CAPTURE = "secure_capture"
-        private const val BLINK_MIN_GAP_MS = 1500L
+        /** "visible" (default; the pill shows in screenshots) or "secure" (never captured). */
+        const val PREF_PILL_CAPTURE = "pill_capture"
         private const val BAR_MARGIN_DP = 6
         /** The pill's own fixed labels: seeing one in a frame means the pill was captured too. */
-        private val PILL_OWN_TEXT = Regex("^(OPEN|CLOSE|SCAN|VERDICT|IV CHECK|REASON|LOGGED|BERRY|BALL|AFTER CATCH|ROLE|.*MOVES.*|GONE.*|AUTO( .*)?|READING.*)$")
         private const val PREF_PILL_SIDE = "pill_side"   // "right" (default) or "left"
         /** Default vertical position: where testing settled on, top of the pill ~57% down the screen. */
         private const val DEFAULT_PILL_Y_FRACTION = 0.57f
@@ -334,7 +335,7 @@ class FloatingOverlayService : Service() {
             layoutFlag,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    (if (prefs.getString(PREF_SECURE_CAPTURE, "untested") != "no") WindowManager.LayoutParams.FLAG_SECURE else 0),
+                    (if (prefs.getString(PREF_PILL_CAPTURE, "visible") == "secure" && prefs.getString(PREF_SECURE_CAPTURE, "untested") != "no") WindowManager.LayoutParams.FLAG_SECURE else 0),
             PixelFormat.TRANSLUCENT
         ).apply {
             if (barStyle) {
@@ -373,27 +374,17 @@ class FloatingOverlayService : Service() {
         finishScan(lastState ?: PillState.message("STANDBY", "TAP SCAN ON A POKÉMON"))
     }
 
-    /**
-     * Gets the pill out of the next captured frame, then runs [then] (on the main thread).
-     * Secure mode: nothing to hide, just force a fresh frame. Blink mode: fade out, wait for the
-     * mirror, force a frame; never more often than BLINK_MIN_GAP_MS.
-     */
+    /** Forces a fresh frame (an invisible opacity change), then runs [then] on the main thread. */
     private fun hideForCapture(then: () -> Unit) {
-        if (secureCapture) {
-            autoNudge = !autoNudge
-            pillView?.alpha = if (autoNudge) 0.99f else 1f
-            mainHandler.post(then)
-            return
-        }
-        val wait = (lastBlinkAt + BLINK_MIN_GAP_MS - System.currentTimeMillis()).coerceAtLeast(0L)
-        mainHandler.postDelayed({
-            lastBlinkAt = System.currentTimeMillis()
-            pillView?.alpha = 0f
-            mainHandler.postDelayed({
-                pillView?.alpha = 0.01f      // forces a fresh frame even if the game is still
-                then()
-            }, PILL_HIDE_MS)
-        }, wait)
+        autoNudge = !autoNudge
+        pillView?.alpha = if (autoNudge) 0.99f else 1f
+        mainHandler.post(then)
+    }
+
+    /** Does the pill cover any of this screen region (fractions of the screen)? */
+    private fun pillCovers(fx0: Double, fy0: Double, fx1: Double, fy1: Double): Boolean {
+        val r = android.graphics.Rect((screenWidth * fx0).toInt(), (screenHeight * fy0).toInt(), (screenWidth * fx1).toInt(), (screenHeight * fy1).toInt())
+        return android.graphics.Rect.intersects(r, pillRectOnScreen)
     }
 
     /** All dark outside the pill: this device blanks secure captures, so the flag has to go. */
@@ -421,7 +412,7 @@ class FloatingOverlayService : Service() {
         }
         prefs.edit().putString(PREF_SECURE_CAPTURE, "no").apply()
         secureCapture = false
-        trail("secure capture blanks the screen here: using the blink instead")
+        trail("secure capture blanks the screen here: pill left visible in captures")
         mainHandler.post {
             params.flags = params.flags and WindowManager.LayoutParams.FLAG_SECURE.inv()
             pillView?.let { try { windowManager.updateViewLayout(it, params) } catch (_: Exception) {} }
@@ -846,12 +837,19 @@ class FloatingOverlayService : Service() {
 
     private fun runOcr(bitmap: Bitmap, auto: Boolean = false) {
         val isStorage = looksLikeStorageCard(bitmap)
-        val isFavorite = isStorage && looksFavorited(bitmap)
-        val isShadow = isStorage && looksShadow(bitmap)
-        val isDynamax = isStorage && looksDynamax(bitmap)
-        val ivs = if (isStorage) readIvBars(bitmap) else null
+        // A detector whose region sits under the pill is skipped (never fed pill pixels); the page
+        // learns which, so it can ask the player to move the pill if that loses something.
+        val blocked = ArrayList<String>()
+        val favoriteClear = !pillCovers(0.84, 0.045, 0.97, 0.11).also { if (it) blocked.add("favorite") }
+        val shadowClear = !pillCovers(0.22, 0.08, 0.78, 0.34).also { if (it) blocked.add("shadow") }
+        val dynamaxClear = !pillCovers(0.32, 0.605, 0.41, 0.655).also { if (it) blocked.add("dynamax") }
+        val appraisalClear = !pillCovers(0.07, 0.68, 0.52, 0.88).also { if (it) blocked.add("appraisal") }
+        val isFavorite = isStorage && favoriteClear && looksFavorited(bitmap)
+        val isShadow = isStorage && shadowClear && looksShadow(bitmap)
+        val isDynamax = isStorage && dynamaxClear && looksDynamax(bitmap)
+        val ivs = if (isStorage && appraisalClear) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax) }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -1048,21 +1046,16 @@ class FloatingOverlayService : Service() {
         return n > 0 && m.toFloat() / n >= 0.30f
     }
 
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false) {
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false, blocked: List<String> = emptyList()) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         // AUTO reads keep the pill on screen: skip any text inside it (scaled to capture pixels).
         val scale = width.toFloat() / screenWidth
         val pr = pillRectOnScreen
         val pillRect = android.graphics.Rect((pr.left * scale).toInt(), (pr.top * scale).toInt(), (pr.right * scale).toInt(), (pr.bottom * scale).toInt())
-        // The side pill covers nothing the scanner needs, so anything under it is dropped. The top
-        // bar sits over the CP line: there, text under it is dropped only when the pill itself was
-        // caught in the frame (the blink did not take), recognised by its own labels.
-        val pillCaptured = text.textBlocks.any { b -> b.lines.any { l ->
-            val box = l.boundingBox
-            box != null && android.graphics.Rect.intersects(box, pillRect) && PILL_OWN_TEXT.matches(l.text.trim().uppercase())
-        } }
-        val maskPill = if (barStyle) pillCaptured else auto
+        // The pill is in the frame (or black, in secure mode): any text inside its rectangle is its
+        // own, never the game's.
+        val maskPill = true
         for (block in text.textBlocks) {
             for (line in block.lines) {
                 val box = line.boundingBox ?: continue
@@ -1086,7 +1079,7 @@ class FloatingOverlayService : Service() {
             evaluator(
                 JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines)
                     .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).put("auto", auto)
-                    .put("shadow", isShadow).put("dynamax", isDynamax).toString()
+                    .put("shadow", isShadow).put("dynamax", isDynamax).put("blocked", JSONArray(blocked)).toString()
             )
             return
         }

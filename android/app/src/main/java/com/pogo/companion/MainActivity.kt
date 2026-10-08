@@ -55,6 +55,20 @@ class MainActivity : AppCompatActivity() {
             styleBtn.text = getString(if (bar) R.string.pill_style_bar else R.string.pill_style_side)
         }
         showStyle()
+        // Screenshots: show the pill (default) or keep it out of every capture.
+        val captureBtn = findViewById<Button>(R.id.btnPillCapture)
+        fun showCapture() {
+            val secure = overlayPrefs.getString(FloatingOverlayService.PREF_PILL_CAPTURE, "visible") == "secure"
+            captureBtn.text = getString(if (secure) R.string.pill_capture_hidden else R.string.pill_capture_shown)
+        }
+        showCapture()
+        captureBtn.setOnClickListener {
+            val secure = overlayPrefs.getString(FloatingOverlayService.PREF_PILL_CAPTURE, "visible") == "secure"
+            overlayPrefs.edit().putString(FloatingOverlayService.PREF_PILL_CAPTURE, if (secure) "visible" else "secure").apply()
+            showCapture()
+            OverlayBus.pillStyleChanged?.invoke()
+            Toast.makeText(this, getString(if (secure) R.string.pill_capture_shown_hint else R.string.pill_capture_hidden_hint), Toast.LENGTH_SHORT).show()
+        }
         styleBtn.setOnClickListener {
             val bar = overlayPrefs.getString(FloatingOverlayService.PREF_PILL_STYLE, "side") == "bar"
             overlayPrefs.edit().putString(FloatingOverlayService.PREF_PILL_STYLE, if (bar) "side" else "bar").apply()

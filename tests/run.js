@@ -384,6 +384,12 @@ test('ranking: a better duplicate outranks a worse one', async t => {
   has(slot(t.last(), 'REASON'), '#2', 'the 39 is second');
 });
 
+test('pill over the appraisal box: the page asks to move it instead of guessing', async t => {
+  const c = card({ cp: 3000, name: 'Charizard', kg: 90.5, m: 1.7, types: 'FIRE / FLYING', ivs: null });
+  await t.app.scan({ ...c, blocked: ['appraisal'] });
+  has(slot(t.last(), 'IV CHECK'), 'MOVE THE PILL', 'asks to move the pill');
+});
+
 // ---------------------------------------------------------------- shell contract
 test('returning to the app restores the page; the pill keeps its result', async t => {
   eq(t.app.mode(), 'catch', 'page starts in catch mode');
