@@ -94,6 +94,16 @@ class FloatingOverlayService : Service() {
     @Volatile private var autoLastSampleAt = 0L
     private var autoUnsettledSince = 0L
     private var autoForced = false
+    private var autoForcedAt = 0L
+    /**
+     * Flicker control. The pill must not appear in the frames we read. Preferred: the pill window
+     * is FLAG_SECURE, which keeps it out of the screen mirror entirely (its rectangle captures as
+     * black) while it stays perfectly visible to the player: no blinking at all. If this device
+     * blanks the whole capture instead, the flag is dropped and the pill falls back to a short
+     * blink, rate-limited to one per BLINK_MIN_GAP_MS so it can never strobe.
+     */
+    @Volatile private var secureCapture = false
+    private var lastBlinkAt = 0L
     private var autoLastReadSig: IntArray? = null
     private var autoLastSeenSig: IntArray? = null
     /** The pill has been blinked out for a read; [autoReadReady] flips once the mirror shows it gone. */
@@ -183,6 +193,9 @@ class FloatingOverlayService : Service() {
         const val PREF_PILL_STYLE = "pill_style"
         private const val PREF_PILL_Y = "pill_y"
         private const val PREF_BAR_Y = "bar_y"
+        /** "untested" | "ok" | "no": does FLAG_SECURE on the pill leave the rest of the capture intact? */
+        private const val PREF_SECURE_CAPTURE = "secure_capture"
+        private const val BLINK_MIN_GAP_MS = 1500L
         private const val BAR_MARGIN_DP = 6
         /** The pill's own fixed labels: seeing one in a frame means the pill was captured too. */
         private val PILL_OWN_TEXT = Regex("^(OPEN|CLOSE|SCAN|VERDICT|IV CHECK|REASON|LOGGED|BERRY|BALL|AFTER CATCH|ROLE|.*MOVES.*|GONE.*|AUTO( .*)?|READING.*)$")
@@ -320,7 +333,8 @@ class FloatingOverlayService : Service() {
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    (if (prefs.getString(PREF_SECURE_CAPTURE, "untested") != "no") WindowManager.LayoutParams.FLAG_SECURE else 0),
             PixelFormat.TRANSLUCENT
         ).apply {
             if (barStyle) {
@@ -337,6 +351,8 @@ class FloatingOverlayService : Service() {
                 y = prefs.getInt(PREF_PILL_Y, (screenHeight * DEFAULT_PILL_Y_FRACTION).toInt())
             }
         }
+
+        secureCapture = (params.flags and WindowManager.LayoutParams.FLAG_SECURE) != 0
 
         // Dragging works from anywhere on the pill; a touch that doesn't move is a tap.
         attachDragOrTap(view, null)
@@ -355,6 +371,62 @@ class FloatingOverlayService : Service() {
             return
         }
         finishScan(lastState ?: PillState.message("STANDBY", "TAP SCAN ON A POKÉMON"))
+    }
+
+    /**
+     * Gets the pill out of the next captured frame, then runs [then] (on the main thread).
+     * Secure mode: nothing to hide, just force a fresh frame. Blink mode: fade out, wait for the
+     * mirror, force a frame; never more often than BLINK_MIN_GAP_MS.
+     */
+    private fun hideForCapture(then: () -> Unit) {
+        if (secureCapture) {
+            autoNudge = !autoNudge
+            pillView?.alpha = if (autoNudge) 0.99f else 1f
+            mainHandler.post(then)
+            return
+        }
+        val wait = (lastBlinkAt + BLINK_MIN_GAP_MS - System.currentTimeMillis()).coerceAtLeast(0L)
+        mainHandler.postDelayed({
+            lastBlinkAt = System.currentTimeMillis()
+            pillView?.alpha = 0f
+            mainHandler.postDelayed({
+                pillView?.alpha = 0.01f      // forces a fresh frame even if the game is still
+                then()
+            }, PILL_HIDE_MS)
+        }, wait)
+    }
+
+    /** All dark outside the pill: this device blanks secure captures, so the flag has to go. */
+    private fun frameBlank(bmp: Bitmap): Boolean {
+        val pill = pillRectOnScreen
+        val toScreen = screenWidth.toFloat() / bmp.width
+        var dark = 0; var n = 0
+        for (gy in 1..6) for (gx in 1..4) {
+            val x = bmp.width * gx / 5; val y = bmp.height * gy / 7
+            if (pill.contains((x * toScreen).toInt(), (y * toScreen).toInt())) continue
+            val c = bmp.getPixel(x, y)
+            n++
+            if ((c shr 16 and 0xFF) < 12 && (c shr 8 and 0xFF) < 12 && (c and 0xFF) < 12) dark++
+        }
+        return n > 0 && dark == n
+    }
+
+    /** Called with the first captured frame of a session; settles whether secure capture works here. */
+    private fun verifySecureCapture(bmp: Bitmap): Boolean {
+        if (!secureCapture) return true
+        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+        if (!frameBlank(bmp)) {
+            if (prefs.getString(PREF_SECURE_CAPTURE, "untested") != "ok") prefs.edit().putString(PREF_SECURE_CAPTURE, "ok").apply()
+            return true
+        }
+        prefs.edit().putString(PREF_SECURE_CAPTURE, "no").apply()
+        secureCapture = false
+        trail("secure capture blanks the screen here: using the blink instead")
+        mainHandler.post {
+            params.flags = params.flags and WindowManager.LayoutParams.FLAG_SECURE.inv()
+            pillView?.let { try { windowManager.updateViewLayout(it, params) } catch (_: Exception) {} }
+        }
+        return false
     }
 
     private fun statusBarHeight(): Int {
@@ -492,6 +564,11 @@ class FloatingOverlayService : Service() {
             if (scanRequested.compareAndSet(true, false)) {
                 mainHandler.removeCallbacks(scanTimeout)
                 val frame = imageToBitmap(image)
+                if (!verifySecureCapture(frame)) {       // blank frame: retake with the blink
+                    frame.recycle()
+                    mainHandler.post { requestScan() }
+                    return
+                }
                 mainHandler.post { showPillReading() }
                 runOcr(frame)
             } else if (autoMode) {
@@ -616,9 +693,15 @@ class FloatingOverlayService : Service() {
             autoReadPending = false
             val sig = fingerprint(image)
             val frame = imageToBitmap(image)
+            if (!verifySecureCapture(frame)) {
+                frame.recycle()
+                mainHandler.post { pillView?.alpha = 1f; requestFrameSoon() }
+                return
+            }
             if (!looksLikeStorageCard(frame)) {
                 if (autoOffPageSince == 0L) autoOffPageSince = now
                 trail("not a storage page")
+                autoLastReadSig = sig            // do not keep re-taking the same screen (and blinking)
                 frame.recycle()
                 mainHandler.post { pillView?.alpha = 1f }
                 return
@@ -661,11 +744,12 @@ class FloatingOverlayService : Service() {
             // screen then goes quiet; if it never settles, read anyway (once per swipe).
             if (autoUnsettledSince == 0L) { autoUnsettledSince = now; trail("swipe ($diff changed)") }
             val waited = now - autoUnsettledSince
-            if (waited < AUTO_FORCE_READ_MS || (autoForced && diff < AUTO_BIG_CHANGE)) {
+            if (waited < AUTO_FORCE_READ_MS || (autoForced && diff < AUTO_BIG_CHANGE && now - autoForcedAt < 6000)) {
                 mainHandler.post { requestFrameSoon() }
                 return
             }
             autoForced = true
+            autoForcedAt = now
             trail("never settled: reading anyway")
         } else {
             autoForced = false
@@ -678,13 +762,7 @@ class FloatingOverlayService : Service() {
         autoBlinkAt = now
         mainHandler.post {
             rememberPillRect()
-            pillView?.alpha = 0f
-            mainHandler.postDelayed({
-                if (autoReadPending) {
-                    autoReadReady = true
-                    pillView?.alpha = 0.01f      // forces a fresh frame even if the game is still
-                }
-            }, PILL_HIDE_MS)
+            hideForCapture { if (autoReadPending) autoReadReady = true }
         }
     }
 
@@ -750,15 +828,11 @@ class FloatingOverlayService : Service() {
             setAutoMode(false)
         }
 
-        // Blink the pill out so nothing underneath it (date tag, favorite star, candy label)
-        // is hidden from the scan. The mirror needs a moment to show the pill gone; the second
-        // alpha change then forces a fresh frame even if the game screen is completely still.
-        view.alpha = 0f
-        mainHandler.postDelayed({
+        // Get the pill out of the frame (secure window, or a single short blink), then take it.
+        hideForCapture {
             scanRequested.set(true)
-            pillView?.alpha = 0.01f
             mainHandler.postDelayed(scanTimeout, SCAN_TIMEOUT_MS)
-        }, PILL_HIDE_MS)
+        }
     }
 
     /** Frame is in hand: bring the pill back, showing that it is working. */
@@ -790,14 +864,20 @@ class FloatingOverlayService : Service() {
      * Sampled on the left so the pill (docked right) can never produce a false white read.
      */
     private fun looksLikeStorageCard(bitmap: Bitmap): Boolean {
-        var white = 0
+        // Points under the pill capture as black (secure window) or as the pill itself: skip them.
+        val pill = pillRectOnScreen
+        val toScreen = screenWidth.toFloat() / bitmap.width
+        var white = 0; var seen = 0
         for (ry in floatArrayOf(0.62f, 0.68f, 0.72f)) {
             for (rx in floatArrayOf(0.12f, 0.20f, 0.30f)) {
-                val c = bitmap.getPixel((bitmap.width * rx).toInt(), (bitmap.height * ry).toInt())
+                val x = (bitmap.width * rx).toInt(); val y = (bitmap.height * ry).toInt()
+                if (pill.contains((x * toScreen).toInt(), (y * toScreen).toInt())) continue
+                seen++
+                val c = bitmap.getPixel(x, y)
                 if ((c shr 16 and 0xFF) > 205 && (c shr 8 and 0xFF) > 205 && (c and 0xFF) > 205) white++
             }
         }
-        return white >= 3
+        return seen == 0 || white >= minOf(3, seen)
     }
 
     /**
