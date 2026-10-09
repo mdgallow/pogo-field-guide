@@ -101,6 +101,12 @@ class FloatingOverlayService : Service() {
      * simply ignore whatever is under it: OCR lines in its rectangle are dropped, the detectors
      * skip regions it covers (the page then says to move it), and the AUTO fingerprint masks it.
      */
+    private var autoLastReadSig: IntArray? = null
+    private var autoLastSeenSig: IntArray? = null
+    /** A read frame has been requested; [autoReadReady] flips when the fresh frame may be used. */
+    @Volatile private var autoReadPending = false
+    @Volatile private var autoReadReady = false
+    private var autoBlinkAt = 0L
     private var autoNudge = false
     /** An AUTO read is being evaluated; its result gets the "logged" buzz. */
     @Volatile private var autoAwaitingResult = false
