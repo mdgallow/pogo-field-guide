@@ -1153,7 +1153,9 @@ function parseStorageDetails(statsText, dateText) {
     // (".41m" was read as 41 m and broke the identity match). No integer part = unknown.
     weight: num((statsText || '').match(/(?:^|[^\d.,])(\d{1,4}[.,]\d{1,2})\s*k[gq]/i)),
     height: num((statsText || '').match(/(?:^|[^\d.,])(\d{1,2}[.,]\d{1,2})\s*m\b/i)),
-    date: date ? `${date[1]}-${date[2]}-${date[3]}` : null
+    date: date ? `${date[1]}-${date[2]}-${date[3]}` : null,
+    // "113 / 113 HP": the maximum is fixed for a Pokémon at its level, a cheap extra fingerprint.
+    hp: (m => (m ? parseInt(m[2], 10) : null))((statsText || '').match(/(\d{1,4})\s*\/\s*(\d{1,4})\s*HP/i)),
   };
 }
 
@@ -1191,6 +1193,7 @@ function recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs) {
   entry.cp = (cp && entry.cp && Math.abs(cp - entry.cp) <= 5) ? entry.cp : (cp || entry.cp || null);
   entry.favorite = !!favorite;
   entry.date = (details && details.date) || entry.date || null;
+  if (details && details.hp) entry.hp = details.hp;
   entry.ivGuess = matchInfo ? (matchInfo.type === '45' ? 'maybe 100%' : 'maybe 98%') : null;
   if (ivs) entry.ivs = ivs;                                   // appraised: exact, kept forever
   if (sized && !entry.weight) { entry.weight = details.weight; entry.height = details.height; }
@@ -1431,6 +1434,7 @@ function findLogEntry(pokemon, cp, details, ivs) {
     else if (bothSized) score += 1;                                     // one dimension within wobble
     else if (sized || e.weight == null) score += 1;                     // one side unsized: cannot contradict
     if (cp && e.cp === cp) { score += 2; anchors++; }
+    if (details && details.hp && e.hp && details.hp === e.hp) { score += 2; anchors++; }   // same max HP
     if (ivs && e.ivs) score += 3;                                        // identical (contradiction excluded above)
     if (details && details.date && e.date) { score += 2; anchors++; }   // identical (ditto)
     if (details && details.where && e.where && details.where === e.where) score += 1;
@@ -1979,7 +1983,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.32';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.33';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -2812,6 +2816,9 @@ function scanIsKeeper() {
 }
 function scanMoveAdvice() {
   if (!scanIsKeeper()) return [];
+  if (scanMatchAmbiguous === 'form') {
+    return [{ caption: 'MOVES', value: 'FORM UNSURE: SCAN WITH THE TYPE ROW VISIBLE', full: 'MOVES: FORM UNSURE (THE TYPE ROW WAS NOT READ): REGIONAL FORMS LEARN DIFFERENT MOVES' }];
+  }
   const shadow = !!(scanContext && scanContext.marks.includes('shadow'));
   return moveAdvice(activeHudPokemon, scanLane, shadow);
 }
@@ -2847,7 +2854,8 @@ function pushNativePill() {
   slots.push(reasonSlot);
   if (scanIsKeeper()) {
     const role = roleOf(activeHudPokemon).role;
-    slots.push(['ROLE', roleLabel(activeHudPokemon), role === 'BOTH' ? '#fbbf24' : role ? '#c084fc' : '#94a3b8']);
+    if (scanMatchAmbiguous === 'form') slots.push(['ROLE', 'FORM? (TYPE ROW NOT READ)', '#fbbf24']);
+    else slots.push(['ROLE', roleLabel(activeHudPokemon), role === 'BOTH' ? '#fbbf24' : role ? '#c084fc' : '#94a3b8']);
   }
   for (const m of scanMoveAdvice()) slots.push([m.caption, m.value, '#7dd3fc']);
   if (scanContext && scanContext.rank) slots.push(['LOGGED', `${pokeLog.length} TOTAL · ${scanContext.ofSpecies} ${scanContext.species.toUpperCase()}`, '#94a3b8']);

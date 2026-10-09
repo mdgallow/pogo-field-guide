@@ -185,6 +185,7 @@ class FloatingOverlayService : Service() {
         private const val PREF_PILL_Y = "pill_y"
         private const val PREF_BAR_Y = "bar_y"
         private const val BAR_MARGIN_DP = 6
+        private const val BAR_MAX_Y_FRACTION = 0.38f
         /** The pill's own fixed labels: seeing one in a frame means the pill was captured too. */
         private const val PREF_PILL_SIDE = "pill_side"   // "right" (default) or "left"
         /** Default vertical position: where testing settled on, top of the pill ~57% down the screen. */
@@ -203,9 +204,9 @@ class FloatingOverlayService : Service() {
         private const val AUTO_IDLE_STOP_MS = 30_000L
         private const val AUTO_OFF_PAGE_MS = 5_000L
         private const val AUTO_MAX_MS = 10 * 60_000L
-        private const val AUTO_CHANGED_MIN = 8 // fingerprint points that must flip to count as a change
+        private const val AUTO_CHANGED_MIN = 5 // fingerprint points that must flip to count as a change (white panels: no noise)
         private const val AUTO_BIG_CHANGE = 60 // a real swipe flips far more than any stray animation
-        private const val SIG_SIZE = 3 * 24 + 3 * 16 + 31 * 24 + 8 * 40
+        private const val SIG_SIZE = 3 * 24 + 4 * 30 + 31 * 24 + 8 * 40
 
         @Volatile var isRunning = false
             private set
@@ -327,7 +328,7 @@ class FloatingOverlayService : Service() {
                 // A strip across the top, just under the status bar; drag it up or down.
                 gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
                 x = 0
-                y = prefs.getInt(PREF_BAR_Y, statusBarHeight())
+                y = prefs.getInt(PREF_BAR_Y, statusBarHeight()).coerceAtMost((screenHeight * BAR_MAX_Y_FRACTION).toInt() - (72 * density).toInt())
             } else {
                 // Docked to one edge (right by default, left for left-handed players: drag it across).
                 // Vertical position is draggable and remembered.
@@ -421,7 +422,11 @@ class FloatingOverlayService : Service() {
                     if (dragging || abs(dy) > touchSlop || abs(dx) > touchSlop) {
                         dragging = true
                         v.isPressed = false
-                        val maxY = (screenHeight - (pillView?.height ?: 0)).coerceAtLeast(0)
+                        // The top bar must stay above the white card: the name, HP, weight, type row,
+                        // appraisal and banner all live below ~38% of the screen and are what AUTO
+                        // and the identity match read. The side pill may go anywhere.
+                        val limit = if (barStyle) (screenHeight * BAR_MAX_Y_FRACTION).toInt() else screenHeight
+                        val maxY = (limit - (pillView?.height ?: 0)).coerceAtLeast(0)
                         params.y = (startY + dy).coerceIn(0, maxY)
                         pillView?.let { windowManager.updateViewLayout(it, params) }
                     }
@@ -605,7 +610,7 @@ class FloatingOverlayService : Service() {
         // HP line ("113 / 113 HP"), centred under the name.
         for (fy in doubleArrayOf(0.468, 0.4725, 0.477)) for (gx in 0 until 24) sample(0.38 + 0.01 * gx, fy)
         // Weight number, left of the type icons.
-        for (fy in doubleArrayOf(0.538, 0.545, 0.552)) for (gx in 0 until 16) sample(0.10 + 0.012 * gx, fy)
+        for (fy in doubleArrayOf(0.538, 0.545, 0.552, 0.559)) for (gx in 0 until 30) sample(0.085 + 0.007 * gx, fy)
         // Appraisal panel: labels and the three bars (left half of the card only).
         for (gy in 0 until 31) for (gx in 0 until 24) sample(0.10 + 0.0155 * gx, 0.705 + 0.005 * gy)
         // Catch banner: three lines of text.
