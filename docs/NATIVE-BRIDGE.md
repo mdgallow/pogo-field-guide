@@ -26,6 +26,8 @@ when it sends the same payloads and renders the same pill states.
   "dynamax": false,         // Dynamax badge
   "auto": false,            // true for AUTO reads (no vibration, sweep bookkeeping)
   "blocked": ["appraisal"], // detector regions the shell's own overlay was covering (skipped, not guessed)
+  "lucky": false,           // gold sparkle background behind the model
+  "colors": [[35,70,90,60]],// model's dominant colours [hue 0-359, sat, val, weight] (background subtracted), or null
   "lines": [ { "t": "CP3000", "x": 0.34, "y": 0.05, "w": 0.26, "h": 0.04 } ]
 }
 ```

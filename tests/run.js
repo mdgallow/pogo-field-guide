@@ -217,6 +217,21 @@ test('shadow: no raid use -> purify when the +2 makes a 44, otherwise keep one',
   eq(slot(u.last(), 'VERDICT'), 'KEEP BEST', 'a lone decent shadow of a no-use species is kept as the one');
 });
 
+// ---------------------------------------------------------------- shiny by colour
+test('shiny by colour: a black Charizard is marked shiny, an orange one is not, Gengar cannot be told', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  const pal = JSON.parse(run(`JSON.stringify(POKEMON_DATA.find(x => x.name === 'Charizard').pal)`));
+  check(pal && pal.d >= 22, `Charizard palettes differ (${pal && pal.d})`);
+  const shinyColors = pal.s.map(c => [c[0], c[1], c[2], c[3]]);
+  const normalColors = pal.n.map(c => [c[0], c[1], c[2], c[3]]);
+  await t.app.scan({ ...card({ cp: 2200, name: 'Charizard', kg: 90, m: 1.7, types: 'FIRE / FLYING', ivs: [10, 10, 10] }), colors: shinyColors });
+  eq(t.app.log()[0].shiny, true, 'marked shiny from colour'); has(slot(t.last(), 'REASON'), 'SHINY', 'verdict from the shiny branch');
+  const u = loadApp();
+  await u.app.scan({ ...card({ cp: 2200, name: 'Charizard', kg: 90, m: 1.7, types: 'FIRE / FLYING', ivs: [10, 10, 10] }), colors: normalColors });
+  check(!u.app.log()[0].shiny, 'normal colours do not mark shiny');
+  eq(run(`shinyFromColors(POKEMON_DATA.find(x => x.name === 'Gengar'), POKEMON_DATA.find(x => x.name === 'Gengar').pal.s)`), null, 'Gengar: palettes too close to tell');
+});
+
 // ---------------------------------------------------------------- shinies
 test('shiny: own branch, prized best two then trade stock, never transfer, never blended', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
