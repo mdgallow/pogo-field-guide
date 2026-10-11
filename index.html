@@ -639,7 +639,7 @@
     <div style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
       Every Pokémon you scan in your storage is remembered on this device, recognised by its family, height and weight, CP, HP, catch date and IVs together, so renaming, powering up or favoriting it never confuses the pill. Each row shows its current standing (keeper, trade, transfer, gone), recomputed from the whole log whenever it is opened. Nothing here leaves the phone.
     </div>
-    <div style="font-size:12px; margin-bottom:8px;">Inside each evolution family: natural <b>44/45</b> always keep · <b>lucky</b> keeps (it plays ~8 IV points higher) · then the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by IVs that clear the floor (37+; 30+ for legendaries and Dynamax) when the family has a raid or league use, or only its single best when it has none · league families also keep their best <input id="keepNPvpInput" type="number" min="1" max="20" value="3" onchange="setKeepNPvp(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by bulk (low attack, high defense and HP) · shadows are their own pool too (attack IV counts double, 30+ floor): raid species keep their best <input id="keepNShadowInput" type="number" min="1" max="20" value="3" onchange="setKeepNShadow(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> as shadows, others keep one; a shadow whose +2 purified IVs make a 44/45 says <b style="color:#34d399;">PURIFY</b>, a surplus shadow worth trading says PURIFY · THEN TRADE, the rest transfer · Dynamax are their own pool, best <input id="keepNDmaxInput" type="number" min="1" max="20" value="3" onchange="setKeepNDynamax(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> per species. A slot is earned, never filled to make up the number. Everything else is ranked for <b style="color:#c084fc;">TRADE</b> by what a receiver saves (level, lucky odds by age, candy in it minus evolution candy owed, rarity), up to 5 per family, and the rest are <b style="color:#f87171;">SURPLUS</b>. Shadows and Dynamax can’t be traded; shinies are never surplus; a favorited surplus says <b style="color:#fbbf24;">FAVORITE?</b>.</div>
+    <div style="font-size:12px; margin-bottom:8px;">Inside each evolution family: natural <b>44/45</b> always keep · <b>lucky</b> keeps (it plays ~8 IV points higher) · then the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by IVs that clear the floor (37+; 30+ for legendaries and Dynamax) when the family has a raid or league use, or only its single best when it has none · league families also keep their best <input id="keepNPvpInput" type="number" min="1" max="20" value="3" onchange="setKeepNPvp(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by bulk (low attack, high defense and HP) · <b>shinies are their own branch</b>, never blended: the best <input id="keepNShinyInput" type="number" min="1" max="20" value="2" onchange="setKeepNShiny(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> shinies of each species are <b style="color:#34d399;">PRIZED</b> (any IVs), every other shiny is <b style="color:#c084fc;">SHINY STOCK</b> held for shiny-for-shiny trades, never transfer; shiny shadows and shiny legendaries included · shadows are their own pool too (attack IV counts double, 30+ floor): raid species keep their best <input id="keepNShadowInput" type="number" min="1" max="20" value="3" onchange="setKeepNShadow(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> as shadows (shadow legendaries keep as many as the raid slots and surplus ones simply transfer: purifying costs rare candy and trading burns the special trade), others keep one; a shadow whose +2 purified IVs make a 44/45 says <b style="color:#34d399;">PURIFY</b>, a surplus shadow worth trading says PURIFY · THEN TRADE, the rest transfer · Dynamax are their own pool, best <input id="keepNDmaxInput" type="number" min="1" max="20" value="3" onchange="setKeepNDynamax(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> per species. A slot is earned, never filled to make up the number. Everything else is ranked for <b style="color:#c084fc;">TRADE</b> by what a receiver saves (level, lucky odds by age, candy in it minus evolution candy owed, rarity), up to 5 per family, and the rest are <b style="color:#f87171;">SURPLUS</b>. Shadows and Dynamax can’t be traded; shinies are never surplus; a favorited surplus says <b style="color:#fbbf24;">FAVORITE?</b>.</div>
     <!-- TEST BUILDS ONLY: tester diagnostics. Hidden unless the shell reports testSharing. -->
     <div id="testShareBox" style="display:none; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12px;">
       <div style="font-weight:800; color:#fbbf24;">Testing: share diagnostics with the developer</div>
@@ -739,7 +739,7 @@
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #7dd3fc;">
           <b>Role and moves.</b> On a keeper the pill adds <b>ROLE</b>: RAID, PVP with its best league, RAID + PVP, or COLLECTION when it is neither. Then the moves to aim your TMs at, one line per role: <b>RAID MOVES</b> and/or <b>&lt;LEAGUE&gt; LEAGUE MOVES</b> (two charged moves for PvP: unlock the second). Each line says <b>FAST</b> and <b>CHARGED</b> separately and names what an ordinary Fast TM / Charged TM can reach; when the very best move needs an Elite TM or its Community Day it is added as <b>BEST: … (ELITE TM)</b>, and <b>(NO TM)</b> marks a move no TM teaches. A Pokémon that still has to evolve gets its final form’s moves (<b>RAID MOVES AS METAGROSS</b>): evolve first, evolving re-rolls the moves. Nothing is shown on trades or transfers, so no TM is wasted.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
-          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by family, height and weight, CP, HP, catch date and IVs together, so renaming or powering up never confuses it, and a re-scan with the appraisal closed still shows the saved IVs as <b>15/14/15 (SAVED)</b>. <b>Appraise once, remembered forever:</b> open the in-game appraisal and SCAN (or let AUTO do it). Each row in My Log shows its <b>current standing</b> (keeper #2 of 6, trade ~66k, transfer, gone), recomputed from the whole log, so an older pill verdict can never contradict a newer scan. Lucky and shadow are read from the page (the purple haze, confirmed by the PURIFY button); tick <b>shiny</b> yourself (a shiny is never surplus). <b>Shadows are judged among shadows</b> (attack IV counts double, 30+ floor): for a raid species the best few stay shadows (KEEP · SHADOW RAID FORM: the +20% attack beats any IV gap), a shadow whose +2 purified IVs make a 44/45 says <b>PURIFY</b> with the dust and candy it costs, a surplus shadow worth more traded than transferred says <b>PURIFY · THEN TRADE</b> (a shadow can’t be traded), and the rest transfer. Dynamax Pokémon are their own pool (keep the best 3 per species). A favorited Pokémon that the numbers would transfer says <b>FAVORITE?</b> instead.</div>
+          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by family, height and weight, CP, HP, catch date and IVs together, so renaming or powering up never confuses it, and a re-scan with the appraisal closed still shows the saved IVs as <b>15/14/15 (SAVED)</b>. <b>Appraise once, remembered forever:</b> open the in-game appraisal and SCAN (or let AUTO do it). Each row in My Log shows its <b>current standing</b> (keeper #2 of 6, trade ~66k, transfer, gone), recomputed from the whole log, so an older pill verdict can never contradict a newer scan. Lucky and shadow are read from the page (the purple haze, confirmed by the PURIFY button); tick <b>shiny</b> yourself. <b>Shinies are their own branch</b>: the best 2 of each species are SHINY PRIZED (collection and high IVs), every other shiny is SHINY STOCK, held for shiny-for-shiny trades rather than transferred; shiny shadows and shiny legendaries follow the same rule. <b>Shadows are judged among shadows</b> (attack IV counts double, 30+ floor): for a raid species the best few stay shadows (KEEP · SHADOW RAID FORM: the +20% attack beats any IV gap), a shadow whose +2 purified IVs make a 44/45 says <b>PURIFY</b> with the dust and candy it costs, a surplus shadow worth more traded than transferred says <b>PURIFY · THEN TRADE</b> (a shadow can’t be traded), and the rest transfer. Shadow legendaries from shadow raids are the exception: keep up to your raid slots as shadows, transfer the rest for candy (purifying costs rare candy and trading burns the one special trade a day). Dynamax Pokémon are their own pool (keep the best 3 per species). A favorited Pokémon that the numbers would transfer says <b>FAVORITE?</b> instead.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #14b8a6;">
           <b>6. Search builder.</b> The <b>Search</b> button writes text for Pokémon GO’s own storage search: tap what you want (stars, attack/defense/HP ratings, kind, type, region, CP, age, family), COPY, paste into the game. Ready-made searches cover logging a big collection fast: only <b>3★,4★</b>, legendaries from 2★, luckies at 1–2★ and PvP-shaped stats can be keepers, so only those need the appraisal sweep with AUTO; everything else is a trade or a transfer. The app never types into the game.</div>
       </div>
@@ -1364,13 +1364,14 @@ function tradeValue(p, cp, ivs, date, need = 0) {
     tier: value >= 150 ? 'FIRST' : value >= 25 ? 'TRADE' : 'LOW' };
 }
 // Who holds a keeper slot in this pool (RAID top-N above the floor, plus the PVP lane).
-function poolKeepers(species, dynamax, shadow = false) {
+function poolKeepers(species, dynamax, shadow = false, shiny = false) {
   const P = name => POKEMON_DATA.find(x => x.name === name);
-  const ks = keepSlots(species, dynamax, shadow);
+  const ks = keepSlots(species, dynamax, shadow, shiny);
   const slots = ks.raid;
-  const ranked = speciesRanking(species, dynamax, shadow ? 'shadow' : 'raid', shadow);
-  const raid = ranked.slice(0, slots).filter(e => e.ivs && (shadow ? e.ivs[0] + e.ivs[1] + e.ivs[2] >= SHADOW_FLOOR : meetsRaidFloor(e.ivs, P(e.species), dynamax, !!e.lucky)));
-  const pvp = !dynamax && !shadow && pvpRelevant(P(species))
+  const ranked = speciesRanking(species, dynamax, shadow && !shiny ? 'shadow' : 'raid', shadow, shiny);
+  // Shiny: no floor, the best few are prized whatever their IVs.
+  const raid = ranked.slice(0, slots).filter(e => e.ivs && (shiny || (shadow ? e.ivs[0] + e.ivs[1] + e.ivs[2] >= SHADOW_FLOOR : meetsRaidFloor(e.ivs, P(e.species), dynamax, !!e.lucky))));
+  const pvp = !dynamax && !shadow && !shiny && pvpRelevant(P(species))
     ? speciesRanking(species, false, 'pvp').slice(0, ks.pvp).filter(e => e.ivs && meetsPvpFloor(e.ivs)) : [];
   return { ranked, slots, raid, ids: new Set([...raid, ...pvp].map(e => e.id)) };
 }
@@ -1402,17 +1403,23 @@ function familyHasRole(species) {
   if (!roleCache.has(key)) roleCache.set(key, candyFamily(p).some(q => !!roleOf(q).role));
   return roleCache.get(key);
 }
-function keepSlots(species, dynamax, shadow = false) {
+function keepSlots(species, dynamax, shadow = false, shiny = false) {
+  if (shiny) return { raid: keepNShiny(), pvp: 0, lowUse: false };   // prized shinies; the rest are trade stock
   if (dynamax) return { raid: keepNDynamax(), pvp: 0, lowUse: false };
   if (shadow) {
     // Shadow slots: worth several for a raid species (the +20% is the point), one otherwise.
+    // Shadow legendaries come in abundance from shadow raids and fill raid teams of six.
     const p = POKEMON_DATA.find(x => x.name === species);
     const raid = !!p && candyFamily(p).some(q => roleOf(q).raid);
+    if (p && p.isLegendary) return { raid: keepN(), pvp: 0, lowUse: false };
     return { raid: raid ? keepNShadow() : 1, pvp: 0, lowUse: !raid };
   }
   return familyHasRole(species) ? { raid: keepN(), pvp: keepNPvp(), lowUse: false } : { raid: 1, pvp: 0, lowUse: true };
 }
 
+const KEEP_N_SHINY_KEY = 'pogo_keep_n_shiny';
+function keepNShiny() { return parseInt(localStorage.getItem(KEEP_N_SHINY_KEY), 10) || 2; }
+function setKeepNShiny(v) { localStorage.setItem(KEEP_N_SHINY_KEY, String(Math.max(1, Math.min(20, parseInt(v, 10) || 2)))); renderLogModal(); }
 const KEEP_N_SHADOW_KEY = 'pogo_keep_n_shadow';
 function keepNShadow() { return parseInt(localStorage.getItem(KEEP_N_SHADOW_KEY), 10) || 3; }
 function setKeepNShadow(v) { localStorage.setItem(KEEP_N_SHADOW_KEY, String(Math.max(1, Math.min(20, parseInt(v, 10) || 3)))); renderLogModal(); }
@@ -1424,19 +1431,22 @@ function setKeepNPvp(v) { localStorage.setItem(KEEP_N_PVP_KEY, String(Math.max(1
 // perfect Charmander is a future perfect Charizard, and a low-attack Marill is a future
 // Great League Azumarill (league families score the whole family with the bulk formula).
 // Only Dynamax ranks per species (its own pool).
-function poolOf(species, dynamax = false, shadow = false) {
+function poolOf(species, dynamax = false, shadow = false, shiny = false) {
   const p = POKEMON_DATA.find(x => x.name === species);
   const family = p ? POKEMON_DATA.filter(q => q.familyRoot === p.familyRoot) : [];
-  const perSpecies = dynamax;
-  return { key: (perSpecies ? species : (p ? p.familyRoot : species)) + (shadow ? ' SHADOW' : ''), perSpecies, shadow,
+  // Shinies are collected per species (a shiny Charmander is not "a spare Charizard").
+  const perSpecies = dynamax || shiny;
+  return { key: (perSpecies ? species : (p ? p.familyRoot : species)) + (shadow ? ' SHADOW' : '') + (shiny ? ' SHINY' : ''), perSpecies, shadow, shiny,
     members: new Set(perSpecies ? [species] : family.map(q => q.name)) };
 }
 
 // Shadows are their own pool: they cannot be traded, cost 20% more to power up, and hit 20%
 // harder, so comparing them with normal Pokémon by IVs alone would always throw them out.
-function speciesRanking(species, dynamax = false, lane = 'raid', shadow = false) {
-  const pool = poolOf(species, dynamax, shadow);
-  return pokeLog.filter(e => pool.members.has(e.species) && !!e.dynamax === dynamax && !!e.shadow === shadow && !e.gone && !e.missing)
+function speciesRanking(species, dynamax = false, lane = 'raid', shadow = false, shiny = false) {
+  const pool = poolOf(species, dynamax, shadow, shiny);
+  // Shiny is its own branch: shinies never take or lose a normal / shadow slot, and are ranked only
+  // against shinies of the same species (shiny shadows and shiny legendaries included).
+  return pokeLog.filter(e => pool.members.has(e.species) && !!e.dynamax === dynamax && !!e.shiny === shiny && (shiny || !!e.shadow === shadow) && !e.gone && !e.missing)
     .sort((x, y) => entryScore(y, lane) - entryScore(x, lane));
 }
 
@@ -1541,15 +1551,16 @@ function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs, auto =
   const known = ivs || (entry && entry.ivs) || null;
   const dynamax = !!(details && details.dynamax) || !!(entry && entry.dynamax);
   const shadow = !!(details && details.shadow) || !!(entry && entry.shadow && !(details && details.notShadow));
-  const ranked = speciesRanking(pokemon.name, dynamax, shadow ? 'shadow' : 'raid', shadow);
-  const pool = poolOf(pokemon.name, dynamax, shadow);
-  const pvpLane = !dynamax && !shadow && pvpRelevant(pokemon);
+  const shiny = !!(entry && entry.shiny);
+  const ranked = speciesRanking(pokemon.name, dynamax, shadow && !shiny ? 'shadow' : 'raid', shadow, shiny);
+  const pool = poolOf(pokemon.name, dynamax, shadow, shiny);
+  const pvpLane = !dynamax && !shadow && !shiny && pvpRelevant(pokemon);
   const rankedPvp = pvpLane ? speciesRanking(pokemon.name, dynamax, 'pvp') : [];
   return { species: pokemon.name, cp: cp || (entry && entry.cp) || null, favorite: !!favorite, root: pokemon.familyRoot, entryId: entry ? entry.id : null,
     logged: relatives.length, bestCp, isStrongest: !!entry && !!cp && cp >= bestCp,
     ivs: known, ivsFromLog: !ivs && !!(entry && entry.ivs),
     rank: entry ? ranked.indexOf(entry) + 1 : 0, ofSpecies: ranked.length, appraised: !!(entry && entry.ivs),
-    luckySibling: ranked.some(e => e !== entry && e.lucky), dynamax, shadow,
+    luckySibling: ranked.some(e => e !== entry && e.lucky), dynamax, shadow, shiny,
     poolLabel: pool.perSpecies ? pokemon.name.toUpperCase() : `${pool.key.toUpperCase()} FAMILY`,
     pvpLane, rankPvp: entry && pvpLane ? rankedPvp.indexOf(entry) + 1 : 0,
     poolIsFamily: !pool.perSpecies,
@@ -1564,7 +1575,7 @@ let lastGuidance = null;
 function applyLogContext(g, p) {
   const c = scanContext;
   if (!c || c.species !== p.name) return g;
-  const ks = keepSlots(p.name, c.dynamax, !!c.shadow);
+  const ks = keepSlots(p.name, c.dynamax, !!c.shadow, !!c.shiny);
   const n = ks.raid;
   const np = ks.pvp;
   const lucky = c.marks.includes('lucky');
@@ -1574,11 +1585,12 @@ function applyLogContext(g, p) {
   const total = c.ivs ? c.ivs[0] + c.ivs[1] + c.ivs[2] : 0;
   const eff = c.ivs ? effectiveTotal(c.ivs, p, lucky) : 0;
   const natural44 = c.ivs && total >= 44 && !lucky;           // never traded, never surplus
-  const inRaid = slotted && c.rank <= n && (c.shadow ? total >= SHADOW_FLOOR : meetsRaidFloor(c.ivs, p, c.dynamax, lucky));
+  // Shiny: no floor, the best few are prized whatever their IVs.
+  const inRaid = slotted && c.rank <= n && (c.shiny ? true : c.shadow ? total >= SHADOW_FLOOR : meetsRaidFloor(c.ivs, p, c.dynamax, lucky));
   const inPvp = slotted && c.pvpLane && c.rankPvp > 0 && c.rankPvp <= np && meetsPvpFloor(c.ivs);
   // Holds a keeper slot and clears the floor: kept whatever the species' old action tag says.
   const keeper = inRaid || inPvp;
-  const belowFloor = c.ivs && (c.shadow ? total < SHADOW_FLOOR : (!meetsRaidFloor(c.ivs, p, c.dynamax, lucky) && !(c.pvpLane && meetsPvpFloor(c.ivs))));
+  const belowFloor = c.ivs && !c.shiny && (c.shadow ? total < SHADOW_FLOOR : (!meetsRaidFloor(c.ivs, p, c.dynamax, lucky) && !(c.pvpLane && meetsPvpFloor(c.ivs))));
   const surplus = c.appraised && !natural44 && ((slotted && !keeper) || belowFloor);
   const better = ranked ? Math.max(0, c.rank - 1) : 0;
   const floor = c.dynamax || c.shadow ? 30 : raidFloor(p);
@@ -1596,7 +1608,23 @@ function applyLogContext(g, p) {
   const finalName = p.finals.length ? p.finals.map(f => baseSpecies(f.name)).join('/').toUpperCase() : '';
   const set = (verdict, color, icon, reason, short) => ({ ...g, verdict, color, icon, reason, short });
 
-  if (c.ivs && total >= 44) {
+  if (c.shiny && c.ivs) {
+    // 0. Shiny: its own branch, never blended. The best few of each species are prized
+    // (collection + high IVs); every other shiny is trade stock, held for shiny-for-shiny trades
+    // (special trades, one a day), never transfer fodder. Shiny shadows and shiny legendaries too.
+    const shinyRank = ranked ? `#${c.rank} OF ${c.ofSpecies} SHINY ${c.species.toUpperCase()}` : `YOUR ONLY SHINY ${c.species.toUpperCase()}`;
+    const flavour = [lucky && 'LUCKY', shadow && 'SHADOW', p.isLegendary && 'LEGENDARY'].filter(Boolean).join(' ');
+    const pur = shadow ? c.ivs.map(v => Math.min(15, v + 2)) : null;
+    const pt = pur ? pur[0] + pur[1] + pur[2] : 0;
+    const purifyNote = pur && pt >= 44 ? ` · PURIFY (${p.pd ? kDust(p.pd) + ' DUST + ' + p.pc + ' CANDY' : 'DUST + CANDY'}) = ${pt}/45` : '';
+    if (total >= 44) {
+      g = set('KEEP', '#34d399', '✨', `${shinyRank} · ${flavour ? flavour + ' ' : ''}SHINY ${total === 45 ? 'PERFECT' : '98%'}: THE PRIZE OF THE COLLECTION`, `SHINY ${total === 45 ? 'PERFECT' : '98%'} · KEEP${rk ? ' · ' + rk : ''}`);
+    } else if (keeper) {
+      g = set('KEEP', '#34d399', '✨', `${shinyRank} · ${flavour ? flavour + ' ' : ''}SHINY PRIZED: ONE OF YOUR BEST ${n} OF THIS SPECIES (${total}/45)${purifyNote}`, `SHINY PRIZED · KEEP${rk ? ' · ' + rk : ''}`);
+    } else {
+      g = set('SHINY STOCK', '#c084fc', '✨', `${shinyRank} · ${flavour ? flavour + ' ' : ''}SHINY BEYOND YOUR BEST ${n}: HOLD FOR A SHINY-FOR-SHINY TRADE (SPECIAL TRADE, 1 A DAY), NOT FOR TRANSFER${shadow ? ' · PURIFY FIRST, A SHADOW CANNOT BE TRADED' : ''}${purifyNote}`, `SHINY STOCK · TRADE FOR A SHINY${rk ? ' · ' + rk : ''}`);
+    }
+  } else if (c.ivs && total >= 44) {
     // 1. Natural 44 / 45 (or lucky 44/45): protected.
     const label = total === 45 ? 'PERFECT 4★ (15/15/15)' : '98% (44) – AS GOOD AS PERFECT';
     const note = c.luckySibling && !lucky ? ' · YOUR L50 BUILD, POWER UP THE LUCKY FIRST' : '';
@@ -1618,9 +1646,12 @@ function applyLogContext(g, p) {
     const pur = c.ivs.map(v => Math.min(15, v + 2));
     const pt = pur[0] + pur[1] + pur[2];
     const raidRole = roleOf(p).raid;
-    const cost = p.pd ? `${kDust(p.pd)} DUST + ${p.pc} CANDY` : 'DUST + CANDY';
+    const cost = p.pd ? `${kDust(p.pd)} DUST + ${p.pc} ${p.isLegendary ? 'RARE ' : ''}CANDY` : 'DUST + CANDY';
     const purified = tradeValue(p, c.cp, pur, pokeLog.find(e => e.id === c.entryId)?.date, 0);
     const shadowTag = ranked ? `#${c.rank} OF ${c.ofSpecies} ${c.poolLabel}` : c.poolLabel;
+    // Shadow legendaries arrive by the dozen from shadow raids: purifying one costs rare candy and
+    // trading it burns the day's special trade, so a surplus one is simply candy.
+    const legendaryShadow = !!p.isLegendary;
     if (keeper && raidRole) {
       g = set('KEEP', '#c084fc', '🟣', `${shadowTag} · SHADOW RAID FORM: +20% ATTACK, KEEP AND POWER UP AS A SHADOW (PURIFYING WOULD ${pt >= 44 ? 'MAKE A ' + pt + '/45 BUT HIT SOFTER' : 'ONLY WEAKEN IT'})`,
         pt >= 44 ? `SHADOW KEEP · PURIFY = ${pt} BUT WEAKER` : `SHADOW RAID FORM · KEEP${rk ? ' · ' + rk : ''}`);
@@ -1632,6 +1663,8 @@ function applyLogContext(g, p) {
       g = league
         ? set('PURIFY', '#c084fc', '⚔️', `${shadowTag} · PURIFY (${cost}) FOR THE LEAGUE: ${pur.join('/')} IS A BULK BUILD; A SHADOW IS GLASS IN PVP`, `PURIFY FOR PVP · ${cost}`)
         : set('KEEP BEST', '#e2e8f0', '🟣', `${shadowTag} · YOUR BEST SHADOW ${c.species.toUpperCase()}: KEEP ONE (CAN’T BE TRADED)`, `KEEP BEST SHADOW · ${rk || '1 OF 1'}`);
+    } else if (legendaryShadow) {
+      g = set('SURPLUS', '#f87171', '🗑️', `${shadowTag} – ${why ? why + '. ' : ''}TRANSFER FOR CANDY: BEYOND YOUR ${n} SHADOW ${c.species.toUpperCase()}, AND PURIFYING (${cost}) PLUS A SPECIAL TRADE IS NOT WORTH IT FOR A SHADOW-RAID LEGENDARY`, `TRANSFER · SHADOW LEGENDARY · ${why || rk}`);
     } else if (purified.tier !== 'LOW' && purified.score * 1000 > (p.pd || 0) * 3) {
       g = set('PURIFY', '#c084fc', '🔄', `${shadowTag} – ${why ? why + '. ' : ''}PURIFY (${cost}) THEN TRADE: WORTH ~${purified.score}K TO A RECEIVER AS ${pur.join('/')}; A SHADOW CANNOT BE TRADED`, `PURIFY · THEN TRADE ~${purified.score}K`);
     } else {
@@ -1737,10 +1770,9 @@ function applyLogContext(g, p) {
     g = set('CHECK FIRST', '#fbbf24', '🟣', 'SHADOW · OPEN THE APPRAISAL AND SCAN AGAIN: KEEP, PURIFY OR TRANSFER DEPENDS ON ITS IVS', 'SHADOW · APPRAISE TO RANK');
   }
 
-  // 9. Shiny: cosmetic value, never a transfer candidate.
-  if (c.marks.includes('shiny') && (g.verdict === 'DELETE' || g.verdict === 'SURPLUS' || g.verdict === 'TRADE')) {
-    const evolve = finalName ? `, EVOLVE TO ${finalName} WHEN YOU LIKE` : '';
-    g = set('KEEP', '#34d399', '✨', `SHINY · KEEP${evolve}` + (rankTag ? ' · ' + rankTag : ''), `SHINY · KEEP${rk ? ' · ' + rk : ''}`);
+  // 9. Shiny not appraised yet: never a transfer or trade candidate; ask for the appraisal to rank it.
+  if (c.shiny && !c.ivs && (g.verdict === 'DELETE' || g.verdict === 'SURPLUS' || g.verdict === 'TRADE' || g.verdict === 'PURIFY')) {
+    g = set('KEEP', '#34d399', '✨', 'SHINY · OPEN THE APPRAISAL AND SCAN AGAIN TO RANK IT AMONG YOUR SHINIES', 'SHINY · APPRAISE TO RANK');
   }
 
   // Every ranked verdict carries its place among like Pokémon, whatever branch produced it.
@@ -1773,20 +1805,21 @@ function renderSpeciesSummary() {
   const n = keepN();
   const nd = keepNDynamax();
   const pools = new Map();
-  for (const e of pokeLog) { if (e.gone || e.missing) continue; const pl = poolOf(e.species, !!e.dynamax, !!e.shadow); pools.set(`${pl.key}|${e.dynamax ? 1 : 0}|${e.shadow ? 1 : 0}`, e.species); }
+  for (const e of pokeLog) { if (e.gone || e.missing) continue; const pl = poolOf(e.species, !!e.dynamax, !!e.shadow, !!e.shiny); pools.set(`${pl.key}|${e.dynamax ? 1 : 0}|${e.shadow && !e.shiny ? 1 : 0}|${e.shiny ? 1 : 0}`, e.species); }
   const rows = [...pools.keys()].sort().map(key => {
-    const [label, dm, sh] = key.split('|');
+    const [label, dm, sh, sy] = key.split('|');
     const sp = pools.get(key);
     const isD = dm === '1';
     const isS = sh === '1';
-    const ranked = speciesRanking(sp, isD, isS ? 'shadow' : 'raid', isS);
-    const isFamily = !poolOf(sp, isD, isS).perSpecies;
+    const isY = sy === '1';
+    const ranked = speciesRanking(sp, isD, isS ? 'shadow' : 'raid', isS, isY);
+    const isFamily = !poolOf(sp, isD, isS, isY).perSpecies;
     const best = ranked[0];
     const p0 = POKEMON_DATA.find(x => x.name === sp);
-    const kslots = keepSlots(sp, isD, isS);
+    const kslots = keepSlots(sp, isD, isS, isY);
     const pvpKeep = new Set(!isD && pvpRelevant(p0) ? speciesRanking(sp, false, 'pvp').slice(0, kslots.pvp).filter(e => e.ivs && meetsPvpFloor(e.ivs)).map(e => e.id) : []);
-    const keepers = new Set(ranked.slice(0, kslots.raid).filter(e => e.ivs && (isS ? e.ivs[0] + e.ivs[1] + e.ivs[2] >= SHADOW_FLOOR : meetsRaidFloor(e.ivs, POKEMON_DATA.find(x => x.name === e.species), isD, !!e.lucky))).map(e => e.id));
-    const surplus = ranked.filter(e => e.ivs && !e.shiny && !keepers.has(e.id) && !pvpKeep.has(e.id) && e.ivs[0] + e.ivs[1] + e.ivs[2] < 44).length;
+    const keepers = new Set(ranked.slice(0, kslots.raid).filter(e => e.ivs && (isY || (isS ? e.ivs[0] + e.ivs[1] + e.ivs[2] >= SHADOW_FLOOR : meetsRaidFloor(e.ivs, POKEMON_DATA.find(x => x.name === e.species), isD, !!e.lucky)))).map(e => e.id));
+    const surplus = isY ? 0 : ranked.filter(e => e.ivs && !keepers.has(e.id) && !pvpKeep.has(e.id) && e.ivs[0] + e.ivs[1] + e.ivs[2] < 44).length;
     const bestText = best.ivs ? `${best.ivs.join('/')} (${ivPercent(best.ivs)}%)` : `${best.cp || '?'} CP, not appraised`;
     return `<tr style="border-top:1px solid var(--border);"><td style="padding:5px 4px;"><b>${label}</b>${isFamily ? ' <span style="color:#94a3b8;">family</span>' : ''}${isD ? ' <span style="color:#ec4899;">Dynamax</span>' : ''}</td><td style="padding:5px 4px; text-align:right;">${ranked.length}</td><td style="padding:5px 4px; text-align:right;">${bestText}</td><td style="padding:5px 4px; text-align:right; color:${surplus ? '#f87171' : '#34d399'};">${surplus ? surplus + ' surplus' : 'ok'}</td></tr>`;
   }).join('');
@@ -1804,7 +1837,11 @@ function entryStanding(e) {
   if (!p || !e.ivs) return { text: 'appraise to rank', color: '#94a3b8' };
   const total = e.ivs[0] + e.ivs[1] + e.ivs[2];
   if (total >= 44 && !e.lucky) return { text: total === 45 ? 'PERFECT · keep' : '98% · keep', color: '#34d399' };
-  if (e.shiny) return { text: 'shiny · keep', color: '#34d399' };
+  if (e.shiny) {
+    const k = poolKeepers(e.species, !!e.dynamax, !!e.shadow, true);
+    if (k.raid.some(x => x.id === e.id)) return { text: `shiny prized #${k.ranked.indexOf(e) + 1} of ${k.slots}`, color: '#34d399' };
+    return { text: `shiny trade stock #${k.ranked.indexOf(e) + 1}`, color: '#c084fc' };
+  }
   const k = poolKeepers(e.species, !!e.dynamax, !!e.shadow);
   if (k.raid.some(x => x.id === e.id)) return { text: `${e.shadow ? 'shadow ' : ''}keeper #${k.ranked.indexOf(e) + 1} of ${k.slots}`, color: '#c084fc' };
   if (e.shadow) {
@@ -1849,6 +1886,7 @@ function renderLogModal() {
   document.getElementById('keepNInput').value = keepN();
   document.getElementById('keepNDmaxInput').value = keepNDynamax();
   document.getElementById('keepNShadowInput').value = keepNShadow();
+  document.getElementById('keepNShinyInput').value = keepNShiny();
   document.getElementById('keepNPvpInput').value = keepNPvp();
   document.getElementById('logSpecies').innerHTML = renderSpeciesSummary();
   const rankOf = new Map(), rankPvpOf = new Map();
@@ -2032,6 +2070,7 @@ function verdictColor(g, p) {
   if (g.verdict === 'CHECK FIRST' || g.verdict === 'FAVORITE?' || scanMatchAmbiguous) return TIER_COLORS.white;
   if (g.verdict === 'TRADE') return TIER_COLORS.purple;
   if (g.verdict === 'PURIFY') return /\/45/.test(reason) ? TIER_COLORS.gold : TIER_COLORS.purple;   // purify to a 44/45 is gold
+  if (g.verdict === 'SHINY STOCK') return TIER_COLORS.purple;
   if (g.verdict === 'KEEP' || g.verdict === 'KEEP BEST') {
     const top = (c && c.rank === 1 && c.ofSpecies >= 2) || ivTotal >= 44 || /PERFECT|POWER UP FIRST/.test(reason);
     if (top) return TIER_COLORS.gold;
@@ -2066,7 +2105,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.38';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.39';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -2944,7 +2983,7 @@ function pushNativePill() {
   if (scanContext && scanContext.rank) slots.push(['LOGGED', `${pokeLog.length} TOTAL · ${scanContext.ofSpecies} ${scanContext.species.toUpperCase()}`, '#94a3b8']);
   const verdict = lastGuidance ? lastGuidance.verdict : '';
   const actions = evaluationMode === 'storage' && scanContext && scanContext.entryId &&
-    ['DELETE', 'SURPLUS', 'TRADE', 'FAVORITE?', 'CHECK FIRST', 'PURIFY'].includes(verdict) ? ['gone'] : [];
+    ['DELETE', 'SURPLUS', 'TRADE', 'FAVORITE?', 'CHECK FIRST', 'PURIFY', 'SHINY STOCK'].includes(verdict) ? ['gone'] : [];
   const modeText = evaluationMode + (scanLane && evaluationMode === 'storage' ? ' · ' + scanLane : '');
   Native.updatePill(modeText, target, slots, actions);
 }
