@@ -217,6 +217,32 @@ test('shadow: no raid use -> purify when the +2 makes a 44, otherwise keep one',
   eq(slot(u.last(), 'VERDICT'), 'KEEP BEST', 'a lone decent shadow of a no-use species is kept as the one');
 });
 
+// ---------------------------------------------------------------- shinies
+test('shiny: own branch, prized best two then trade stock, never transfer, never blended', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  const mk = (ivs, i, cp) => card({ cp, name: 'Charmander', kg: 8 + i * 0.3, m: 0.6, types: 'FIRE', ivs, date: `9/${10 + i}/2026` });
+  for (let i = 0; i < 6; i++) await t.app.scan(mk([14, 14, 13], i, 600 + i));          // six normal keepers
+  for (let i = 0; i < 3; i++) { await t.app.scan(mk([6, 7, 8], 10 + i, 300 + i)); run(`pokeLog[pokeLog.length - 1].shiny = true`); }
+  await t.app.scan(mk([6, 7, 8], 12, 302));   // equal IVs: the highest CP ranks first
+  eq(slot(t.last(), 'VERDICT'), 'KEEP', 'a low-IV shiny can still be prized'); has(slot(t.last(), 'REASON'), 'SHINY PRIZED', 'as shiny');
+  await t.app.scan(mk([6, 7, 8], 10, 300));
+  eq(slot(t.last(), 'VERDICT'), 'SHINY STOCK', 'the third shiny is trade stock'); check(!/TRANSFER/.test(slot(t.last(), 'REASON')), 'never transfer');
+  await t.app.scan(mk([14, 14, 13], 0, 600));
+  eq(slot(t.last(), 'VERDICT'), 'KEEP', 'normal keepers untouched by shinies'); has(slot(t.last(), 'REASON'), '/6', 'normal pool counts six, not nine');
+  await t.app.scan(mk([15, 15, 14], 20, 700)); run(`pokeLog[pokeLog.length - 1].shiny = true`); await t.app.scan(mk([15, 15, 14], 20, 700));
+  has(slot(t.last(), 'REASON'), 'SHINY 98%', 'a 44 shiny is the prize');
+});
+
+test('shadow legendary: keep up to the raid slots, surplus transfers (no purify-then-trade)', async t => {
+  const sh = (ivs, i) => ({ ...card({ cp: 2200 + i, name: 'Lunala', kg: 120 + i, m: 4, types: 'PSYCHIC / GHOST', ivs, date: `9/${10 + i}/2026` }), shadow: true });
+  for (let i = 0; i < 7; i++) await t.app.scan(sh([12, 12, 12], i));
+  await t.app.scan(sh([12, 12, 12], 6));   // equal IVs: the highest CP ranks first
+  eq(slot(t.last(), 'VERDICT'), 'KEEP', 'a shadow legendary in the raid slots keeps'); has(slot(t.last(), 'REASON'), 'SHADOW', 'as shadow');
+  await t.app.scan(sh([12, 12, 12], 0));
+  eq(slot(t.last(), 'VERDICT'), 'SURPLUS', 'the seventh transfers'); has(slot(t.last(), 'REASON'), 'SHADOW LEGENDARY', 'and says why');
+  check(!/PURIFY/.test(slot(t.last(), 'VERDICT')), 'no purify-then-trade for a shadow-raid legendary');
+});
+
 // ---------------------------------------------------------------- keeper slots
 // A legendary catch at ~level 20-25; CP scales with the IVs so every card is a different Pokémon.
 const lunala = (ivs, i) => card({ cp: 2200 + ivs[0] + ivs[1] + ivs[2] + i, name: 'Lunala', kg: 120 + i, m: 4, types: 'PSYCHIC / GHOST', ivs, date: `9/${10 + i}/2026` });
