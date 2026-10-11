@@ -1201,8 +1201,9 @@ function recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs) {
   entry.ivGuess = matchInfo ? (matchInfo.type === '45' ? 'maybe 100%' : 'maybe 98%') : null;
   if (ivs) entry.ivs = ivs;                                   // appraised: exact, kept forever
   if (sized && !entry.weight) { entry.weight = details.weight; entry.height = details.height; }
+  // A lucky stays lucky for life: set it when the label (or the gold background) is seen, and
+  // never clear it just because one read missed the label.
   if (details && details.lucky) entry.lucky = true;
-  if (details && details.notLucky) entry.lucky = false;
   if (details && details.purifiedLabel) entry.shadow = false;
   if (details && details.where) entry.where = details.where;
   if (details && 'dynamax' in details) entry.dynamax = !!details.dynamax; // badge is always visible when set
@@ -1552,7 +1553,7 @@ function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs, auto =
     poolLabel: pool.perSpecies ? pokemon.name.toUpperCase() : `${pool.key.toUpperCase()} FAMILY`,
     pvpLane, rankPvp: entry && pvpLane ? rankedPvp.indexOf(entry) + 1 : 0,
     poolIsFamily: !pool.perSpecies,
-    marks: [((details && details.lucky) || (entry && entry.lucky && !(details && details.notLucky))) && 'lucky', entry && entry.shiny && 'shiny',
+    marks: [((details && details.lucky) || (entry && entry.lucky)) && 'lucky', entry && entry.shiny && 'shiny',
       ((details && details.shadow) || (entry && entry.shadow && !(details && details.notShadow))) && 'shadow'].filter(Boolean) };
 }
 
@@ -2065,7 +2066,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.37';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.38';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -3216,10 +3217,11 @@ async function classifyScan(isLikelyStorageScreen, readRegion) {
       nameText, buttonsText, typesText);
     if (banner || fromPage) {
       const details = parseStorageDetails(await readRegion(SCAN_REGIONS.storageStats), await readRegion(SCAN_REGIONS.storageDate));
-      // Every lucky carries a "LUCKY POKÉMON" label under its name, so no label = not lucky.
+      // Every lucky carries a "LUCKY POKÉMON" label under its name; the gold sparkle background
+      // (pixels, from the shell) backs it up when the thin green label is missed by OCR.
       const purifiedLabel = /PURIFIED/i.test(nameText);
       details.lucky = /LUCKY/i.test(nameText) && !purifiedLabel;
-      details.notLucky = !details.lucky;
+      details.luckyLabel = details.lucky;
       details.purifiedLabel = purifiedLabel;
       // Shadow: the dark-violet haze around the body (pixels, from assess*), confirmed or
       // corrected by the PURIFY button whenever the buttons are on screen.
@@ -3287,6 +3289,7 @@ function applyScanResult(result, isSilent = false) {
     if (mode === 'storage' && pokemon && ambiguous !== 'stage') {
       if (result.details) result.details.formUnsure = ambiguous === 'form';
       if (result.details && result.shadowHaze && !result.details.notShadow) result.details.shadow = true;
+      if (result.details && result.luckyHaze && !result.details.purifiedLabel) result.details.lucky = true;
       if (result.details) result.details.dynamax = !!result.dynamax;
       scanContext = buildScanContext(pokemon, cp, result.details, result.favorite, cp ? evaluateCpMatch(pokemon, cp) : null, result.ivs, !!result.auto);
     }
@@ -3374,7 +3377,7 @@ window.assessNativeOcr = async function (payload) {
       .join('\n');
     const res = await classifyScan(!!payload.storage, readRegion);
     const out = applyScanResult({ ...res, favorite: !!payload.favorite, ivs: Array.isArray(payload.ivs) ? payload.ivs : null,
-      auto: !!payload.auto, shadowHaze: !!payload.shadow, dynamax: !!payload.dynamax }, true);
+      auto: !!payload.auto, shadowHaze: !!payload.shadow, luckyHaze: !!payload.lucky, dynamax: !!payload.dynamax }, true);
     lastScanDebug += `\n=> ${out.mode} ${out.pokemon ? out.pokemon.name : '(no species)'} cp=${out.cp}`;
   } catch (err) {
     console.error('Native scan assessment error:', err);

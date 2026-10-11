@@ -809,10 +809,11 @@ class FloatingOverlayService : Service() {
         val appraisalClear = !pillCovers(0.07, 0.68, 0.52, 0.88).also { if (it) blocked.add("appraisal") }
         val isFavorite = isStorage && favoriteClear && looksFavorited(bitmap)
         val isShadow = isStorage && shadowClear && looksShadow(bitmap)
+        val isLucky = isStorage && looksLucky(bitmap)
         val isDynamax = isStorage && dynamaxClear && looksDynamax(bitmap)
         val ivs = if (isStorage && appraisalClear) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked) }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked, isLucky) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -979,6 +980,40 @@ class FloatingOverlayService : Service() {
         return ring >= 0.45f && ring - edge >= 0.08f
     }
 
+    /**
+     * Lucky Pokémon get a gold sparkle background behind the model (the whole top of the page turns
+     * warm gold with bright bokeh). Sampled around the model, pill pixels skipped. Fire habitats
+     * are redder and darker than this hue/brightness window.
+     */
+    private fun looksLucky(bmp: Bitmap): Boolean {
+        val w = bmp.width
+        val h = bmp.height
+        fun gold(c: Int): Boolean {
+            val r = (c shr 16 and 0xFF) / 255f
+            val g = (c shr 8 and 0xFF) / 255f
+            val b = (c and 0xFF) / 255f
+            val max = maxOf(r, g, b)
+            val min = minOf(r, g, b)
+            val d = max - min
+            if (max < 0.62f || d / max < 0.25f) return false
+            val hue = if (max == r) ((g - b) / d + 6f) % 6f else if (max == g) (b - r) / d + 2f else (r - g) / d + 4f
+            return hue in 0.55f..0.95f   // 33°-57°: amber to gold
+        }
+        var n = 0; var v = 0
+        var y = (h * 0.08).toInt()
+        while (y < (h * 0.34).toInt()) {
+            var x = (w * 0.04).toInt()
+            while (x < (w * 0.96).toInt()) {
+                if (!(x > w * 0.34 && x < w * 0.66 && y > h * 0.13 && y < h * 0.32) && !underPill(x, y, w)) {
+                    n++; if (gold(bmp.getPixel(x, y))) v++
+                }
+                x += 4
+            }
+            y += 4
+        }
+        return n > 0 && v.toFloat() / n >= 0.50f
+    }
+
     /** Magenta round Dynamax badge under the height/weight row; same rule as looksDynamax() in index.html. */
     private fun looksDynamax(bmp: Bitmap): Boolean {
         val x0 = (bmp.width * 0.32).toInt()
@@ -1009,7 +1044,7 @@ class FloatingOverlayService : Service() {
         return n > 0 && m.toFloat() / n >= 0.30f
     }
 
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false, blocked: List<String> = emptyList()) {
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false, blocked: List<String> = emptyList(), isLucky: Boolean = false) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         // AUTO reads keep the pill on screen: skip any text inside it (scaled to capture pixels).
@@ -1042,7 +1077,7 @@ class FloatingOverlayService : Service() {
             evaluator(
                 JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines)
                     .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).put("auto", auto)
-                    .put("shadow", isShadow).put("dynamax", isDynamax).put("blocked", JSONArray(blocked)).toString()
+                    .put("shadow", isShadow).put("dynamax", isDynamax).put("lucky", isLucky).put("blocked", JSONArray(blocked)).toString()
             )
             return
         }
