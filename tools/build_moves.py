@@ -21,6 +21,7 @@ What is written per species
                   elite-only, not-TM-able (display names), so the app can tell a wrong move
                   from a fine one
   bs              base attack / defense / stamina (for CP and IV-odds maths)
+  ec / ecr / te   candy for the next evolution, candy to the final form, evolves free after a trade
   rr / rt / rty   raid rank overall, rank among attackers of the same move type, and that type
                   (used to say whether a species is a RAID pick, a PVP pick, or BOTH)
 The older ranks (pvp_r / pve_r / pvp_n / pve_n) and the action tags are left untouched.
@@ -96,8 +97,14 @@ class GameMaster:
                 continue
             dex = int(re.match(r"V(\d+)_POKEMON_", item["templateId"]).group(1))
             form = ps.get("form")
+            branches = []
+            for b in ps.get("evolutionBranch", []) or []:
+                if "evolution" in b:
+                    branches.append({"to": b["evolution"], "form": b.get("form"), "candy": int(b.get("candyCost", 0) or 0),
+                                     "trade": bool(b.get("noCandyCostViaTrade", False))})
             self.species.setdefault(dex, []).append({
-                "template": item["templateId"], "form": form if isinstance(form, str) else None,
+                "template": item["templateId"], "pid": ps.get("pokemonId"), "branches": branches,
+                "form": form if isinstance(form, str) else None,
                 "types": [t.replace("POKEMON_TYPE_", "") for t in (ps.get("type"), ps.get("type2")) if t],
                 "atk": ps["stats"]["baseAttack"], "def": ps["stats"]["baseDefense"], "sta": ps["stats"]["baseStamina"],
                 "fast": [fix(x) for x in ps.get("quickMoves", [])],
@@ -106,6 +113,29 @@ class GameMaster:
                 "elite_charged": [fix(x) for x in ps.get("eliteCinematicMove", [])],
                 "special": [fix(x) for x in ps.get("nonTmCinematicMoves", [])],
             })
+
+    def by_evolution(self, pid, form):
+        """The entry a branch evolves into: exact form first, then the plain/NORMAL one."""
+        cands = [c for group in self.species.values() for c in group if c["pid"] == pid]
+        if form:
+            for c in cands:
+                if c["form"] == form:
+                    return c
+        for c in cands:
+            if c["form"] is None or (c["form"] or "").endswith("_NORMAL"):
+                return c
+        return cands[0] if cands else None
+
+    def candy_to_final(self, sp, depth=0):
+        """Cheapest candy total from this stage to a stage that evolves no further."""
+        if not sp["branches"] or depth > 4:
+            return 0
+        best = None
+        for b in sp["branches"]:
+            nxt = self.by_evolution(b["to"], b["form"])
+            total = b["candy"] + (self.candy_to_final(nxt, depth + 1) if nxt else 0)
+            best = total if best is None else min(best, total)
+        return best or 0
 
     def display(self, move_id):
         return self.names.get(move_id.replace("_FAST", "").replace("_", "")) or title(move_id)
@@ -263,6 +293,9 @@ def main():
             continue
         elite = set(sp["elite_fast"] + sp["elite_charged"])
         p["bs"] = [sp["atk"], sp["def"], sp["sta"]]     # base stats: exact CP maths in the page
+        p["ec"] = min((b["candy"] for b in sp["branches"]), default=0)   # candy for the next evolution
+        p["ecr"] = gm.candy_to_final(sp)                                   # candy to the final form
+        p["te"] = any(b["trade"] for b in sp["branches"])                   # evolves free after a trade
         p["mv"] = {
             "f": [gm.display(x) for x in sp["fast"]],
             "c": [gm.display(x) for x in sp["charged"]],
