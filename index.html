@@ -651,6 +651,7 @@
     </div>
     <div id="logSpecies"></div>
     <div id="logBody" style="max-height:40vh; overflow-y:auto;"></div>
+    <div id="scanHealthNotice" style="display:none; background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.5); border-radius:8px; padding:8px 10px; margin:8px 0; font-size:12px; color:#fbbf24;"></div>
     <details style="margin-top:8px; font-size:11px; color:var(--text-muted);"><summary style="cursor:pointer;">Last scan details (for troubleshooting)</summary><pre id="lastScanDebug" style="white-space:pre-wrap; background:#0f172a; padding:6px; border-radius:6px; max-height:30vh; overflow:auto;"></pre></details>
     <textarea id="logTransferBox" style="display:none; width:100%; height:90px; margin-top:10px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:8px; font-size:11px; padding:6px; box-sizing:border-box;"></textarea>
     <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
@@ -1893,7 +1894,7 @@ function diagnosticsBundle() {
   return JSON.stringify({
     app: APP_VERSION, at: new Date().toISOString(), ua: navigator.userAgent,
     settings: { keepN: keepN(), keepNPvp: keepNPvp(), keepNDynamax: keepNDynamax() },
-    lastScan: lastScanDebug, autoTrail: Native.autoTrail(),
+    lastScan: lastScanDebug, autoTrail: Native.autoTrail(), scanHealth: scanHealth(),
     log: entries,
   });
 }
@@ -1908,6 +1909,13 @@ function sendDiagnostics() {
 function renderLogModal() {
   const box = document.getElementById('testShareBox');
   if (box) box.style.display = Native.testSharing ? 'block' : 'none';
+  const health = scanHealth();
+  const notice = document.getElementById('scanHealthNotice');
+  if (notice) {
+    const fails = health.filter(x => !x).length;
+    notice.style.display = layoutSuspect() ? 'block' : 'none';
+    notice.innerText = `${fails} of the last ${health.length} storage reads found the card but no Pokémon or CP. Pokémon GO may have changed its screen layout: check for an app update, and if there is none, share a diagnostics file so the scanner can be re-calibrated.`;
+  }
   const trail = Native.autoTrail();
   document.getElementById('lastScanDebug').innerText = (lastScanDebug || 'No native scan yet.') + (trail ? '\n\nAUTO trail:\n' + trail : '');
   document.getElementById('keepNInput').value = keepN();
@@ -2132,7 +2140,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.40';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.41';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -2990,7 +2998,9 @@ function pushNativePill() {
     target = [name, cp ? `${cp} CP` : ''].filter(Boolean).join('\n');
   }
   if (evaluationMode === 'blank') {
-    Native.updatePill('STANDBY', '', [['', 'NOTHING TO READ', ''], ['', 'TAP SCAN ON A POKÉMON', '']]);
+    const rows = [['', 'NOTHING TO READ', ''], ['', 'TAP SCAN ON A POKÉMON', '']];
+    if (layoutSuspect()) rows.push(['', LAYOUT_SUSPECT_LINE, '#fbbf24']);
+    Native.updatePill('STANDBY', '', rows);
     return;
   }
   // One [caption, value, colour] row per answer, in the order they are needed mid-encounter.
@@ -3007,6 +3017,7 @@ function pushNativePill() {
     else slots.push(['ROLE', roleLabel(activeHudPokemon), role === 'BOTH' ? '#fbbf24' : role ? '#c084fc' : '#94a3b8']);
   }
   for (const m of scanMoveAdvice()) slots.push([m.caption, m.value, '#7dd3fc']);
+  if (evaluationMode === 'storage' && !activeHudPokemon && layoutSuspect()) slots.push(['', LAYOUT_SUSPECT_LINE, '#fbbf24']);
   if (scanContext && scanContext.rank) slots.push(['LOGGED', `${pokeLog.length} TOTAL · ${scanContext.ofSpecies} ${scanContext.species.toUpperCase()}`, '#94a3b8']);
   const verdict = lastGuidance ? lastGuidance.verdict : '';
   const actions = evaluationMode === 'storage' && scanContext && scanContext.entryId &&
@@ -3424,6 +3435,24 @@ window.appForegrounded = function () {
 };
 document.addEventListener('visibilitychange', () => { if (!document.hidden) window.appForegrounded(); });
 
+// --- Screen-layout listener --------------------------------------------------------------------
+// The scanner reads fixed regions of the storage page. A game update that moves the layout breaks
+// reads silently, so the app keeps the outcomes of its last storage reads (on this phone only):
+// the white card was found but no species / CP came out of it = a failed read. Mostly failures
+// lately = the layout probably changed; say so on the pill and in My Log.
+const SCAN_HEALTH_KEY = 'pogo_scan_health';
+const SCAN_HEALTH_WINDOW = 8, SCAN_HEALTH_ALARM = 6;
+function scanHealth() { try { return JSON.parse(localStorage.getItem(SCAN_HEALTH_KEY) || '[]'); } catch (e) { return []; } }
+function noteScanOutcome(ok) {
+  const h = scanHealth().concat(ok ? 1 : 0).slice(-SCAN_HEALTH_WINDOW);
+  localStorage.setItem(SCAN_HEALTH_KEY, JSON.stringify(h));
+}
+function layoutSuspect() {
+  const h = scanHealth();
+  return h.length >= SCAN_HEALTH_WINDOW && h.filter(x => !x).length >= SCAN_HEALTH_ALARM;
+}
+const LAYOUT_SUSPECT_LINE = 'READS FAILING · GAME UPDATE? CHECK FOR AN APP UPDATE';
+
 window.assessNativeOcr = async function (payload) {
   try {
     if (!pageBeforePill) {
@@ -3443,6 +3472,7 @@ window.assessNativeOcr = async function (payload) {
       .map(l => l.t)
       .join('\n');
     const res = await classifyScan(!!payload.storage, readRegion);
+    if (payload && payload.storage) noteScanOutcome(res.mode === 'storage' && !!res.pokemon && !!res.cp);
     const out = applyScanResult({ ...res, favorite: !!payload.favorite, ivs: Array.isArray(payload.ivs) ? payload.ivs : null,
       auto: !!payload.auto, shadowHaze: !!payload.shadow, luckyHaze: !!payload.lucky, dynamax: !!payload.dynamax,
       colors: Array.isArray(payload.colors) ? payload.colors : null }, true);

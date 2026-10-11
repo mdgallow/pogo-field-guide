@@ -1,1 +1,1 @@
-{"versionCode": 63, "versionName": "2.3.40", "apk": "pogo-companion.apk", "notes": "Shiny detection by colour: the model's colours are compared with the species' normal and shiny palettes, so obvious shinies (black Charizard, red Gyarados) are marked automatically; subtle ones still need the tick."}
+{"versionCode": 64, "versionName": "2.3.41", "apk": "pogo-companion.apk", "notes": "Update listeners: a weekly check of the game data opens an issue when Pokemon, moves, evolutions or rankings change; the app warns when its reads start failing after a game update."}

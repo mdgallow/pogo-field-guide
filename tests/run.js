@@ -429,6 +429,19 @@ test('reference page: the type and region filters return matching species', asyn
   }
 });
 
+// ---------------------------------------------------------------- layout listener
+test('layout listener: mostly failed storage reads raise the game-update warning', async t => {
+  const broken = { storage: true, favorite: false, ivs: null, auto: false, shadow: false, dynamax: false, lines: [line('???', 0.4, 0.41, 0.2, 0.03)] };
+  for (let i = 0; i < 8; i++) await t.app.scan(broken);
+  const run = code => require('vm').runInContext(code, t.ctx);
+  eq(run('layoutSuspect()'), true, 'alarm after 8 failed reads');
+  check(t.last().slots.some(x => /READS FAILING/.test(x.value)), 'pill carries the warning');
+  await t.app.scan(card({ cp: 3000, name: 'Charizard', kg: 90.5, m: 1.7, types: 'FIRE / FLYING', ivs: [15, 15, 15] }));
+  check(!t.last().slots.some(x => /READS FAILING/.test(x.value)), 'a successful read shows no warning on its own pill');
+  for (let i = 0; i < 8; i++) await t.app.scan(card({ cp: 3000, name: 'Charizard', kg: 90.5, m: 1.7, types: 'FIRE / FLYING', ivs: [15, 15, 15] }));
+  eq(run('layoutSuspect()'), false, 'clears after healthy reads');
+});
+
 // ---------------------------------------------------------------- tester diagnostics (test builds)
 test('diagnostics file: log without catch places, plus trail and last scan; off in non-test shells', async t => {
   await t.app.scan(card({ cp: 3000, name: 'Charizard', kg: 90.5, m: 1.7, types: 'FIRE / FLYING', ivs: [15, 15, 15] }));
