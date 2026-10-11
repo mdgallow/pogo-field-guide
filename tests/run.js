@@ -118,6 +118,17 @@ test('lucky: needs the label, and counts above its raw IVs', async t => {
   check(!u.app.log()[0].lucky, 'no label, not lucky');
 });
 
+test('lucky: once seen, a lucky stays lucky even when a later read misses the label', async t => {
+  const g = extra => card({ cp: 2900, name: 'Giratina', kg: 750, m: 4.5, types: 'GHOST / DRAGON', ivs: [12, 12, 13], ...extra });
+  await t.app.scan(g({ lucky: true }));
+  eq(t.app.log()[0].lucky, true, 'logged as lucky');
+  await t.app.scan(g({ lucky: false }));
+  eq(t.app.log()[0].lucky, true, 'still lucky after a read without the label'); has(slot(t.last(), 'REASON'), 'LUCKY', 'pill still says lucky');
+  const u = loadApp();
+  await u.app.scan({ ...g({ lucky: false }), lucky: true });   // gold background seen by the shell, label missed
+  eq(u.app.log()[0].lucky, true, 'gold background alone marks it lucky');
+});
+
 test('lucky: a 32-IV lucky clears the floor that a plain 32 fails', async t => {
   const dragonite = extra => card({ cp: 2400, name: 'Dragonite', kg: 210, m: 2.2, types: 'DRAGON / FLYING', ivs: [11, 10, 11], ...extra });
   await t.app.scan(dragonite({}));
