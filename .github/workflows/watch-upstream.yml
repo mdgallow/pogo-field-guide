@@ -1,0 +1,43 @@
+name: Watch upstream Pokémon GO data
+
+# Weekly check of the game master, PvPoke rankings and sprite assets. When anything moved it opens
+# (or updates) one issue listing what changed and how to refresh the app. Nothing is committed.
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare live sources with the recorded baseline
+        id: watch
+        run: |
+          set +e
+          python3 tools/watch_upstream.py > report.txt
+          code=$?
+          set -e
+          cat report.txt
+          echo "changed=$([ "$code" = "3" ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+          if [ "$code" != "0" ] && [ "$code" != "3" ]; then exit "$code"; fi
+
+      - name: Open or update the issue
+        if: steps.watch.outputs.changed == 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Upstream Pokémon GO data changed"
+          body="$(printf 'Detected on %s by the weekly watcher.\n\n```\n%s\n```\n' "$(date -u +%F)" "$(cat report.txt)")"
+          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number -q '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body" --label "upstream"
+          fi
