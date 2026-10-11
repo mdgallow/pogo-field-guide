@@ -1585,11 +1585,12 @@ function applyLogContext(g, p) {
   const total = c.ivs ? c.ivs[0] + c.ivs[1] + c.ivs[2] : 0;
   const eff = c.ivs ? effectiveTotal(c.ivs, p, lucky) : 0;
   const natural44 = c.ivs && total >= 44 && !lucky;           // never traded, never surplus
-  const inRaid = slotted && c.rank <= n && (c.shadow ? total >= SHADOW_FLOOR : meetsRaidFloor(c.ivs, p, c.dynamax, lucky));
+  // Shiny: no floor, the best few are prized whatever their IVs.
+  const inRaid = slotted && c.rank <= n && (c.shiny ? true : c.shadow ? total >= SHADOW_FLOOR : meetsRaidFloor(c.ivs, p, c.dynamax, lucky));
   const inPvp = slotted && c.pvpLane && c.rankPvp > 0 && c.rankPvp <= np && meetsPvpFloor(c.ivs);
   // Holds a keeper slot and clears the floor: kept whatever the species' old action tag says.
   const keeper = inRaid || inPvp;
-  const belowFloor = c.ivs && (c.shadow ? total < SHADOW_FLOOR : (!meetsRaidFloor(c.ivs, p, c.dynamax, lucky) && !(c.pvpLane && meetsPvpFloor(c.ivs))));
+  const belowFloor = c.ivs && !c.shiny && (c.shadow ? total < SHADOW_FLOOR : (!meetsRaidFloor(c.ivs, p, c.dynamax, lucky) && !(c.pvpLane && meetsPvpFloor(c.ivs))));
   const surplus = c.appraised && !natural44 && ((slotted && !keeper) || belowFloor);
   const better = ranked ? Math.max(0, c.rank - 1) : 0;
   const floor = c.dynamax || c.shadow ? 30 : raidFloor(p);
