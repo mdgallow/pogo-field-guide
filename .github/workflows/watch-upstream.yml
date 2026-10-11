@@ -1,7 +1,7 @@
 name: Watch upstream Pokémon GO data
 
-# Twice-weekly check. Two reports, two issues: "Upcoming" (announced events: pre-patch while the
-# details are available) and "Changed" (data that actually moved: true up the assumptions).
+# Twice-weekly check. Two reports, two issues: "Prepare" (announced events: get the work ready on
+# the branch, no release) and "Release" (data that actually moved in the game: bundle and ship once).
 # Every source is a public GitHub-hosted mirror; nothing touches the game or its makers' servers,
 # and nothing is committed by the workflow.
 on:
@@ -44,5 +44,5 @@ jobs:
           }
           upcoming="$(awk '/^UPCOMING/{f=1} /^CONFIRMED CHANGES/{f=0} f' report.txt)"
           confirmed="$(awk '/^CONFIRMED CHANGES/{f=1} f' report.txt)"
-          post "Upcoming Pokémon GO changes (pre-patch)" "$upcoming" "upstream-upcoming"
-          post "Upstream Pokémon GO data changed (true-up)" "$confirmed" "upstream"
+          post "Prepare: upcoming Pokémon GO changes (no release yet)" "$upcoming" "upstream-upcoming"
+          post "Release: Pokémon GO data changed (bundle and ship)" "$confirmed" "upstream"

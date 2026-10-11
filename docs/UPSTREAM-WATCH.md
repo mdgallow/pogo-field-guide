@@ -14,11 +14,11 @@ twice a week, one request per file. The app on the phone takes no part in any of
 ever contacts our own site for `version.json`. So nothing here can count as accessing the game
 "through automation", which is the clause the game's terms care about.
 
-## 1. Announcements (twice weekly, automatic) → pre-patch
+## 1. Announcements (twice weekly, automatic) → prepare, do not release
 
 The same workflow reads the community event calendar and opens or updates the issue
-**"Upcoming Pokémon GO changes (pre-patch)"** for events starting within 28 days that can affect
-the app, each with what to prepare:
+**"Prepare: upcoming Pokémon GO changes"** for events starting within 28 days that can affect
+the app, each with what to prepare. This is working material, not a release trigger:
 
 | Announced | Prepare ahead |
 |---|---|
@@ -28,17 +28,21 @@ the app, each with what to prepare:
 | GO Tour / GO Fest / Wild Area / research | debuts and new forms: add dataset rows (name, dex, types, `cps`) before they appear |
 | Max Battles / Max Mondays | Dynamax species for the Dynamax pool |
 
-**Maintenance cadence.** Repo maintenance is scheduled when an announcement is confirmed and
-carries enough detail: a **pre-patch** release ships what can be known in advance, marked as
-assumed in the issue (new rows, elite-move markers, palettes). When the game data actually moves
-(§2), the **true-up** release regenerates everything from the real data and the issue's checklist
-is used to confirm or correct each assumption. Two small releases, no surprises on event day.
+**Maintenance cadence: one release, aligned with the game.** Users must not feel they are
+patching all the time, so nothing ships ahead of the game. When an announcement is confirmed and
+carries enough detail, the preparation is done on the branch (dataset rows, elite-move markers,
+palettes, any rule change the event implies) with the assumptions written on the issue, and it
+stays unreleased. When the game data actually moves (§2), everything is regenerated from the real
+data, each assumption is confirmed or corrected, and the prepared work and the true-up go out as
+**one bundled release** on or just after the day the change is live in the game. Only a verdict
+rule that is wrong today (a bug) is released on its own.
 
 ## 2. Game data (twice weekly, automatic) → true-up
 
 `.github/workflows/watch-upstream.yml` runs `tools/watch_upstream.py` on Mondays and Thursdays
-and opens or updates the issue **"Upstream Pokémon GO data changed (true-up)"** when any of these
-moved since the recorded baseline (`tools/upstream.json`):
+and opens or updates the issue **"Release: Pokémon GO data changed"** when any of these moved
+since the recorded baseline (`tools/upstream.json`). This is the release trigger: bundle the
+prepared work with the regenerated data and ship once.
 
 | Source | What a change means | Refresh |
 |---|---|---|
