@@ -22,6 +22,7 @@ What is written per species
                   from a fine one
   bs              base attack / defense / stamina (for CP and IV-odds maths)
   ec / ecr / te   candy for the next evolution, candy to the final form, evolves free after a trade
+  pd / pc         purification stardust / candy (only species that exist as shadows)
   rr / rt / rty   raid rank overall, rank among attackers of the same move type, and that type
                   (used to say whether a species is a RAID pick, a PVP pick, or BOTH)
 The older ranks (pvp_r / pve_r / pvp_n / pve_n) and the action tags are left untouched.
@@ -102,8 +103,10 @@ class GameMaster:
                 if "evolution" in b:
                     branches.append({"to": b["evolution"], "form": b.get("form"), "candy": int(b.get("candyCost", 0) or 0),
                                      "trade": bool(b.get("noCandyCostViaTrade", False))})
+            shadow = ps.get("shadow") or {}
             self.species.setdefault(dex, []).append({
                 "template": item["templateId"], "pid": ps.get("pokemonId"), "branches": branches,
+                "pd": int(shadow.get("purificationStardustNeeded", 0) or 0), "pc": int(shadow.get("purificationCandyNeeded", 0) or 0),
                 "form": form if isinstance(form, str) else None,
                 "types": [t.replace("POKEMON_TYPE_", "") for t in (ps.get("type"), ps.get("type2")) if t],
                 "atk": ps["stats"]["baseAttack"], "def": ps["stats"]["baseDefense"], "sta": ps["stats"]["baseStamina"],
@@ -296,6 +299,10 @@ def main():
         p["ec"] = min((b["candy"] for b in sp["branches"]), default=0)   # candy for the next evolution
         p["ecr"] = gm.candy_to_final(sp)                                   # candy to the final form
         p["te"] = any(b["trade"] for b in sp["branches"])                   # evolves free after a trade
+        if sp["pd"]:
+            p["pd"], p["pc"] = sp["pd"], sp["pc"]                            # purification stardust / candy
+        else:
+            p.pop("pd", None); p.pop("pc", None)
         p["mv"] = {
             "f": [gm.display(x) for x in sp["fast"]],
             "c": [gm.display(x) for x in sp["charged"]],

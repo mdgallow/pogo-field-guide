@@ -178,6 +178,34 @@ test('trade value: a league pick above its cap level earns nothing for that leag
   eq(over.parts.level, 0, 'level worth nothing above the cap');
 });
 
+// ---------------------------------------------------------------- shadows
+test('shadow: ranked among shadows; best of a raid species keeps as shadow, extras purify-to-trade or transfer', async t => {
+  const sh = (ivs, i, cp) => ({ ...card({ cp, name: 'Machamp', kg: 120 + i, m: 1.6, types: 'FIGHTING', ivs, date: `9/${10 + i}/2026` }), shadow: true });
+  // Six normal keepers first: they must not push the shadows out.
+  for (let i = 0; i < 6; i++) await t.app.scan(card({ cp: 2500 + i * 10, name: 'Machamp', kg: 100 + i, m: 1.6, types: 'FIGHTING', ivs: [15, 14, 13], date: `8/${10 + i}/2026` }));
+  await t.app.scan(sh([12, 10, 11], 0, 2600));
+  eq(slot(t.last(), 'VERDICT'), 'KEEP', 'a 33-IV shadow of a raid species is a keeper'); has(slot(t.last(), 'REASON'), 'SHADOW', 'as a shadow');
+  check(movesSlots(t.last()).length >= 1, 'shadow keeper gets its moves');
+  await t.app.scan(sh([5, 4, 6], 1, 2400));
+  eq(slot(t.last(), 'VERDICT'), 'PURIFY', 'a 15-IV shadow at level ~30 is worth purifying to trade'); has(slot(t.last(), 'REASON'), 'THEN TRADE', 'purify, then trade');
+  await t.app.scan(sh([5, 4, 6], 3, 400));
+  eq(slot(t.last(), 'VERDICT'), 'SURPLUS', 'a 15-IV low-level shadow is a transfer'); has(slot(t.last(), 'REASON'), 'SHADOW', 'named as shadow');
+  await t.app.scan(sh([13, 13, 14], 2, 2650));
+  has(slot(t.last(), 'REASON'), 'PURIFY', 'a shadow that purifies to 45 mentions it'); eq(slot(t.last(), 'VERDICT'), 'KEEP', 'but stays a shadow keeper for raids');
+  eq(t.app.log().filter(e => e.shadow).length, 4, 'four shadows logged');
+});
+
+test('shadow: no raid use -> purify when the +2 makes a 44, otherwise keep one', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  const noRaid = run(`POKEMON_DATA.find(p => !roleOf(p).raid && !roleOf(p).pvp && p.pd && p.finals.length === 0 && p.types.length === 1 && p.name.indexOf(' ') < 0 && p.name.indexOf('(') < 0 && baseCatchRate(p) <= 0.3).name`);
+  const types = run(`POKEMON_DATA.find(p => p.name === ${JSON.stringify(noRaid)}).types.join(' / ').toUpperCase()`);
+  await t.app.scan({ ...card({ cp: 1500, name: noRaid, kg: 30, m: 1, types, ivs: [13, 13, 13] }), shadow: true });
+  eq(slot(t.last(), 'VERDICT'), 'PURIFY', `${noRaid} 13/13/13 shadow purifies to 45`); has(slot(t.last(), 'REASON'), '45/45', 'says what it becomes');
+  const u = loadApp();
+  await u.app.scan({ ...card({ cp: 1500, name: noRaid, kg: 30, m: 1, types, ivs: [11, 10, 11] }), shadow: true });
+  eq(slot(u.last(), 'VERDICT'), 'KEEP BEST', 'a lone decent shadow of a no-use species is kept as the one');
+});
+
 // ---------------------------------------------------------------- keeper slots
 // A legendary catch at ~level 20-25; CP scales with the IVs so every card is a different Pokémon.
 const lunala = (ivs, i) => card({ cp: 2200 + ivs[0] + ivs[1] + ivs[2] + i, name: 'Lunala', kg: 120 + i, m: 4, types: 'PSYCHIC / GHOST', ivs, date: `9/${10 + i}/2026` });
