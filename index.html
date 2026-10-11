@@ -1616,7 +1616,7 @@ function applyLogContext(g, p) {
       [tv.parts.lucky >= 5 ? tv.parts.lucky : 0, `LUCKY ${Math.round(tv.pLucky * 100)}% ${k(tv.parts.lucky)}`],
       [p.te ? 1 : 0, 'FREE EVO'],
       [tv.parts.ticket, `${rare} ${k(tv.parts.ticket)}`],
-    ].filter(d => d[0]).sort((a, b) => Math.abs(b[0]) - Math.abs(a[0])).map(d => d[1]);
+    ].filter(d => d[0]).sort((a, b) => b[0] - a[0]).map(d => d[1]);   // what adds the most first; what it still owes last
     const stack = c.dynamax || shadow ? { position: 0, size: 0 } : tradeStackPosition(c.entryId, p.name, need);
     const crowded = tv.tier !== 'LOW' && stack.position > TRADE_STACK;
     // What the score is made of, for the card / toast.
@@ -1634,13 +1634,15 @@ function applyLogContext(g, p) {
     if (c.dynamax || shadow) {
       g = set('SURPLUS', '#f87171', '🗑️', `${tag}${wh} – TRANSFER${goal ? ' FOR CANDY' : ''}`, `TRANSFER · ${why || rk}`);
     } else if (tv.tier === 'LOW') {
-      g = set('SURPLUS', '#f87171', '🗑️', `${tag} – ${notKept}TRANSFER FOR ROOM. WORTH ~${tv.score}K TO A RECEIVER: ${bits}`, `TRANSFER · ~${tv.score}K · ${drivers.slice(0, 2).join(' · ')}`);
+      g = set('SURPLUS', '#f87171', '🗑️', `${tag} – ${notKept}TRANSFER FOR ROOM. WORTH ~${tv.score}K TO A RECEIVER: ${bits}`, `TRANSFER · ~${tv.score}K · ${drivers[0] || `L${tv.level}`}`);
     } else if (crowded) {
       g = set('SURPLUS', '#f87171', '🗑️', `${tag} – ${notKept}TRANSFER: YOU ALREADY HOLD ${TRADE_STACK} BETTER TRADES IN THIS FAMILY (THIS IS #${stack.position} OF ${stack.size}). WORTH ~${tv.score}K`,
         `TRANSFER · ${TRADE_STACK} BETTER TRADES HELD`);
     } else {
       const first = tv.tier === 'FIRST';
-      const lead = drivers.slice(0, 2).join(' · ');
+      // Two drivers when they fit the pill (the rank "#n/m" is appended later), else one.
+      const head = `${tv.tier === 'FIRST' ? 'TRADE 1ST' : 'TRADE'} ~${tv.score}K · `;
+      const lead = head.length + drivers.slice(0, 2).join(' · ').length <= 32 ? drivers.slice(0, 2).join(' · ') : (drivers[0] || `L${tv.level}`);
       g = set('TRADE', '#c084fc', '🔄', `${tag} – ${notKept}${first ? 'TRADE FIRST' : 'TRADE'}${special}. WORTH ~${tv.score}K TO A RECEIVER: ${bits}. IVs RE-ROLL IN A TRADE, THE LEVEL STAYS${goal ? '. ' + goal : ''}`,
         `${first ? 'TRADE 1ST' : 'TRADE'} ~${tv.score}K · ${lead}`);
     }
