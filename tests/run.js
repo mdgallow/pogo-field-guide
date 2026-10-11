@@ -261,7 +261,9 @@ test('shadow legendary: keep up to the raid slots, surplus transfers (no purify-
 test('fringe tier: a near-miss family (Torterra) keeps half the slots, not one', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
   eq(run(`roleOf(POKEMON_DATA.find(x => x.name === 'Torterra')).role`), 'FRINGE', 'Torterra is fringe');
-  eq(run(`keepSlots('Turtwig', false).raid`), 3, 'half of the default six');
+  eq(run(`keepSlots('Turtwig', false).raid`), 3, 'three of six at ~43% utility');
+  eq(run(`keepSlots('Beldum', false).raid`), 6, 'a top pick keeps all six'); eq(run(`keepSlots('Rattata', false).raid`), 1, 'a collection species keeps one');
+  check(run(`keepSlots('Pidgey', false).raid`) === 2, `a minor pick keeps two (${run(`keepSlots('Pidgey', false).raid`)})`);
   const tw = (ivs, i) => card({ cp: 900 - i * 20, name: 'Turtwig', kg: 10 + i * 0.2, m: 0.4, types: 'GRASS', ivs, date: `9/${10 + i}/2026` });
   const ivs = [[15, 15, 15], [14, 15, 14], [13, 14, 13], [13, 13, 13], [12, 12, 12]];
   for (let i = 0; i < ivs.length; i++) await t.app.scan(tw(ivs[i], i));
@@ -391,7 +393,7 @@ test('role + moves: a raid-and-PvP pick is labelled BOTH and gets both movesets'
 test('role + moves: a PvP-only pick gets only its league set', async t => {
   await t.app.scan(card({ cp: 1490, name: 'Azumarill', kg: 28.5, m: 0.8, types: 'WATER / FAIRY', ivs: [15, 15, 15] }));
   const s = t.last();
-  eq(slot(s, 'ROLE'), 'PVP (GREAT)', 'role');
+  has(slot(s, 'ROLE'), 'PVP (GREAT)', 'role');
   const m = movesSlots(s);
   eq(m.length, 1, 'one moveset'); eq(m[0].caption, 'GREAT LEAGUE MOVES', 'caption'); has(m[0].value, 'FAST: BUBBLE · CHARGED: ', 'fast and charged named');
 });
@@ -399,7 +401,7 @@ test('role + moves: a PvP-only pick gets only its league set', async t => {
 test('role + moves: a raid-only pick gets only its raid set', async t => {
   await t.app.scan(card({ cp: 3000, name: 'Machamp', kg: 130, m: 1.6, types: 'FIGHTING', ivs: [15, 15, 15] }));
   const s = t.last();
-  eq(slot(s, 'ROLE'), 'RAID', 'role');
+  has(slot(s, 'ROLE'), 'RAID ·', 'role');
   const m = movesSlots(s);
   eq(m.length, 1, 'one moveset'); eq(m[0].caption, 'RAID MOVES', 'caption');
 });

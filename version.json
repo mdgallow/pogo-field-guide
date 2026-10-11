@@ -1,1 +1,1 @@
-{"versionCode": 65, "versionName": "2.3.42", "apk": "pogo-companion.apk", "notes": "New FRINGE tier: species close to a raid or league pick (e.g. Torterra) keep half the slots instead of one, so a 43 Turtwig is no longer transfer fodder."}
+{"versionCode": 66, "versionName": "2.3.43", "apk": "pogo-companion.apk", "notes": "Utility is now a scale: the ROLE line shows a percentage, and keeper slots below the pick line scale with it (2, 3 or 4 instead of dropping to one), as does trade value."}
