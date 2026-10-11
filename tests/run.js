@@ -140,6 +140,20 @@ test('favorite star does not force a KEEP', async t => {
   check(slot(t.last(), 'VERDICT') !== 'KEEP', 'a favorited 12-IV Charmander is still not a KEEP');
 });
 
+test('trade order inside a family follows CP: higher CP trades, lower CP makes room', async t => {
+  // Six Machamp keepers, then non-keepers below the floor at mixed CP, IVs and ages.
+  const machamp = (cp, ivs, i, date) => card({ cp, name: 'Machamp', kg: 120 + i, m: 1.6, types: 'FIGHTING', ivs, date: date || `9/${10 + i}/2026` });
+  const keepers = [[15, 14, 13], [14, 14, 13], [14, 13, 13], [13, 13, 13], [13, 13, 12], [13, 12, 12]];
+  for (let i = 0; i < keepers.length; i++) await t.app.scan(machamp(2500 + i * 10, keepers[i], i));
+  const extras = [[2900, [10, 10, 10], 20, '9/1/2026'], [2000, [12, 12, 11], 21, '9/1/2023'], [1200, [11, 11, 11], 22, '9/1/2026'], [600, [12, 12, 12], 23, '9/1/2022']];
+  for (const [cp, ivs, i, d] of extras) await t.app.scan(machamp(cp, ivs, i, d));
+  const verdicts = [];
+  for (const [cp, ivs, i, d] of extras) { await t.app.scan(machamp(cp, ivs, i, d)); verdicts.push(cp + ':' + slot(t.last(), 'VERDICT')); }
+  eq(verdicts[0], '2900:TRADE', 'highest CP non-keeper trades');
+  eq(verdicts[1], '2000:TRADE', 'next trades');
+  check(verdicts[3] !== '600:TRADE', `the 600 CP one (better IVs, older) is not ranked above them for trade (got ${verdicts[3]})`);
+});
+
 // ---------------------------------------------------------------- keeper slots
 // A legendary catch at ~level 20-25; CP scales with the IVs so every card is a different Pokémon.
 const lunala = (ivs, i) => card({ cp: 2200 + ivs[0] + ivs[1] + ivs[2] + i, name: 'Lunala', kg: 120 + i, m: 4, types: 'PSYCHIC / GHOST', ivs, date: `9/${10 + i}/2026` });
@@ -227,7 +241,7 @@ test('trade value: an old catch is worth more (better lucky odds)', async t => {
   const fresh = score(t.last());
   const u = loadApp();
   await u.app.scan(card({ cp: 700, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 5], date: '8/4/2017' }));
-  eq(score(u.last()), fresh + 10, 'a 9-year-old catch scores 10 higher');
+  eq(score(u.last()), fresh + 5, 'a 9-year-old catch scores 5 higher (a tie-break, never above a level step)');
 });
 
 test('trade value: only the best few of a family are held for trading', async t => {

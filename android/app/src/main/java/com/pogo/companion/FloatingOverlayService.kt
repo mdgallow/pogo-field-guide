@@ -108,6 +108,7 @@ class FloatingOverlayService : Service() {
     @Volatile private var autoReadReady = false
     private var autoBlinkAt = 0L
     private var autoNudge = false
+    private var autoStillCount = 0
     /** An AUTO read is being evaluated; its result gets the "logged" buzz. */
     @Volatile private var autoAwaitingResult = false
     private var autoReads = 0
@@ -205,7 +206,7 @@ class FloatingOverlayService : Service() {
         private const val EVAL_TIMEOUT_MS = 4000L
         private const val AUTO_TICK_MS = 1000L          // stop-rule check only; sampling follows the frames
         private const val AUTO_SAMPLE_GAP_MS = 200L     // at most one look per this long
-        private const val AUTO_FORCE_READ_MS = 2500L    // changed but never still: read anyway
+        private const val AUTO_FORCE_READ_MS = 3500L    // changed but never still: read anyway
         private const val AUTO_READ_TIMEOUT_MS = 1500L
         private const val AUTO_IDLE_STOP_MS = 30_000L
         private const val AUTO_OFF_PAGE_MS = 5_000L
@@ -537,6 +538,7 @@ class FloatingOverlayService : Service() {
         autoLastSampleAt = 0L
         autoUnsettledSince = 0L
         autoForced = false
+        autoStillCount = 0
         mainHandler.removeCallbacks(autoNudgeRunnable)
         autoReadPending = false
         autoReadReady = false
@@ -669,7 +671,11 @@ class FloatingOverlayService : Service() {
         // Holding still = same as the look before. Any change is activity (swiping back over
         // cards already read must not count as idle).
         val seen = autoLastSeenSig
-        val still = seen != null && changedCount(seen, sig) < AUTO_CHANGED_MIN
+        // Still = unchanged for two looks in a row (one look can land between two frames of a swipe
+        // and read the wrong card for a moment).
+        val unchanged = seen != null && changedCount(seen, sig) < AUTO_CHANGED_MIN
+        autoStillCount = if (unchanged) autoStillCount + 1 else 0
+        val still = autoStillCount >= 2
         if (!still) autoLastActiveAt = now
         autoLastSeenSig = sig
 
