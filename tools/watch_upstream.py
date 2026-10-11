@@ -4,7 +4,15 @@
     python tools/watch_upstream.py            compare the live sources with tools/upstream.json, print a report
     python tools/watch_upstream.py --update   also record the live state as the new baseline (after refreshing the app)
 
-Exit code 3 when something changed (CI opens / updates an issue), 0 when nothing did.
+Exit code 3 when something changed (CI opens / updates the issues), 0 when nothing did. Two
+reports: UPCOMING (announced events: pre-patch while details are available) and CONFIRMED (data
+that actually moved: true up the assumptions).
+
+Where the data comes from, and why none of it can get the app flagged: every source is a public
+file on GitHub maintained by a third party (PokeMiners' game-master mirror, PvPoke under MIT, the
+pokemon-go-api sprite repo, ScrapedDuck which mirrors LeekDuck's event calendar with permission
+and asks for credit, which README gives). Nothing here talks to Niantic / Scopely servers or to
+the game, nothing runs on a phone, and the app itself only ever contacts our own site.
 
 What is watched
   * Game master (PokeMiners): its timestamp, every species/form with stats (new Pokémon, new
@@ -33,6 +41,27 @@ SOURCES = {
     "rank_ul": "https://raw.githubusercontent.com/pvpoke/pvpoke/master/src/data/rankings/all/overall/rankings-2500.json",
     "rank_ml": "https://raw.githubusercontent.com/pvpoke/pvpoke/master/src/data/rankings/all/overall/rankings-10000.json",
     "icons_commit": "https://api.github.com/repos/pokemon-go-api/assets/commits?per_page=1",
+    # Community event calendar (LeekDuck via ScrapedDuck, credited in README): announcements ahead of time.
+    "events": "https://raw.githubusercontent.com/bigfoott/ScrapedDuck/data/events.json",
+}
+LOOKAHEAD_DAYS = 28
+# What each kind of announced event may change, and what can be patched BEFORE it lands.
+PREPATCH = {
+    "community-day": "exclusive (Elite) move for the featured line: mark it in the data if the game master "
+                     "does not yet; shiny palette for the species; expect many of them in logs (keep slots)",
+    "raid-day": "raid boss and its shiny: raid catch odds (fixed levels), shiny palette, role/moves",
+    "raid-battles": "boss rotation: legendary raid catches use the fixed-level perfect check; confirm the "
+                    "species row exists (new debuts) and its role/moves",
+    "season": "a season usually brings a move rebalance and a GBL reset: re-run build_moves.py once the "
+              "game master and PvPoke move; until then verdicts rest on last season's data",
+    "go-battle-league": "league rotation: PVP roles use overall rankings, so nothing to patch unless a new "
+                        "cup becomes the main format",
+    "pokemon-go-tour": "debuts and regional-form releases: add dataset rows (name, dex, types, cps) ahead",
+    "event": "watch the text for debuts / new forms: add dataset rows ahead",
+    "max-battles": "Dynamax / Gigantamax species: the Dynamax pool and badge detector",
+    "max-mondays": "Dynamax species of the week: Dynamax pool",
+    "research": "special research debuts (often new species / mythicals): dataset rows",
+    "wild-area": "mass debuts and shinies: dataset rows and palettes",
 }
 
 
@@ -75,6 +104,38 @@ def snapshot():
     }
 
 
+def upcoming(seen_ids):
+    """Announced events starting within LOOKAHEAD_DAYS that we have not reported before."""
+    import datetime as dt
+    try:
+        events = json.loads(get(SOURCES["events"]))
+    except Exception as e:
+        return [f"- (event calendar unavailable: {e})"], seen_ids
+    now = dt.datetime.utcnow()
+    horizon = now + dt.timedelta(days=LOOKAHEAD_DAYS)
+    lines, ids = [], list(seen_ids)
+    for ev in sorted(events, key=lambda x: x.get("start") or ""):
+        try:
+            start = dt.datetime.fromisoformat((ev.get("start") or "").replace("Z", ""))
+        except ValueError:
+            continue
+        if start > horizon or start < now - dt.timedelta(days=1) or ev.get("eventID") in seen_ids:
+            continue       # only what is still ahead (or started today) and not yet reported
+        kind = ev.get("eventType", "event")
+        if kind not in PREPATCH:
+            continue
+        extra = ev.get("extraData") or {}
+        names = []
+        for block in extra.values():
+            if isinstance(block, dict):
+                for key in ("spawns", "bosses", "shinies"):
+                    names += [x.get("name") for x in block.get(key, []) if isinstance(x, dict) and x.get("name")]
+        who = (" — " + ", ".join(dict.fromkeys(names))) if names else ""
+        lines.append(f"- {start.date()} {kind}: {ev.get('name')}{who}\n    pre-patch: {PREPATCH[kind]}\n    {ev.get('link', '')}")
+        ids.append(ev.get("eventID"))
+    return lines, ids
+
+
 def diff_map(old, new, label, show=12):
     added = sorted(k for k in new if k not in old)
     removed = sorted(k for k in old if k not in new)
@@ -108,16 +169,21 @@ def main():
     if old.get("icons_commit") != live["icons_commit"]:
         report.append(f"- Icon assets updated ({live['icons_date']}): new sprites, re-run build_palettes.py")
 
+    coming, seen = upcoming(old.get("events_seen", []))
+    live["events_seen"] = seen[-400:]
+
+    if coming:
+        print("UPCOMING (pre-patch while the details are available)\n" + "\n".join(coming) + "\n")
     if report:
-        print("UPSTREAM CHANGED\n" + "\n".join(report))
+        print("CONFIRMED CHANGES (true up what was assumed)\n" + "\n".join(report))
         print("\nTo refresh: python tools/build_moves.py && python tools/build_palettes.py --offline, re-run the tests, "
               "check the constants in docs/UPSTREAM-WATCH.md, then python tools/watch_upstream.py --update and release.")
-    else:
+    if not coming and not report:
         print("No upstream changes since the last baseline.")
     if update:
         STATE.write_text(json.dumps(live, indent=0, sort_keys=True), encoding="utf-8")
         print("baseline recorded in tools/upstream.json")
-    sys.exit(3 if report and not update else 0)
+    sys.exit(3 if (report or coming) and not update else 0)
 
 
 if __name__ == "__main__":

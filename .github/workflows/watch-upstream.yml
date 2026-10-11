@@ -1,10 +1,12 @@
 name: Watch upstream Pokémon GO data
 
-# Weekly check of the game master, PvPoke rankings and sprite assets. When anything moved it opens
-# (or updates) one issue listing what changed and how to refresh the app. Nothing is committed.
+# Twice-weekly check. Two reports, two issues: "Upcoming" (announced events: pre-patch while the
+# details are available) and "Changed" (data that actually moved: true up the assumptions).
+# Every source is a public GitHub-hosted mirror; nothing touches the game or its makers' servers,
+# and nothing is committed by the workflow.
 on:
   schedule:
-    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+    - cron: "17 6 * * 1,4"   # Mondays and Thursdays 06:17 UTC
   workflow_dispatch:
 
 permissions:
@@ -28,16 +30,19 @@ jobs:
           echo "changed=$([ "$code" = "3" ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
           if [ "$code" != "0" ] && [ "$code" != "3" ]; then exit "$code"; fi
 
-      - name: Open or update the issue
+      - name: Open or update the issues
         if: steps.watch.outputs.changed == 'yes'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          title="Upstream Pokémon GO data changed"
-          body="$(printf 'Detected on %s by the weekly watcher.\n\n```\n%s\n```\n' "$(date -u +%F)" "$(cat report.txt)")"
-          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number -q '.[0].number')
-          if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body "$body"
-          else
-            gh issue create --title "$title" --body "$body" --label "upstream"
-          fi
+          post() {   # title, section text, label
+            [ -z "$2" ] && return 0
+            body="$(printf 'Detected on %s by the upstream watcher (see docs/UPSTREAM-WATCH.md for the maintenance steps).\n\n```\n%s\n```\n' "$(date -u +%F)" "$2")"
+            existing=$(gh issue list --state open --search "\"$1\" in:title" --json number -q '.[0].number')
+            if [ -n "$existing" ]; then gh issue comment "$existing" --body "$body"
+            else gh issue create --title "$1" --body "$body" --label "$3" 2>/dev/null || gh issue create --title "$1" --body "$body"; fi
+          }
+          upcoming="$(awk '/^UPCOMING/{f=1} /^CONFIRMED CHANGES/{f=0} f' report.txt)"
+          confirmed="$(awk '/^CONFIRMED CHANGES/{f=1} f' report.txt)"
+          post "Upcoming Pokémon GO changes (pre-patch)" "$upcoming" "upstream-upcoming"
+          post "Upstream Pokémon GO data changed (true-up)" "$confirmed" "upstream"
