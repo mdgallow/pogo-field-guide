@@ -5,8 +5,8 @@
     python tools/watch_upstream.py --update   also record the live state as the new baseline (after refreshing the app)
 
 Exit code 3 when something changed (CI opens / updates the issues), 0 when nothing did. Two
-reports: UPCOMING (announced events: pre-patch while details are available) and CONFIRMED (data
-that actually moved: true up the assumptions).
+reports: UPCOMING (announced events: prepare on the branch, no release) and CONFIRMED (data that
+actually moved in the game: bundle the prepared work and release once).
 
 Where the data comes from, and why none of it can get the app flagged: every source is a public
 file on GitHub maintained by a third party (PokeMiners' game-master mirror, PvPoke under MIT, the
@@ -131,7 +131,7 @@ def upcoming(seen_ids):
                 for key in ("spawns", "bosses", "shinies"):
                     names += [x.get("name") for x in block.get(key, []) if isinstance(x, dict) and x.get("name")]
         who = (" — " + ", ".join(dict.fromkeys(names))) if names else ""
-        lines.append(f"- {start.date()} {kind}: {ev.get('name')}{who}\n    pre-patch: {PREPATCH[kind]}\n    {ev.get('link', '')}")
+        lines.append(f"- {start.date()} {kind}: {ev.get('name')}{who}\n    prepare: {PREPATCH[kind]}\n    {ev.get('link', '')}")
         ids.append(ev.get("eventID"))
     return lines, ids
 
@@ -173,9 +173,9 @@ def main():
     live["events_seen"] = seen[-400:]
 
     if coming:
-        print("UPCOMING (pre-patch while the details are available)\n" + "\n".join(coming) + "\n")
+        print("UPCOMING (prepare on the branch; release only when the game data moves)\n" + "\n".join(coming) + "\n")
     if report:
-        print("CONFIRMED CHANGES (true up what was assumed)\n" + "\n".join(report))
+        print("CONFIRMED CHANGES (in the game now: bundle the prepared work and release once)\n" + "\n".join(report))
         print("\nTo refresh: python tools/build_moves.py && python tools/build_palettes.py --offline, re-run the tests, "
               "check the constants in docs/UPSTREAM-WATCH.md, then python tools/watch_upstream.py --update and release.")
     if not coming and not report:
