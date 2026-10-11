@@ -8,9 +8,5 @@
     <string name="pill_style_side">PILL: SIDE</string>
     <string name="pill_style_bar">PILL: TOP BAR</string>
     <string name="pill_style_side_hint">Pill on the side. Drag it across the screen to switch sides.</string>
-    <string name="pill_capture_shown">SHOTS: PILL ON</string>
-    <string name="pill_capture_hidden">SHOTS: PILL OFF</string>
-    <string name="pill_capture_shown_hint">The pill will appear in your screenshots.</string>
-    <string name="pill_capture_hidden_hint">The pill is kept out of screenshots and screen recordings.</string>
     <string name="pill_style_bar_hint">Pill as a bar across the top. Drag it up or down.</string>
 </resources>

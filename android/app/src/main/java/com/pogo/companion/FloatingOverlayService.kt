@@ -96,22 +96,19 @@ class FloatingOverlayService : Service() {
     private var autoForced = false
     private var autoForcedAt = 0L
     /**
-     * The pill is never hidden or blinked (photosensitivity). Reads simply ignore whatever is
-     * under it: OCR lines in its rectangle are dropped, the detectors skip regions it covers (the
-     * page then says to move it), and the AUTO fingerprint masks it. Two modes:
-     *  - "visible" (default): the pill is in the capture and in the player's own screenshots.
-     *  - "secure": the window is FLAG_SECURE, so it never appears in any capture or screenshot
-     *    (its rectangle is black). If a device blanks the whole capture for secure windows, the
-     *    flag is dropped and remembered.
+     * The pill is never hidden or blinked (photosensitivity) and never hidden from captures either
+     * (an overlay invisible to screen recording is a malware trait Play Protect flags). Reads
+     * simply ignore whatever is under it: OCR lines in its rectangle are dropped, the detectors
+     * skip regions it covers (the page then says to move it), and the AUTO fingerprint masks it.
      */
-    @Volatile private var secureCapture = false
     private var autoLastReadSig: IntArray? = null
     private var autoLastSeenSig: IntArray? = null
-    /** The pill has been blinked out for a read; [autoReadReady] flips once the mirror shows it gone. */
+    /** A read frame has been requested; [autoReadReady] flips when the fresh frame may be used. */
     @Volatile private var autoReadPending = false
     @Volatile private var autoReadReady = false
     private var autoBlinkAt = 0L
     private var autoNudge = false
+    private var autoStillCount = 0
     /** An AUTO read is being evaluated; its result gets the "logged" buzz. */
     @Volatile private var autoAwaitingResult = false
     private var autoReads = 0
@@ -194,11 +191,8 @@ class FloatingOverlayService : Service() {
         const val PREF_PILL_STYLE = "pill_style"
         private const val PREF_PILL_Y = "pill_y"
         private const val PREF_BAR_Y = "bar_y"
-        /** "untested" | "ok" | "no": does FLAG_SECURE on the pill leave the rest of the capture intact? */
-        private const val PREF_SECURE_CAPTURE = "secure_capture"
-        /** "visible" (default; the pill shows in screenshots) or "secure" (never captured). */
-        const val PREF_PILL_CAPTURE = "pill_capture"
         private const val BAR_MARGIN_DP = 6
+        private const val BAR_MAX_Y_FRACTION = 0.38f
         /** The pill's own fixed labels: seeing one in a frame means the pill was captured too. */
         private const val PREF_PILL_SIDE = "pill_side"   // "right" (default) or "left"
         /** Default vertical position: where testing settled on, top of the pill ~57% down the screen. */
@@ -212,14 +206,14 @@ class FloatingOverlayService : Service() {
         private const val EVAL_TIMEOUT_MS = 4000L
         private const val AUTO_TICK_MS = 1000L          // stop-rule check only; sampling follows the frames
         private const val AUTO_SAMPLE_GAP_MS = 200L     // at most one look per this long
-        private const val AUTO_FORCE_READ_MS = 2500L    // changed but never still: read anyway
+        private const val AUTO_FORCE_READ_MS = 3500L    // changed but never still: read anyway
         private const val AUTO_READ_TIMEOUT_MS = 1500L
         private const val AUTO_IDLE_STOP_MS = 30_000L
         private const val AUTO_OFF_PAGE_MS = 5_000L
         private const val AUTO_MAX_MS = 10 * 60_000L
-        private const val AUTO_CHANGED_MIN = 8 // fingerprint points that must flip to count as a change
+        private const val AUTO_CHANGED_MIN = 5 // fingerprint points that must flip to count as a change (white panels: no noise)
         private const val AUTO_BIG_CHANGE = 60 // a real swipe flips far more than any stray animation
-        private const val SIG_SIZE = 3 * 24 + 3 * 16 + 31 * 24 + 8 * 40
+        private const val SIG_SIZE = 3 * 24 + 4 * 30 + 31 * 24 + 8 * 40
 
         @Volatile var isRunning = false
             private set
@@ -334,15 +328,14 @@ class FloatingOverlayService : Service() {
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    (if (prefs.getString(PREF_PILL_CAPTURE, "visible") == "secure" && prefs.getString(PREF_SECURE_CAPTURE, "untested") != "no") WindowManager.LayoutParams.FLAG_SECURE else 0),
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
             if (barStyle) {
                 // A strip across the top, just under the status bar; drag it up or down.
                 gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
                 x = 0
-                y = prefs.getInt(PREF_BAR_Y, statusBarHeight())
+                y = prefs.getInt(PREF_BAR_Y, statusBarHeight()).coerceAtMost((screenHeight * BAR_MAX_Y_FRACTION).toInt() - (72 * density).toInt())
             } else {
                 // Docked to one edge (right by default, left for left-handed players: drag it across).
                 // Vertical position is draggable and remembered.
@@ -352,8 +345,6 @@ class FloatingOverlayService : Service() {
                 y = prefs.getInt(PREF_PILL_Y, (screenHeight * DEFAULT_PILL_Y_FRACTION).toInt())
             }
         }
-
-        secureCapture = (params.flags and WindowManager.LayoutParams.FLAG_SECURE) != 0
 
         // Dragging works from anywhere on the pill; a touch that doesn't move is a tap.
         attachDragOrTap(view, null)
@@ -385,39 +376,6 @@ class FloatingOverlayService : Service() {
     private fun pillCovers(fx0: Double, fy0: Double, fx1: Double, fy1: Double): Boolean {
         val r = android.graphics.Rect((screenWidth * fx0).toInt(), (screenHeight * fy0).toInt(), (screenWidth * fx1).toInt(), (screenHeight * fy1).toInt())
         return android.graphics.Rect.intersects(r, pillRectOnScreen)
-    }
-
-    /** All dark outside the pill: this device blanks secure captures, so the flag has to go. */
-    private fun frameBlank(bmp: Bitmap): Boolean {
-        val pill = pillRectOnScreen
-        val toScreen = screenWidth.toFloat() / bmp.width
-        var dark = 0; var n = 0
-        for (gy in 1..6) for (gx in 1..4) {
-            val x = bmp.width * gx / 5; val y = bmp.height * gy / 7
-            if (pill.contains((x * toScreen).toInt(), (y * toScreen).toInt())) continue
-            val c = bmp.getPixel(x, y)
-            n++
-            if ((c shr 16 and 0xFF) < 12 && (c shr 8 and 0xFF) < 12 && (c and 0xFF) < 12) dark++
-        }
-        return n > 0 && dark == n
-    }
-
-    /** Called with the first captured frame of a session; settles whether secure capture works here. */
-    private fun verifySecureCapture(bmp: Bitmap): Boolean {
-        if (!secureCapture) return true
-        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
-        if (!frameBlank(bmp)) {
-            if (prefs.getString(PREF_SECURE_CAPTURE, "untested") != "ok") prefs.edit().putString(PREF_SECURE_CAPTURE, "ok").apply()
-            return true
-        }
-        prefs.edit().putString(PREF_SECURE_CAPTURE, "no").apply()
-        secureCapture = false
-        trail("secure capture blanks the screen here: pill left visible in captures")
-        mainHandler.post {
-            params.flags = params.flags and WindowManager.LayoutParams.FLAG_SECURE.inv()
-            pillView?.let { try { windowManager.updateViewLayout(it, params) } catch (_: Exception) {} }
-        }
-        return false
     }
 
     private fun statusBarHeight(): Int {
@@ -471,7 +429,11 @@ class FloatingOverlayService : Service() {
                     if (dragging || abs(dy) > touchSlop || abs(dx) > touchSlop) {
                         dragging = true
                         v.isPressed = false
-                        val maxY = (screenHeight - (pillView?.height ?: 0)).coerceAtLeast(0)
+                        // The top bar must stay above the white card: the name, HP, weight, type row,
+                        // appraisal and banner all live below ~38% of the screen and are what AUTO
+                        // and the identity match read. The side pill may go anywhere.
+                        val limit = if (barStyle) (screenHeight * BAR_MAX_Y_FRACTION).toInt() else screenHeight
+                        val maxY = (limit - (pillView?.height ?: 0)).coerceAtLeast(0)
                         params.y = (startY + dy).coerceIn(0, maxY)
                         pillView?.let { windowManager.updateViewLayout(it, params) }
                     }
@@ -555,11 +517,6 @@ class FloatingOverlayService : Service() {
             if (scanRequested.compareAndSet(true, false)) {
                 mainHandler.removeCallbacks(scanTimeout)
                 val frame = imageToBitmap(image)
-                if (!verifySecureCapture(frame)) {       // blank frame: retake with the blink
-                    frame.recycle()
-                    mainHandler.post { requestScan() }
-                    return
-                }
                 mainHandler.post { showPillReading() }
                 runOcr(frame)
             } else if (autoMode) {
@@ -581,6 +538,7 @@ class FloatingOverlayService : Service() {
         autoLastSampleAt = 0L
         autoUnsettledSince = 0L
         autoForced = false
+        autoStillCount = 0
         mainHandler.removeCallbacks(autoNudgeRunnable)
         autoReadPending = false
         autoReadReady = false
@@ -660,7 +618,7 @@ class FloatingOverlayService : Service() {
         // HP line ("113 / 113 HP"), centred under the name.
         for (fy in doubleArrayOf(0.468, 0.4725, 0.477)) for (gx in 0 until 24) sample(0.38 + 0.01 * gx, fy)
         // Weight number, left of the type icons.
-        for (fy in doubleArrayOf(0.538, 0.545, 0.552)) for (gx in 0 until 16) sample(0.10 + 0.012 * gx, fy)
+        for (fy in doubleArrayOf(0.538, 0.545, 0.552, 0.559)) for (gx in 0 until 30) sample(0.085 + 0.007 * gx, fy)
         // Appraisal panel: labels and the three bars (left half of the card only).
         for (gy in 0 until 31) for (gx in 0 until 24) sample(0.10 + 0.0155 * gx, 0.705 + 0.005 * gy)
         // Catch banner: three lines of text.
@@ -684,11 +642,6 @@ class FloatingOverlayService : Service() {
             autoReadPending = false
             val sig = fingerprint(image)
             val frame = imageToBitmap(image)
-            if (!verifySecureCapture(frame)) {
-                frame.recycle()
-                mainHandler.post { pillView?.alpha = 1f; requestFrameSoon() }
-                return
-            }
             if (!looksLikeStorageCard(frame)) {
                 if (autoOffPageSince == 0L) autoOffPageSince = now
                 trail("not a storage page")
@@ -718,7 +671,11 @@ class FloatingOverlayService : Service() {
         // Holding still = same as the look before. Any change is activity (swiping back over
         // cards already read must not count as idle).
         val seen = autoLastSeenSig
-        val still = seen != null && changedCount(seen, sig) < AUTO_CHANGED_MIN
+        // Still = unchanged for two looks in a row (one look can land between two frames of a swipe
+        // and read the wrong card for a moment).
+        val unchanged = seen != null && changedCount(seen, sig) < AUTO_CHANGED_MIN
+        autoStillCount = if (unchanged) autoStillCount + 1 else 0
+        val still = autoStillCount >= 2
         if (!still) autoLastActiveAt = now
         autoLastSeenSig = sig
 

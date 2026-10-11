@@ -41,20 +41,6 @@
             android:layout_marginEnd="4dp" />
 
         <Button
-            android:id="@+id/btnPillCapture"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="0dp"
-            android:text="@string/pill_capture_shown"
-            android:textColor="@color/cyan_accent"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
-            android:layout_marginEnd="4dp" />
-
-        <Button
             android:id="@+id/btnLaunchOverlay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

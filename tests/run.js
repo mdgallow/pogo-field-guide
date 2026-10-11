@@ -140,6 +140,20 @@ test('favorite star does not force a KEEP', async t => {
   check(slot(t.last(), 'VERDICT') !== 'KEEP', 'a favorited 12-IV Charmander is still not a KEEP');
 });
 
+test('trade order inside a family follows CP: higher CP trades, lower CP makes room', async t => {
+  // Six Machamp keepers, then non-keepers below the floor at mixed CP, IVs and ages.
+  const machamp = (cp, ivs, i, date) => card({ cp, name: 'Machamp', kg: 120 + i, m: 1.6, types: 'FIGHTING', ivs, date: date || `9/${10 + i}/2026` });
+  const keepers = [[15, 14, 13], [14, 14, 13], [14, 13, 13], [13, 13, 13], [13, 13, 12], [13, 12, 12]];
+  for (let i = 0; i < keepers.length; i++) await t.app.scan(machamp(2500 + i * 10, keepers[i], i));
+  const extras = [[2900, [10, 10, 10], 20, '9/1/2026'], [2000, [12, 12, 11], 21, '9/1/2023'], [1200, [11, 11, 11], 22, '9/1/2026'], [600, [12, 12, 12], 23, '9/1/2022']];
+  for (const [cp, ivs, i, d] of extras) await t.app.scan(machamp(cp, ivs, i, d));
+  const verdicts = [];
+  for (const [cp, ivs, i, d] of extras) { await t.app.scan(machamp(cp, ivs, i, d)); verdicts.push(cp + ':' + slot(t.last(), 'VERDICT')); }
+  eq(verdicts[0], '2900:TRADE', 'highest CP non-keeper trades');
+  eq(verdicts[1], '2000:TRADE', 'next trades');
+  check(verdicts[3] !== '600:TRADE', `the 600 CP one (better IVs, older) is not ranked above them for trade (got ${verdicts[3]})`);
+});
+
 // ---------------------------------------------------------------- keeper slots
 // A legendary catch at ~level 20-25; CP scales with the IVs so every card is a different Pokémon.
 const lunala = (ivs, i) => card({ cp: 2200 + ivs[0] + ivs[1] + ivs[2] + i, name: 'Lunala', kg: 120 + i, m: 4, types: 'PSYCHIC / GHOST', ivs, date: `9/${10 + i}/2026` });
@@ -227,7 +241,7 @@ test('trade value: an old catch is worth more (better lucky odds)', async t => {
   const fresh = score(t.last());
   const u = loadApp();
   await u.app.scan(card({ cp: 700, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 5], date: '8/4/2017' }));
-  eq(score(u.last()), fresh + 10, 'a 9-year-old catch scores 10 higher');
+  eq(score(u.last()), fresh + 5, 'a 9-year-old catch scores 5 higher (a tie-break, never above a level step)');
 });
 
 test('trade value: only the best few of a family are held for trading', async t => {
@@ -346,8 +360,8 @@ test('same IVs, different body: two Pokémon', async t => {
 
 test('identity: a height hidden behind the appraisal leader (".41m") is unknown, not 41 m', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
-  eq(run(`JSON.stringify(parseStorageDetails('8.81kg WEIGHT ROCK / .41m', ''))`), '{"weight":8.81,"height":null,"date":null}', 'truncated height dropped');
-  eq(run(`JSON.stringify(parseStorageDetails('8.81kg WEIGHT ROCK / WATER 0.41m HEIGHT', ''))`), '{"weight":8.81,"height":0.41,"date":null}', 'full height kept');
+  eq(run(`JSON.stringify(parseStorageDetails('8.81kg WEIGHT ROCK / .41m', ''))`), '{"weight":8.81,"height":null,"date":null,"hp":null}', 'truncated height dropped');
+  eq(run(`JSON.stringify(parseStorageDetails('8.81kg WEIGHT ROCK / WATER 0.41m HEIGHT', ''))`), '{"weight":8.81,"height":0.41,"date":null,"hp":null}', 'full height kept');
   // Appraised with the leader covering the height, then scanned again with the appraisal closed.
   const base = (ivs, extra) => card({ cp: 1329, name: 'Omanyte 42', species: 'Omanyte', kg: 8.81, m: extra, types: 'ROCK / WATER', ivs, lucky: true, date: '7/27/2023' });
   const first = base([14, 14, 14], '.41'); first.lines = first.lines.filter(l => l.t !== '.41m'); first.lines.push(line('.41m', 0.78, 0.545, 0.08, 0.02));
@@ -373,6 +387,30 @@ test('regional form: told apart by the type row', async t => {
   const u = loadApp();
   await u.app.scan(card({ cp: 2500, name: 'Exeggutor', kg: 120, m: 2.0, types: 'GRASS / PSYCHIC', ivs: [13, 14, 13] }));
   eq(u.last().target[0], 'Exeggutor', 'Kanto form chosen from GRASS / PSYCHIC');
+});
+
+test('form unsure: no regional moves are recommended until the type row is read', async t => {
+  const c = card({ cp: 1800, name: 'Sneasel', kg: 27, m: 0.9, types: null, ivs: [15, 15, 15] });
+  await t.app.scan(c);
+  has(t.last().target[0], 'Sneasel?', 'form flagged');
+  eq(slot(t.last(), 'ROLE'), 'FORM? (TYPE ROW NOT READ)', 'role withheld');
+  has(movesSlots(t.last())[0].value, 'FORM UNSURE', 'moves withheld');
+  const u = loadApp();
+  await u.app.scan(card({ cp: 1800, name: 'Sneasel', kg: 27, m: 0.9, types: 'FIGHTING / POISON', ivs: [15, 15, 15] }));
+  has(u.last().target[0], 'Hisui', 'Hisuian form from the type row');
+  has(movesSlots(u.last())[0].caption, 'SNEASLER', 'advised on Sneasler, not Weavile');
+});
+
+test('identity: the HP line links a re-scan when size and date are hidden', async t => {
+  const first = card({ cp: 1329, name: 'Omanyte', kg: 8.81, m: 0.41, types: 'ROCK / WATER', ivs: [14, 14, 14], date: '7/27/2023' });
+  first.lines.push(line('92 / 92 HP', 0.43, 0.49, 0.14, 0.02));
+  await t.app.scan(first);
+  // Appraisal closed, pill over the weight/height, no date badge: only name, CP and HP remain.
+  const again = { storage: true, favorite: false, ivs: null, auto: false, shadow: false, dynamax: false, lines: [
+    line('CP1329', 0.34, 0.05, 0.26, 0.04), line('Omanyte', 0.36, 0.41, 0.28, 0.035), line('92 / 92 HP', 0.43, 0.49, 0.14, 0.02),
+    line('ROCK / WATER', 0.39, 0.59, 0.22, 0.015), line('OMANYTE CANDY', 0.4, 0.69, 0.26, 0.015), line('POWER UP', 0.15, 0.765, 0.22, 0.03), line('EVOLVE', 0.25, 0.83, 0.16, 0.03)] };
+  await t.app.scan(again);
+  eq(t.app.log().length, 1, 'same Pokémon'); has(slot(t.last(), 'IV CHECK'), '(SAVED)', 'saved IVs reused');
 });
 
 // ---------------------------------------------------------------- ranking
