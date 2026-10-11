@@ -639,7 +639,7 @@
     <div style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
       Every Pokémon you scan in your storage is remembered on this device, recognised by its family, height and weight, CP, HP, catch date and IVs together, so renaming, powering up or favoriting it never confuses the pill. Each row shows its current standing (keeper, trade, transfer, gone), recomputed from the whole log whenever it is opened. Nothing here leaves the phone.
     </div>
-    <div style="font-size:12px; margin-bottom:8px;">Inside each evolution family: natural <b>44/45</b> always keep · <b>lucky</b> keeps (it plays ~8 IV points higher) · then the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by IVs that clear the floor (37+; 30+ for legendaries and Dynamax) when the family has a raid or league use, or only its single best when it has none · league families also keep their best <input id="keepNPvpInput" type="number" min="1" max="20" value="3" onchange="setKeepNPvp(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by bulk (low attack, high defense and HP) · <b>shinies are their own branch</b>, never blended: the best <input id="keepNShinyInput" type="number" min="1" max="20" value="2" onchange="setKeepNShiny(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> shinies of each species are <b style="color:#34d399;">PRIZED</b> (any IVs), every other shiny is <b style="color:#c084fc;">SHINY STOCK</b> held for shiny-for-shiny trades, never transfer; shiny shadows and shiny legendaries included · shadows are their own pool too (attack IV counts double, 30+ floor): raid species keep their best <input id="keepNShadowInput" type="number" min="1" max="20" value="3" onchange="setKeepNShadow(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> as shadows (shadow legendaries keep as many as the raid slots and surplus ones simply transfer: purifying costs rare candy and trading burns the special trade), others keep one; a shadow whose +2 purified IVs make a 44/45 says <b style="color:#34d399;">PURIFY</b>, a surplus shadow worth trading says PURIFY · THEN TRADE, the rest transfer · Dynamax are their own pool, best <input id="keepNDmaxInput" type="number" min="1" max="20" value="3" onchange="setKeepNDynamax(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> per species. A slot is earned, never filled to make up the number. Everything else is ranked for <b style="color:#c084fc;">TRADE</b> by what a receiver saves (level, lucky odds by age, candy in it minus evolution candy owed, rarity), up to 5 per family, and the rest are <b style="color:#f87171;">SURPLUS</b>. Shadows and Dynamax can’t be traded; shinies are never surplus; a favorited surplus says <b style="color:#fbbf24;">FAVORITE?</b>.</div>
+    <div style="font-size:12px; margin-bottom:8px;">Inside each evolution family: natural <b>44/45</b> always keep · <b>lucky</b> keeps (it plays ~8 IV points higher) · then the best <input id="keepNInput" type="number" min="1" max="20" value="6" onchange="setKeepN(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by IVs that clear the floor (37+; 30+ for legendaries and Dynamax) when the family has a raid or league use, half that many when it is a <b>fringe</b> pick (close to the cut), or only its single best when it has none · league families also keep their best <input id="keepNPvpInput" type="number" min="1" max="20" value="3" onchange="setKeepNPvp(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> by bulk (low attack, high defense and HP) · <b>shinies are their own branch</b>, never blended: the best <input id="keepNShinyInput" type="number" min="1" max="20" value="2" onchange="setKeepNShiny(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> shinies of each species are <b style="color:#34d399;">PRIZED</b> (any IVs), every other shiny is <b style="color:#c084fc;">SHINY STOCK</b> held for shiny-for-shiny trades, never transfer; shiny shadows and shiny legendaries included · shadows are their own pool too (attack IV counts double, 30+ floor): raid species keep their best <input id="keepNShadowInput" type="number" min="1" max="20" value="3" onchange="setKeepNShadow(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> as shadows (shadow legendaries keep as many as the raid slots and surplus ones simply transfer: purifying costs rare candy and trading burns the special trade), others keep one; a shadow whose +2 purified IVs make a 44/45 says <b style="color:#34d399;">PURIFY</b>, a surplus shadow worth trading says PURIFY · THEN TRADE, the rest transfer · Dynamax are their own pool, best <input id="keepNDmaxInput" type="number" min="1" max="20" value="3" onchange="setKeepNDynamax(this.value)" style="width:44px; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:6px; padding:2px 4px; text-align:center;"> per species. A slot is earned, never filled to make up the number. Everything else is ranked for <b style="color:#c084fc;">TRADE</b> by what a receiver saves (level, lucky odds by age, candy in it minus evolution candy owed, rarity), up to 5 per family, and the rest are <b style="color:#f87171;">SURPLUS</b>. Shadows and Dynamax can’t be traded; shinies are never surplus; a favorited surplus says <b style="color:#fbbf24;">FAVORITE?</b>.</div>
     <!-- TEST BUILDS ONLY: tester diagnostics. Hidden unless the shell reports testSharing. -->
     <div id="testShareBox" style="display:none; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12px;">
       <div style="font-weight:800; color:#fbbf24;">Testing: share diagnostics with the developer</div>
@@ -738,7 +738,7 @@
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #c084fc;">
           <b>Trade value.</b> A trade re-rolls IVs but keeps the level, so a trade candidate is valued by the stardust a receiver can expect to save, shown as <b>~NNK</b>: the dust already powered into it (L30 ≈ 120k, L40 = 270k) · the chance it turns lucky (5% under a year old, 10% / 15% / 20% at 1 / 2 / 3+ years) times half the power-ups still ahead · the candy in it minus the candy still owed to fully evolve (so a level-30 Charmander is worth about half a level-30 Charizard; a trade evolution like Machoke counts its free evolution as a plus) · a re-roll ticket for rare and meta families while your keeper slots are empty. League picks are valued against their league’s cap level. 150k+ is <b>TRADE 1ST</b>, 25k+ <b>TRADE</b>, below that transfer. Up to 5 trades are held per family; the pill shows the two biggest contributors (L31 130K · CANDY 33K).</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #7dd3fc;">
-          <b>Role and moves.</b> On a keeper the pill adds <b>ROLE</b>: RAID, PVP with its best league, RAID + PVP, or COLLECTION when it is neither. Then the moves to aim your TMs at, one line per role: <b>RAID MOVES</b> and/or <b>&lt;LEAGUE&gt; LEAGUE MOVES</b> (two charged moves for PvP: unlock the second). Each line says <b>FAST</b> and <b>CHARGED</b> separately and names what an ordinary Fast TM / Charged TM can reach; when the very best move needs an Elite TM or its Community Day it is added as <b>BEST: … (ELITE TM)</b>, and <b>(NO TM)</b> marks a move no TM teaches. A Pokémon that still has to evolve gets its final form’s moves (<b>RAID MOVES AS METAGROSS</b>): evolve first, evolving re-rolls the moves. Nothing is shown on trades or transfers, so no TM is wasted.</div>
+          <b>Role and moves.</b> On a keeper the pill adds <b>ROLE</b>: RAID, PVP with its best league, RAID + PVP, <b>FRINGE</b> (close to a pick, e.g. raid #175 or Master League #171: half the keeper slots, 60% trade value) or COLLECTION when it is none of those. Then the moves to aim your TMs at, one line per role: <b>RAID MOVES</b> and/or <b>&lt;LEAGUE&gt; LEAGUE MOVES</b> (two charged moves for PvP: unlock the second). Each line says <b>FAST</b> and <b>CHARGED</b> separately and names what an ordinary Fast TM / Charged TM can reach; when the very best move needs an Elite TM or its Community Day it is added as <b>BEST: … (ELITE TM)</b>, and <b>(NO TM)</b> marks a move no TM teaches. A Pokémon that still has to evolve gets its final form’s moves (<b>RAID MOVES AS METAGROSS</b>): evolve first, evolving re-rolls the moves. Nothing is shown on trades or transfers, so no TM is wasted.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
           <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by family, height and weight, CP, HP, catch date and IVs together, so renaming or powering up never confuses it, and a re-scan with the appraisal closed still shows the saved IVs as <b>15/14/15 (SAVED)</b>. <b>Appraise once, remembered forever:</b> open the in-game appraisal and SCAN (or let AUTO do it). Each row in My Log shows its <b>current standing</b> (keeper #2 of 6, trade ~66k, transfer, gone), recomputed from the whole log, so an older pill verdict can never contradict a newer scan. Lucky and shadow are read from the page (the purple haze, confirmed by the PURIFY button); shiny is read from the model’s colours against the species’ normal and shiny palettes (the obvious ones: a black Charizard, a red Gyarados; subtle shinies such as Gengar or Pikachu still need the tick) and you can tick <b>shiny</b> yourself. <b>Shinies are their own branch</b>: the best 2 of each species are SHINY PRIZED (collection and high IVs), every other shiny is SHINY STOCK, held for shiny-for-shiny trades rather than transferred; shiny shadows and shiny legendaries follow the same rule. <b>Shadows are judged among shadows</b> (attack IV counts double, 30+ floor): for a raid species the best few stay shadows (KEEP · SHADOW RAID FORM: the +20% attack beats any IV gap), a shadow whose +2 purified IVs make a 44/45 says <b>PURIFY</b> with the dust and candy it costs, a surplus shadow worth more traded than transferred says <b>PURIFY · THEN TRADE</b> (a shadow can’t be traded), and the rest transfer. Shadow legendaries from shadow raids are the exception: keep up to your raid slots as shadows, transfer the rest for candy (purifying costs rare candy and trading burns the one special trade a day). Dynamax Pokémon are their own pool (keep the best 3 per species). A favorited Pokémon that the numbers would transfer says <b>FAVORITE?</b> instead.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #14b8a6;">
@@ -1357,7 +1357,7 @@ function tradeValue(p, cp, ivs, date, need = 0) {
   if (r.pvp) options.push(against(r.league === 'ml' ? 40 : capLevel(t, r.league === 'gl' ? 1500 : 2500), true));
   if (!options.length) options.push(against(40, false));
   const best = options.reduce((a, b) => (b.sum > a.sum ? b : a));
-  const factor = r.role ? 1 : 0.25;
+  const factor = r.role === 'FRINGE' ? 0.6 : r.role ? 1 : 0.25;
   const ticket = (rarity === 3 ? 60000 : rarity === 2 ? 30000 : 0) * (0.5 + 0.5 * Math.max(0, Math.min(1, need)));
   const value = Math.round((factor * best.sum + ticket) / 1000);
   const parts = { level: Math.round(factor * best.dustIn / 1000), lucky: Math.round(factor * best.lucky / 1000),
@@ -1398,13 +1398,18 @@ function pvpRelevant(p) {
 // number (default 6 raid + 3 PvP). A low-use family (no stage is a raid or league pick, e.g.
 // Raticate) keeps only its single best. Dynamax has its own count.
 const roleCache = new Map();
-function familyHasRole(species) {
+// 'full' when any stage is a raid / league pick, 'fringe' when any stage is close, else 'none'.
+function familyTier(species) {
   const p = POKEMON_DATA.find(x => x.name === species);
-  if (!p) return false;
+  if (!p) return 'none';
   const key = baseSpecies(p.familyRoot || p.name);
-  if (!roleCache.has(key)) roleCache.set(key, candyFamily(p).some(q => !!roleOf(q).role));
+  if (!roleCache.has(key)) {
+    const roles = candyFamily(p).map(q => roleOf(q).role);
+    roleCache.set(key, roles.some(r => r && r !== 'FRINGE') ? 'full' : roles.some(r => r === 'FRINGE') ? 'fringe' : 'none');
+  }
   return roleCache.get(key);
 }
+function familyHasRole(species) { return familyTier(species) !== 'none'; }
 function keepSlots(species, dynamax, shadow = false, shiny = false) {
   if (shiny) return { raid: keepNShiny(), pvp: 0, lowUse: false };   // prized shinies; the rest are trade stock
   if (dynamax) return { raid: keepNDynamax(), pvp: 0, lowUse: false };
@@ -1416,7 +1421,10 @@ function keepSlots(species, dynamax, shadow = false, shiny = false) {
     if (p && p.isLegendary) return { raid: keepN(), pvp: 0, lowUse: false };
     return { raid: raid ? keepNShadow() : 1, pvp: 0, lowUse: !raid };
   }
-  return familyHasRole(species) ? { raid: keepN(), pvp: keepNPvp(), lowUse: false } : { raid: 1, pvp: 0, lowUse: true };
+  const tier = familyTier(species);
+  if (tier === 'full') return { raid: keepN(), pvp: keepNPvp(), lowUse: false };
+  if (tier === 'fringe') return { raid: Math.max(1, Math.ceil(keepN() / 2)), pvp: 0, lowUse: false, fringe: true };   // half the slots
+  return { raid: 1, pvp: 0, lowUse: true };
 }
 
 const KEEP_N_SHINY_KEY = 'pogo_keep_n_shiny';
@@ -1734,7 +1742,7 @@ function applyLogContext(g, p) {
       p.te ? 'THE TRADE MAKES ITS EVOLUTION FREE' : '',
       tv.parts.ticket ? `${rare} RE-ROLL TICKET ~${kDust(tv.parts.ticket * 1000)}${keepers.slots - keepers.raid.length ? ` (${keepers.slots - keepers.raid.length} OF YOUR ${keepers.slots} KEEPER SLOTS EMPTY)` : ''}` : '',
       tv.parts.T !== 40 ? `VALUED FOR THE LEAGUE (CAP LEVEL ${tv.parts.T})` : '',
-      tv.parts.factor < 1 ? 'LOW-USE SPECIES: WORTH A QUARTER' : '',
+      tv.parts.factor < 1 ? (tv.parts.factor < 0.5 ? 'LOW-USE SPECIES: WORTH A QUARTER' : 'FRINGE SPECIES: WORTH 60%') : '',
     ].filter(Boolean).join(' · ');
     const notKept = why ? `NOT A KEEPER (${why}). ` : '';
     const special = tv.rarity === 3 ? ' · SPECIAL TRADE (1 A DAY)' : '';
@@ -1775,8 +1783,8 @@ function applyLogContext(g, p) {
     // get to send your best ones away.
     g = ks.lowUse
       ? set('KEEP BEST', '#e2e8f0', '⭐', `${rankTag ? rankTag + ' · ' : ''}YOUR BEST ${c.poolLabel} (${total}/45). LOW-USE SPECIES: KEEP THIS ONE, TRADE OR TRANSFER THE REST`, `KEEP BEST 1 · LOW USE`)
-      : set('KEEP', '#c084fc', '⭐', `${rankTag ? rankTag + ' · ' : ''}${total}/45 HOLDS ONE OF YOUR ${n} ${c.dynamax ? 'DYNAMAX ' : ''}KEEPER SLOTS`,
-          ranked ? `KEEP · TOP ${n}` : `KEEP · YOUR BEST`);
+      : set('KEEP', '#c084fc', '⭐', `${rankTag ? rankTag + ' · ' : ''}${total}/45 HOLDS ONE OF YOUR ${n} ${c.dynamax ? 'DYNAMAX ' : ''}KEEPER SLOTS${ks.fringe ? ' (FRINGE SPECIES: HALF THE SLOTS)' : ''}`,
+          ranked ? `KEEP · TOP ${n}${ks.fringe ? ' FRINGE' : ''}` : `KEEP · YOUR BEST`);
   } else if (rankTag) {
     g = { ...g, reason: `${rankTag} · ${g.reason}`, short: `${g.verdict} · ${rk}` };
   }
@@ -2140,7 +2148,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.41';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.42';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -2907,19 +2915,32 @@ function pickTm(m) {
 const bestLeague = p => (p && p.lg ? Object.keys(p.lg).sort((a, b) => p.lg[a][0] - p.lg[b][0])[0] : null);
 // What a species is for, judged on its final form: a RAID pick (top 150 raid attackers overall,
 // or top 10 of its attack type), a PVP pick (top 150 of a league), BOTH, or neither.
+// A hard cut-off makes a cliff (Torterra: raid #175, Grass #14, Master #171 was "collection"),
+// so there is a FRINGE tier between a full pick and collection-only: fewer keeper slots, raid
+// moves still shown, trade value scaled by 0.6 instead of 0.25.
 const ROLE_RAID_OVERALL = 150, ROLE_RAID_TYPE = 10, ROLE_PVP_RANK = 150;
+const FRINGE_RAID_OVERALL = 300, FRINGE_RAID_TYPE = 20, FRINGE_PVP_RANK = 300;
 function roleOf(p) {
   const t = p && p.finals.length === 1 ? p.finals[0] : p;
-  if (!t) return { role: '', raid: false, pvp: false, league: null, target: t };
+  if (!t) return { role: '', raid: false, pvp: false, fringe: false, league: null, target: t };
   const league = bestLeague(t);
   const raid = (t.rr || 9999) <= ROLE_RAID_OVERALL || (t.rt || 9999) <= ROLE_RAID_TYPE;
   const pvp = !!league && t.lg[league][0] <= ROLE_PVP_RANK;
-  return { role: raid && pvp ? 'BOTH' : raid ? 'RAID' : pvp ? 'PVP' : '', raid, pvp, league, target: t };
+  const nearRaid = !raid && ((t.rr || 9999) <= FRINGE_RAID_OVERALL || (t.rt || 9999) <= FRINGE_RAID_TYPE);
+  const nearPvp = !pvp && !!league && t.lg[league][0] <= FRINGE_PVP_RANK;
+  const fringe = !raid && !pvp && (nearRaid || nearPvp);
+  return { role: raid && pvp ? 'BOTH' : raid ? 'RAID' : pvp ? 'PVP' : fringe ? 'FRINGE' : '',
+    raid: raid || (fringe && nearRaid), pvp: pvp || (fringe && nearPvp), fringe, league, target: t };
 }
 // Short label for the pill and the cards.
 function roleLabel(p) {
   const r = roleOf(p);
   const lg = r.league ? LEAGUE_LABEL[r.league] : '';
+  if (r.role === 'FRINGE') {
+    const t = r.target;
+    const bits = [r.raid ? `RAID #${t.rt} ${t.rty || ''}`.trim() : '', r.pvp ? `${lg} #${t.lg[r.league][0]}` : ''].filter(Boolean);
+    return `FRINGE (${bits.join(', ')})`;
+  }
   return r.role === 'BOTH' ? `RAID + PVP (${lg})` : r.role === 'RAID' ? 'RAID' : r.role === 'PVP' ? `PVP (${lg})` : 'COLLECTION';
 }
 
@@ -3014,7 +3035,7 @@ function pushNativePill() {
   if (scanIsKeeper()) {
     const role = roleOf(activeHudPokemon).role;
     if (scanMatchAmbiguous === 'form') slots.push(['ROLE', 'FORM? (TYPE ROW NOT READ)', '#fbbf24']);
-    else slots.push(['ROLE', roleLabel(activeHudPokemon), role === 'BOTH' ? '#fbbf24' : role ? '#c084fc' : '#94a3b8']);
+    else slots.push(['ROLE', roleLabel(activeHudPokemon), role === 'BOTH' ? '#fbbf24' : role === 'FRINGE' ? '#e2e8f0' : role ? '#c084fc' : '#94a3b8']);
   }
   for (const m of scanMoveAdvice()) slots.push([m.caption, m.value, '#7dd3fc']);
   if (evaluationMode === 'storage' && !activeHudPokemon && layoutSuspect()) slots.push(['', LAYOUT_SUSPECT_LINE, '#fbbf24']);

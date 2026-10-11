@@ -1,1 +1,1 @@
-{"versionCode": 64, "versionName": "2.3.41", "apk": "pogo-companion.apk", "notes": "Update listeners: a weekly check of the game data opens an issue when Pokemon, moves, evolutions or rankings change; the app warns when its reads start failing after a game update."}
+{"versionCode": 65, "versionName": "2.3.42", "apk": "pogo-companion.apk", "notes": "New FRINGE tier: species close to a raid or league pick (e.g. Torterra) keep half the slots instead of one, so a 43 Turtwig is no longer transfer fodder."}
