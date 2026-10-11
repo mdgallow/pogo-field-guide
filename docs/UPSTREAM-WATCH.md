@@ -3,11 +3,42 @@
 Three listeners cover three kinds of change. None of them involve the phone: the app still sends
 nothing anywhere.
 
-## 1. Game data (weekly, automatic)
+## 0. Compliance
 
-`.github/workflows/watch-upstream.yml` runs `tools/watch_upstream.py` every Monday and opens or
-updates the issue **"Upstream Pokémon GO data changed"** when any of these moved since the
-recorded baseline (`tools/upstream.json`):
+Every listener reads **public files hosted on GitHub by third parties**: PokeMiners' game-master
+mirror, PvPoke (MIT), the pokemon-go-api sprite repo, and ScrapedDuck, which mirrors LeekDuck's
+event calendar with LeekDuck's permission and asks only for credit (given in README) and that the
+app is free and ad-free (it is). The watcher never contacts Niantic / Scopely servers, their
+websites or the game; it does not crawl, log in, or automate anything of theirs. It runs in CI,
+twice a week, one request per file. The app on the phone takes no part in any of this: it only
+ever contacts our own site for `version.json`. So nothing here can count as accessing the game
+"through automation", which is the clause the game's terms care about.
+
+## 1. Announcements (twice weekly, automatic) → pre-patch
+
+The same workflow reads the community event calendar and opens or updates the issue
+**"Upcoming Pokémon GO changes (pre-patch)"** for events starting within 28 days that can affect
+the app, each with what to prepare:
+
+| Announced | Prepare ahead |
+|---|---|
+| Community Day | the exclusive (Elite) move of the featured line, its shiny palette, and the flood of that species in logs |
+| Raid Day / raid rotation | the boss and its shiny: fixed-level perfect check, role and moves, dataset row if it is a debut |
+| Season start | a move rebalance and GBL reset usually follow: plan a `build_moves.py` run for the day the data lands |
+| GO Tour / GO Fest / Wild Area / research | debuts and new forms: add dataset rows (name, dex, types, `cps`) before they appear |
+| Max Battles / Max Mondays | Dynamax species for the Dynamax pool |
+
+**Maintenance cadence.** Repo maintenance is scheduled when an announcement is confirmed and
+carries enough detail: a **pre-patch** release ships what can be known in advance, marked as
+assumed in the issue (new rows, elite-move markers, palettes). When the game data actually moves
+(§2), the **true-up** release regenerates everything from the real data and the issue's checklist
+is used to confirm or correct each assumption. Two small releases, no surprises on event day.
+
+## 2. Game data (twice weekly, automatic) → true-up
+
+`.github/workflows/watch-upstream.yml` runs `tools/watch_upstream.py` on Mondays and Thursdays
+and opens or updates the issue **"Upstream Pokémon GO data changed (true-up)"** when any of these
+moved since the recorded baseline (`tools/upstream.json`):
 
 | Source | What a change means | Refresh |
 |---|---|---|
@@ -26,7 +57,7 @@ The new species list is also the cue to extend the dataset itself: `build_moves.
 species already in `POKEMON_DATA`; a brand-new Pokémon needs a row (name, dex id, types, region,
 `cps` table from `cpOf`, icon URL) before the generators can fill the rest.
 
-## 2. Game mechanics we hold as constants (manual, on the issue's checklist)
+## 3. Game mechanics we hold as constants (manual, on the issue's checklist)
 
 These are not in any feed; when the game changes them, edit the constant and run the tests:
 
@@ -42,7 +73,7 @@ These are not in any feed; when the game changes them, edit the constant and run
 | Shadow bonus (+20% / x1.2 cost), purified +2 IV, floors | `index.html` | game rules |
 | Elite / event move markers | generator output | game master `eliteQuickMove` / `eliteCinematicMove` / `nonTmCinematicMoves` |
 
-## 3. Screen layout (on the phone, automatic)
+## 4. Screen layout (on the phone, automatic)
 
 The scanner reads fixed regions of the storage page (`SCAN_REGIONS`, the AUTO fingerprint zones,
 the pixel detectors). A client update that moves the layout breaks reads silently, so the app
