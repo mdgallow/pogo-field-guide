@@ -810,10 +810,11 @@ class FloatingOverlayService : Service() {
         val isFavorite = isStorage && favoriteClear && looksFavorited(bitmap)
         val isShadow = isStorage && shadowClear && looksShadow(bitmap)
         val isLucky = isStorage && looksLucky(bitmap)
+        val colors = if (isStorage) modelColors(bitmap) else null
         val isDynamax = isStorage && dynamaxClear && looksDynamax(bitmap)
         val ivs = if (isStorage && appraisalClear) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked, isLucky) }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked, isLucky, colors) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -1014,6 +1015,59 @@ class FloatingOverlayService : Service() {
         return n > 0 && v.toFloat() / n >= 0.50f
     }
 
+    /**
+     * The dominant colours of the 3D model, for shiny detection: a hue histogram of the centre of
+     * the model area with the surrounding background's histogram subtracted (habitats are
+     * colourful too), as up to four [hue 0-359, sat 0-100, val 0-100, weight 0-100] rows. The page
+     * compares them with the species' normal and shiny palettes. Pill pixels are skipped.
+     */
+    private fun modelColors(bmp: Bitmap): JSONArray? {
+        val w = bmp.width
+        val h = bmp.height
+        val bins = 36
+        val centre = DoubleArray(bins); val cs = DoubleArray(bins); val cv = DoubleArray(bins)
+        val ring = DoubleArray(bins)
+        var nc = 0.0; var nr = 0.0
+        fun hsv(c: Int): DoubleArray {
+            val r = (c shr 16 and 0xFF) / 255.0; val g = (c shr 8 and 0xFF) / 255.0; val b = (c and 0xFF) / 255.0
+            val max = maxOf(r, g, b); val min = minOf(r, g, b); val d = max - min
+            val sat = if (max == 0.0) 0.0 else d / max
+            val hue = if (d == 0.0) 0.0 else when (max) {
+                r -> ((g - b) / d + 6.0) % 6.0
+                g -> (b - r) / d + 2.0
+                else -> (r - g) / d + 4.0
+            } * 60.0
+            return doubleArrayOf(hue, sat, max)
+        }
+        var y = (h * 0.08).toInt()
+        while (y < (h * 0.36).toInt()) {
+            var x = (w * 0.08).toInt()
+            while (x < (w * 0.92).toInt()) {
+                if (!underPill(x, y, w)) {
+                    val p = hsv(bmp.getPixel(x, y))
+                    if (p[1] >= 0.22 && p[2] >= 0.18) {           // coloured pixels only
+                        val bin = ((p[0] / 10.0).toInt()).coerceIn(0, bins - 1)
+                        val inCentre = x > w * 0.32 && x < w * 0.68 && y > h * 0.13 && y < h * 0.33
+                        if (inCentre) { centre[bin] += 1.0; cs[bin] += p[1]; cv[bin] += p[2]; nc += 1.0 } else { ring[bin] += 1.0; nr += 1.0 }
+                    }
+                }
+                x += 3
+            }
+            y += 3
+        }
+        if (nc < 40) return null
+        // What the centre has more of than the background is the model.
+        val model = DoubleArray(bins) { i -> maxOf(0.0, centre[i] / nc - (if (nr > 0) ring[i] / nr else 0.0) * 0.9) }
+        val total = model.sum()
+        if (total <= 0.0) return null
+        val order = (0 until bins).sortedByDescending { model[it] }.take(4).filter { model[it] / total >= 0.08 }
+        val out = JSONArray()
+        for (i in order) {
+            out.put(JSONArray(listOf(i * 10 + 5, (100 * cs[i] / maxOf(1.0, centre[i])).toInt(), (100 * cv[i] / maxOf(1.0, centre[i])).toInt(), (100 * model[i] / total).toInt())))
+        }
+        return out
+    }
+
     /** Magenta round Dynamax badge under the height/weight row; same rule as looksDynamax() in index.html. */
     private fun looksDynamax(bmp: Bitmap): Boolean {
         val x0 = (bmp.width * 0.32).toInt()
@@ -1044,7 +1098,7 @@ class FloatingOverlayService : Service() {
         return n > 0 && m.toFloat() / n >= 0.30f
     }
 
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false, blocked: List<String> = emptyList(), isLucky: Boolean = false) {
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false, blocked: List<String> = emptyList(), isLucky: Boolean = false, colors: JSONArray? = null) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         // AUTO reads keep the pill on screen: skip any text inside it (scaled to capture pixels).
@@ -1077,7 +1131,8 @@ class FloatingOverlayService : Service() {
             evaluator(
                 JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines)
                     .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).put("auto", auto)
-                    .put("shadow", isShadow).put("dynamax", isDynamax).put("lucky", isLucky).put("blocked", JSONArray(blocked)).toString()
+                    .put("shadow", isShadow).put("dynamax", isDynamax).put("lucky", isLucky).put("blocked", JSONArray(blocked))
+                    .put("colors", colors ?: JSONObject.NULL).toString()
             )
             return
         }
