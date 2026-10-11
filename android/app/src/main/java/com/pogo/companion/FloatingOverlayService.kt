@@ -372,6 +372,12 @@ class FloatingOverlayService : Service() {
         mainHandler.post(then)
     }
 
+    /** Is this capture pixel under the pill? */
+    private fun underPill(x: Int, y: Int, captureWidth: Int): Boolean {
+        val k = screenWidth.toFloat() / captureWidth
+        return pillRectOnScreen.contains((x * k).toInt(), (y * k).toInt())
+    }
+
     /** Does the pill cover any of this screen region (fractions of the screen)? */
     private fun pillCovers(fx0: Double, fy0: Double, fx1: Double, fy1: Double): Boolean {
         val r = android.graphics.Rect((screenWidth * fx0).toInt(), (screenHeight * fy0).toInt(), (screenWidth * fx1).toInt(), (screenHeight * fy1).toInt())
@@ -798,7 +804,7 @@ class FloatingOverlayService : Service() {
         // learns which, so it can ask the player to move the pill if that loses something.
         val blocked = ArrayList<String>()
         val favoriteClear = !pillCovers(0.84, 0.045, 0.97, 0.11).also { if (it) blocked.add("favorite") }
-        val shadowClear = !pillCovers(0.22, 0.08, 0.78, 0.34).also { if (it) blocked.add("shadow") }
+        val shadowClear = true   // looksShadow() masks the pill itself; the ring is big enough
         val dynamaxClear = !pillCovers(0.32, 0.605, 0.41, 0.655).also { if (it) blocked.add("dynamax") }
         val appraisalClear = !pillCovers(0.07, 0.68, 0.52, 0.88).also { if (it) blocked.add("appraisal") }
         val isFavorite = isStorage && favoriteClear && looksFavorited(bitmap)
@@ -951,7 +957,7 @@ class FloatingOverlayService : Service() {
             var x = (w * 0.22).toInt()
             while (x < (w * 0.78).toInt()) {
                 if (!(x > w * 0.36 && x < w * 0.64 && y > h * 0.14 && y < h * 0.31)) {
-                    ringN++; if (darkViolet(bmp.getPixel(x, y))) ringV++
+                    if (!underPill(x, y, w)) { ringN++; if (darkViolet(bmp.getPixel(x, y))) ringV++ }
                 }
                 x += 3
             }
@@ -962,7 +968,7 @@ class FloatingOverlayService : Service() {
             var x = (w * 0.02).toInt()
             while (x < (w * 0.98).toInt()) {
                 if (x < w * 0.12 || x > w * 0.88) {
-                    edgeN++; if (darkViolet(bmp.getPixel(x, y))) edgeV++
+                    if (!underPill(x, y, w)) { edgeN++; if (darkViolet(bmp.getPixel(x, y))) edgeV++ }
                 }
                 x += 3
             }
