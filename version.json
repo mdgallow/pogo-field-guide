@@ -1,1 +1,1 @@
-{"versionCode": 58, "versionName": "2.3.35", "apk": "pogo-companion.apk", "notes": "Trade value is now the stardust a receiver can expect to save: level, lucky odds by age, candy in it minus evolution candy still owed (free for trade evolutions), league cap level for PvP picks. Smaller pill text."}
+{"versionCode": 59, "versionName": "2.3.36", "apk": "pogo-companion.apk", "notes": "Updates now open the download page in your browser instead of installing from inside the app; the app no longer asks for permission to install packages. In-app guide and My Log notes updated."}

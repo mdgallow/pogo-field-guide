@@ -21,7 +21,7 @@ are deferred until the Play launch and are blocking for it.
 - [ ] Enrol in **Play App Signing**; upload key = the permanent key created by `tools/setup-signing.sh`
       (`~/.pogo-signing`, backed up off-machine). The pre-2026-09-22 key was published by the old
       workflow and is burned; v2.0.0 installs must uninstall once.
-- [ ] Remove or gate `UpdateChecker` (self-update) in the Play build; keep it for the sideload site.
+- [ ] Gate `UpdateChecker` (version check + "open download page") off in the Play build; keep it for the sideload site.
 - [ ] Bundle the ML Kit Latin model (`com.google.mlkit:text-recognition`) or add the
       `com.google.mlkit.vision.DEPENDENCIES` meta-data + module-install check, so a fresh install
       can scan without a silent "NOTHING TO READ".

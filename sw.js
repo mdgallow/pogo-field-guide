@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pogo-companion-2.3.35';
+const CACHE_NAME = 'pogo-companion-2.3.36';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
