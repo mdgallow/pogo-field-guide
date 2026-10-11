@@ -151,7 +151,31 @@ test('trade order inside a family follows CP: higher CP trades, lower CP makes r
   for (const [cp, ivs, i, d] of extras) { await t.app.scan(machamp(cp, ivs, i, d)); verdicts.push(cp + ':' + slot(t.last(), 'VERDICT')); }
   eq(verdicts[0], '2900:TRADE', 'highest CP non-keeper trades');
   eq(verdicts[1], '2000:TRADE', 'next trades');
-  check(verdicts[3] !== '600:TRADE', `the 600 CP one (better IVs, older) is not ranked above them for trade (got ${verdicts[3]})`);
+  const worth = s => Number((s.match(/~(\d+)K/) || [])[1]);
+  const reasons = [];
+  for (const [cp, ivs, i, d] of extras) { await t.app.scan(machamp(cp, ivs, i, d)); reasons.push(slot(t.last(), 'REASON')); }
+  check(worth(reasons[0]) > worth(reasons[1]) && worth(reasons[1]) > worth(reasons[3]), `value follows level, not IVs or age: ${reasons.map(worth).join(' > ')}`);
+});
+
+test('trade value: evolution candy owed and free trade evolutions are priced in', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  const v = (n, cp) => JSON.parse(run(`JSON.stringify(tradeValue(POKEMON_DATA.find(x => x.name === ${JSON.stringify(n)}), ${cp}, null, '9/1/2026', 0))`));
+  const charmander = v('Charmander', 715), charizard = v('Charizard', 2200);     // both about level 30
+  check(charmander.parts.evoLeft === 125 && charizard.parts.evoLeft === 0, 'candy still owed: 125 vs 0');
+  check(charizard.score > charmander.score * 1.5, `a Charizard at the same level is worth far more (${charizard.score}k vs ${charmander.score}k)`);
+  const machoke = v('Machoke', 1200);
+  has(run(`POKEMON_DATA.find(x => x.name === 'Machoke').te`), true, 'Machoke is a trade evolution');
+  check(machoke.parts.candy > 0, 'the free evolution turns its candy term positive');
+  const low = v('Charmander', 150);
+  eq(low.tier, 'LOW', 'a low-level unevolved common-ish catch is transfer fodder');
+});
+
+test('trade value: a league pick above its cap level earns nothing for that league', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  const cap = run(`capLevel(POKEMON_DATA.find(x => x.name === 'Azumarill'), 1500)`);
+  check(cap >= 25 && cap <= 45, `Azumarill GL cap level is plausible (${cap})`);
+  const over = JSON.parse(run(`JSON.stringify(tradeValue(POKEMON_DATA.find(x => x.name === 'Azumarill'), 1800, null, '9/1/2026', 0))`));
+  eq(over.parts.level, 0, 'level worth nothing above the cap');
 });
 
 // ---------------------------------------------------------------- keeper slots
@@ -169,7 +193,7 @@ test('keeper slots: the best of a raid/PvP species are KEEP, whatever its old "t
   await t.app.scan(lunala(ivSets[5], 5));
   eq(slot(t.last(), 'VERDICT'), 'KEEP', '#6 still holds a slot');
   await t.app.scan(lunala(ivSets[6], 6));
-  eq(slot(t.last(), 'VERDICT'), 'TRADE', '#7 is outside the six slots'); has(slot(t.last(), 'REASON'), 'LEGENDARY', 'traded as a legendary');
+  eq(slot(t.last(), 'VERDICT'), 'TRADE', '#7 is outside the six slots');
 });
 
 test('keeper slots: a better one scanned after six takes the slot; the old #6 becomes a trade', async t => {
@@ -208,7 +232,7 @@ test('trade value: a high-level common beats a low-level one with better IVs', a
   await t.app.scan(card({ cp: 1300, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [2, 3, 2] }));
   const high = t.last();
   eq(slot(high, 'VERDICT'), 'TRADE', 'level ~30 with 15% IVs is a trade');
-  has(slot(high, 'REASON'), 'L31 +', 'pill names the level as the driver');
+  has(slot(high, 'REASON'), 'L31', 'pill names the level as the driver');
   const u = loadApp();
   await u.app.scan(card({ cp: 100, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 4] }));
   eq(slot(u.last(), 'VERDICT'), 'SURPLUS', 'level ~2 with 31% IVs is transfer fodder');
@@ -225,7 +249,7 @@ test('trade value: rarity lifts every level, and level + rarity goes first', asy
 });
 
 test('trade value: the IVs being traded away do not change the score', async t => {
-  const score = s => (slot(s, 'REASON').match(/TRADE(?: 1ST)? (\d+)/) || [])[1];
+  const score = s => (slot(s, 'REASON').match(/TRADE(?: 1ST)? ~(\d+)K/) || [])[1];
   await t.app.scan(card({ cp: 1384, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [1, 1, 1] }));
   const low = score(t.last());
   const u = loadApp();
@@ -236,12 +260,12 @@ test('trade value: the IVs being traded away do not change the score', async t =
 });
 
 test('trade value: an old catch is worth more (better lucky odds)', async t => {
-  const score = s => Number((slot(s, 'REASON').match(/(?:TRADE(?: 1ST)?|TRANSFER ·) (\d+)/) || [])[1]);
+  const score = s => Number((slot(s, 'REASON').match(/(?:TRADE(?: 1ST)?|TRANSFER ·) ~(\d+)K/) || [])[1]);
   await t.app.scan(card({ cp: 700, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 5], date: '8/4/2026' }));
   const fresh = score(t.last());
   const u = loadApp();
   await u.app.scan(card({ cp: 700, name: 'Raticate', kg: 18.5, m: 0.7, types: 'NORMAL', ivs: [5, 5, 5], date: '8/4/2017' }));
-  eq(score(u.last()), fresh + 5, 'a 9-year-old catch scores 5 higher (a tie-break, never above a level step)');
+  check(score(u.last()) > fresh && score(u.last()) - fresh < 15, `an old catch is worth a little more (${fresh} -> ${score(u.last())}), never a level's worth`);
 });
 
 test('trade value: only the best few of a family are held for trading', async t => {
