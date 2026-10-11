@@ -2023,7 +2023,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.35';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.36';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -3465,7 +3465,7 @@ function clearCpFilter() {
 // Update & Origin Sync Engine
 async function checkForUpdates(manual = false) {
   if (manual && Native.canSelfUpdate) {
-    // The APK updates itself from the site's version.json; the PWA cache check below is moot.
+    // The APK checks the site's version.json and opens the download page; the PWA cache check below is moot.
     Native.checkForUpdate();
     return;
   }

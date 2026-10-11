@@ -8,9 +8,7 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.FileProvider
 import org.json.JSONObject
-import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
@@ -70,74 +68,21 @@ object UpdateChecker {
         AlertDialog.Builder(activity)
             .setTitle("Update to v$name")
             .setMessage((if (notes.isBlank()) "" else notes + "\n\n") +
-                "You have v${BuildConfig.VERSION_NAME}. The update downloads (about 6 MB) and Android will ask you to confirm the install. Your log and settings are kept.")
-            .setPositiveButton("Update now") { _, _ -> download(activity, apkUrl, expectedCode) }
+                "You have v${BuildConfig.VERSION_NAME}. The download page opens in your browser; install the APK from there. Your log and settings are kept.")
+            .setPositiveButton("Open download page") { _, _ ->
+                // The app never downloads or installs packages itself (that capability is one of the
+                // traits Play Protect flags); the browser handles the file like any other download.
+                try {
+                    activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)))
+                } catch (e: Exception) {
+                    Toast.makeText(activity, "Could not open the browser: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
             .setNegativeButton("Later", null)
             .setNeutralButton("Skip this version") { _, _ ->
                 activity.getSharedPreferences(PREFS, Activity.MODE_PRIVATE).edit().putInt(PREF_SKIPPED, code).apply()
             }
             .show()
-    }
-
-    private fun download(activity: Activity, apkUrl: String, expectedCode: Int) {
-        Toast.makeText(activity, "Downloading update…", Toast.LENGTH_SHORT).show()
-        io.execute {
-            try {
-                val file = File(activity.cacheDir, "update.apk")
-                val conn = URL(apkUrl).openConnection() as HttpURLConnection
-                conn.connectTimeout = 10000
-                conn.readTimeout = 30000
-                conn.inputStream.use { input -> file.outputStream().use { input.copyTo(it) } }
-                val problem = validate(activity, file, expectedCode)
-                main.post {
-                    if (activity.isFinishing || activity.isDestroyed) return@post
-                    if (problem != null) Toast.makeText(activity, "Update not installed: $problem", Toast.LENGTH_LONG).show()
-                    else install(activity, file)
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Update download failed: $e")
-                main.post { Toast.makeText(activity, "Download failed: ${e.message}", Toast.LENGTH_LONG).show() }
-            }
-        }
-    }
-
-    /**
-     * Refuse anything that is not our package, an older/same versionCode, or signed with a
-     * different key: Android would fail those later with an unhelpful dialog (or a stale CDN
-     * copy would loop the "update" forever).
-     */
-    private fun validate(activity: Activity, file: File, expectedCode: Int): String? {
-        val pm = activity.packageManager
-        val info = (if (android.os.Build.VERSION.SDK_INT >= 28)
-            pm.getPackageArchiveInfo(file.path, android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES)
-        else @Suppress("DEPRECATION") pm.getPackageArchiveInfo(file.path, android.content.pm.PackageManager.GET_SIGNATURES))
-            ?: return "the download is not a valid app package"
-        if (info.packageName != activity.packageName) return "wrong package (${info.packageName})"
-        val code = if (android.os.Build.VERSION.SDK_INT >= 28) info.longVersionCode.toInt() else @Suppress("DEPRECATION") info.versionCode
-        if (code < expectedCode) return "the site served an older build (v$code); try again in a few minutes"
-        if (code <= BuildConfig.VERSION_CODE) return "not newer than the installed version"
-        try {
-            val mine = if (android.os.Build.VERSION.SDK_INT >= 28)
-                pm.getPackageInfo(activity.packageName, android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES).signingInfo?.apkContentsSigners
-            else @Suppress("DEPRECATION") pm.getPackageInfo(activity.packageName, android.content.pm.PackageManager.GET_SIGNATURES).signatures
-            val theirs = if (android.os.Build.VERSION.SDK_INT >= 28) info.signingInfo?.apkContentsSigners else @Suppress("DEPRECATION") info.signatures
-            if (mine != null && theirs != null && mine.map { it.toCharsString() }.toSet() != theirs.map { it.toCharsString() }.toSet())
-                return "signed with a different key; uninstall first"
-        } catch (_: Exception) {}
-        return null
-    }
-
-    private fun install(activity: Activity, file: File) {
-        val uri = FileProvider.getUriForFile(activity, activity.packageName + ".fileprovider", file)
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        try {
-            activity.startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(activity, "Could not open the installer: ${e.message}", Toast.LENGTH_LONG).show()
-        }
     }
 
     private fun URL.readText(timeoutMs: Int): String {
