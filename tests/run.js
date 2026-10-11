@@ -258,6 +258,19 @@ test('shadow legendary: keep up to the raid slots, surplus transfers (no purify-
   check(!/PURIFY/.test(slot(t.last(), 'VERDICT')), 'no purify-then-trade for a shadow-raid legendary');
 });
 
+test('fringe tier: a near-miss family (Torterra) keeps half the slots, not one', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  eq(run(`roleOf(POKEMON_DATA.find(x => x.name === 'Torterra')).role`), 'FRINGE', 'Torterra is fringe');
+  eq(run(`keepSlots('Turtwig', false).raid`), 3, 'half of the default six');
+  const tw = (ivs, i) => card({ cp: 900 - i * 20, name: 'Turtwig', kg: 10 + i * 0.2, m: 0.4, types: 'GRASS', ivs, date: `9/${10 + i}/2026` });
+  const ivs = [[15, 15, 15], [14, 15, 14], [13, 14, 13], [13, 13, 13], [12, 12, 12]];
+  for (let i = 0; i < ivs.length; i++) await t.app.scan(tw(ivs[i], i));
+  await t.app.scan(tw(ivs[1], 1));
+  eq(slot(t.last(), 'VERDICT'), 'KEEP', 'the 43 (#2) is a keeper'); has(slot(t.last(), 'ROLE'), 'FRINGE', 'labelled fringe');
+  await t.app.scan(tw(ivs[3], 3));
+  check(slot(t.last(), 'VERDICT') !== 'KEEP', 'the #4 (39) is outside the three fringe slots');
+});
+
 // ---------------------------------------------------------------- keeper slots
 // A legendary catch at ~level 20-25; CP scales with the IVs so every card is a different Pokémon.
 const lunala = (ivs, i) => card({ cp: 2200 + ivs[0] + ivs[1] + ivs[2] + i, name: 'Lunala', kg: 120 + i, m: 4, types: 'PSYCHIC / GHOST', ivs, date: `9/${10 + i}/2026` });
