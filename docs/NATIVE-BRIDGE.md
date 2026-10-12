@@ -27,6 +27,8 @@ when it sends the same payloads and renders the same pill states.
   "auto": false,            // true for AUTO reads (no vibration, sweep bookkeeping)
   "blocked": ["appraisal"], // detector regions the shell's own overlay was covering (skipped, not guessed)
   "lucky": false,           // gold sparkle background behind the model
+  // "sparkle" and "colors" are shiny signals. PAUSED: the shell sends null for both while SHINY_SIGNALS is
+  // false (mirrors SHINY_BRANCH in index.html); the page then never marks shiny and judges shinies like any other.
   "sparkle": {"base":12,"peak":210,"burst":198,"spikes":1,"n":22}, // the last ~3.5 s of near-white counts over the model:
                             // quiet baseline, peak, their difference and how many spikes; the shiny sparkle burst
                             // is one tall spike. null when there was no history (first frames).

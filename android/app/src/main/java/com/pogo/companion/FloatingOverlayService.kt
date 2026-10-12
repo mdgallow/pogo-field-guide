@@ -214,6 +214,7 @@ class FloatingOverlayService : Service() {
         private const val AUTO_MAX_MS = 10 * 60_000L
         private const val AUTO_CHANGED_MIN = 5 // fingerprint points that must flip to count as a change (white panels: no noise)
         private const val AUTO_BIG_CHANGE = 60 // a real swipe flips far more than any stray animation
+        private const val SHINY_SIGNALS = false     // mirrors SHINY_BRANCH in index.html
         private const val SPARKLE_GAP_MS = 150L
         private const val SPARKLE_WINDOW_MS = 3500L
         private const val SPARKLE_SPIKE = 40        // grid points (of ~10k) that must light up over the baseline
@@ -525,7 +526,7 @@ class FloatingOverlayService : Service() {
         var image: Image? = null
         try {
             image = reader.acquireLatestImage() ?: return
-            watchSparkle(image)
+            if (SHINY_SIGNALS) watchSparkle(image)
             if (scanRequested.compareAndSet(true, false)) {
                 mainHandler.removeCallbacks(scanTimeout)
                 val frame = imageToBitmap(image)
@@ -872,8 +873,9 @@ class FloatingOverlayService : Service() {
         val isFavorite = isStorage && favoriteClear && looksFavorited(bitmap)
         val isShadow = isStorage && shadowClear && looksShadow(bitmap)
         val isLucky = isStorage && looksLucky(bitmap)
-        val colors = if (isStorage) modelColors(bitmap) else null
-        val sparkle = if (isStorage) sparkleSummary() else null
+        // Shiny signals are paused with the page's SHINY_BRANCH; nothing is computed or sent meanwhile.
+        val colors = if (SHINY_SIGNALS && isStorage) modelColors(bitmap) else null
+        val sparkle = if (SHINY_SIGNALS && isStorage) sparkleSummary() else null
         val isDynamax = isStorage && dynamaxClear && looksDynamax(bitmap)
         val ivs = if (isStorage && appraisalClear) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))

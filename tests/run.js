@@ -29,6 +29,8 @@ const notTheGame = () => ({ storage: false, lines: [line('SHOP', 0.4, 0.7, 0.2, 
 const slot = (state, caption) => (state.slots.find(s => s.caption === caption) || {}).value || '';
 const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
+// Tests of the shiny branch: skipped (and said so) while SHINY_BRANCH is off in index.html.
+const shinyTest = (name, fn) => tests.push({ name, fn: async t => (require('vm').runInContext('SHINY_BRANCH', t.ctx) ? fn(t) : 'skip') });
 function check(cond, message) { if (!cond) throw new Error(message); }
 const eq = (got, want, what) => check(got === want, `${what}: expected ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
 const has = (got, want, what) => check(String(got).includes(want), `${what}: expected to contain ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
@@ -218,7 +220,7 @@ test('shadow: no raid use -> purify when the +2 makes a 44, otherwise keep one',
 });
 
 // ---------------------------------------------------------------- shiny by colour
-test('shiny by colour: hue evidence only; night lighting cannot fake a shiny; colour marks are reversible', async t => {
+shinyTest('shiny by colour: hue evidence only; night lighting cannot fake a shiny; colour marks are reversible', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
   const cz = (extra) => ({ ...card({ cp: 2200, name: 'Charizard', kg: 90, m: 1.7, types: 'FIRE / FLYING', ivs: [10, 10, 10] }), ...extra });
   // What the phone sees of a shiny Charizard: the black body is too dull to count, so cream and red wings.
@@ -247,7 +249,7 @@ test('shiny by colour: hue evidence only; night lighting cannot fake a shiny; co
   eq(run(`shinyFromColors(POKEMON_DATA.find(x => x.name === 'Turtwig'), [[81, 20, 40, 70], [52, 30, 36, 20]])`), false, 'a dark green Turtwig at night is normal');
 });
 
-test('shiny pass: with the game\'s shiny search on screen every read is shiny; colour never undoes it; the pass expires', async t => {
+shinyTest('shiny pass: with the game\'s shiny search on screen every read is shiny; colour never undoes it; the pass expires', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
   const gc = (extra) => ({ ...card({ cp: 3000, name: 'Garchomp', kg: 95, m: 1.9, types: 'DRAGON / GROUND', ivs: [14, 13, 15] }), ...extra });
   await t.app.scan(gc({}));
@@ -267,7 +269,7 @@ test('shiny pass: with the game\'s shiny search on screen every read is shiny; c
   has(run(`buildSearch({ shiny: 1 })`), 'shiny', 'the search builder knows the shiny flag');
 });
 
-test('shiny ladder: pass > list > sparkle > hue; disagreement asks instead of guessing', async t => {
+shinyTest('shiny ladder: pass > list > sparkle > hue; disagreement asks instead of guessing', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
   const d = args => JSON.parse(run(`JSON.stringify(shinyDecision(${JSON.stringify(args)}))`));
   eq(d({ pass: true, released: false, sparkle: false, hue: false }).source, 'pass', 'a pass beats everything');
@@ -307,8 +309,23 @@ test('shiny released list: unreleased species are never marked; tell = hue, badg
   eq(run(`POKEMON_DATA.filter(p => p.sh).length`), 1193, 'released count matches the snapshot');
 });
 
+test('shiny branch paused: scans never mark shiny, a ticked shiny is judged like any other Pokémon', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  if (run('SHINY_BRANCH')) return 'skip';
+  const mk = (ivs, i, cp) => card({ cp, name: 'Charmander', kg: 8 + i * 0.3, m: 0.6, types: 'FIRE', ivs, date: `9/${10 + i}/2026` });
+  for (let i = 0; i < 6; i++) await t.app.scan(mk([14, 14, 13], i, 600 + i));          // six keepers
+  await t.app.scan({ ...mk([6, 7, 8], 10, 300), colors: [[1, 90, 90, 90]], sparkle: { base: 5, peak: 200, burst: 195, spikes: 1, n: 18 } });
+  check(!t.app.log()[6].shiny, 'colour and sparkles mark nothing');
+  check(slot(t.last(), 'REASON').indexOf('SHINY') < 0, 'no shiny wording');
+  run(`setLogMark(pokeLog[6].id, 'shiny', true)`);
+  await t.app.scan(mk([6, 7, 8], 10, 300));
+  check(slot(t.last(), 'REASON').indexOf('SHINY') < 0 && slot(t.last(), 'VERDICT') !== 'KEEP', 'a ticked shiny with 21 IVs is judged like a normal 21: not a keeper');
+  check(!t.last().slots.some(x => x.caption === 'PASS' || x.caption === 'SHINY?'), 'no shiny lines on the pill');
+  eq(run(`entryStanding(pokeLog[6]).text.indexOf('shiny')`), -1, 'My Log standing has no shiny lane');
+});
+
 // ---------------------------------------------------------------- shinies
-test('shiny: own branch, prized best two then trade stock, never transfer, never blended', async t => {
+shinyTest('shiny: own branch, prized best two then trade stock, never transfer, never blended', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
   const mk = (ivs, i, cp) => card({ cp, name: 'Charmander', kg: 8 + i * 0.3, m: 0.6, types: 'FIRE', ivs, date: `9/${10 + i}/2026` });
   for (let i = 0; i < 6; i++) await t.app.scan(mk([14, 14, 13], i, 600 + i));          // six normal keepers
@@ -664,10 +681,12 @@ test('the log survives a restart (stored on the device)', async t => {
 
 (async () => {
   let failed = 0;
+  let skipped = 0;
   for (const { name, fn } of tests) {
     const t = loadApp();
     try {
-      await fn(t);
+      const r = await fn(t);
+      if (r === 'skip') { skipped++; console.log(`  skip  ${name}`); continue; }
       console.log(`  ok    ${name}`);
       if (verbose && t.last()) console.log('        ' + JSON.stringify(t.last()));
     } catch (e) {
@@ -676,6 +695,6 @@ test('the log survives a restart (stored on the device)', async t => {
       if (t.last()) console.log('        last pill: ' + JSON.stringify(t.last()));
     }
   }
-  console.log(`\n${tests.length - failed}/${tests.length} passed`);
+  console.log(`\n${tests.length - failed - skipped}/${tests.length - skipped} passed${skipped ? `, ${skipped} skipped (shiny branch off)` : ''}`);
   process.exit(failed ? 1 : 0);
 })();
