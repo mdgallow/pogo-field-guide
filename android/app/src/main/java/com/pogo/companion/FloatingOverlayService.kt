@@ -818,11 +818,7 @@ class FloatingOverlayService : Service() {
         val isDynamax = isStorage && dynamaxClear && looksDynamax(bitmap)
         val ivs = if (isStorage && appraisalClear) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text ->
-                // The shiny badge sits beside the name, so it needs the OCR boxes and the pixels.
-                val badge = if (isStorage) shinyBadge(bitmap, text) else null
-                evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked, isLucky, colors, badge)
-            }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked, isLucky, colors) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -1106,57 +1102,7 @@ class FloatingOverlayService : Service() {
         return n > 0 && m.toFloat() / n >= 0.30f
     }
 
-    /**
-     * The game's own shiny mark: a small sparkle glyph drawn on the white card immediately LEFT of
-     * the Pokémon's name (the pencil sits on the right, the gender sign at the far right). It is
-     * there on every shiny whatever its colours, so it is the path for shinies that look like
-     * their normal form (Garchomp, Slowpoke, Gengar, Pikachu). The name's OCR box gives the
-     * place: the strip one name-height wide to its left is plain card on a normal Pokémon and
-     * carries a compact glyph on a shiny. Returns a JSON object with the verdict and the
-     * measurements (for calibration from the diagnostics file), or null when the name line was
-     * not read or the strip is under the pill.
-     */
-    private fun shinyBadge(bmp: Bitmap, text: Text): JSONObject? {
-        val w = bmp.width; val h = bmp.height
-        var name: android.graphics.Rect? = null
-        for (block in text.textBlocks) for (line in block.lines) {
-            val box = line.boundingBox ?: continue
-            val cy = box.exactCenterY() / h
-            if (cy < 0.385f || cy > 0.475f) continue                       // the name band of the card
-            if (line.text.uppercase().contains("LUCKY") || box.height() < h * 0.012) continue
-            if (name == null || box.height() > name!!.height()) name = box
-        }
-        val nb = name ?: return null
-        val hg = nb.height()
-        val x0 = (nb.left - 1.9 * hg).toInt().coerceAtLeast(0); val x1 = (nb.left - 0.15 * hg).toInt()
-        val y0 = (nb.top - 0.15 * hg).toInt().coerceAtLeast(0); val y1 = (nb.bottom + 0.15 * hg).toInt().coerceAtMost(h - 1)
-        if (x1 - x0 < 6 || y1 - y0 < 6) return null
-        if (underPill(x0, y0, w) || underPill(x1, y1, w) || underPill(x0, y1, w) || underPill(x1, y0, w)) return null
-        // Card colour from the brightest fifth of the strip (white, or the pale pink of a lucky).
-        val lums = ArrayList<Int>()
-        for (y in y0..y1 step 2) for (x in x0..x1 step 2) { val c = bmp.getPixel(x, y); lums.add(((c shr 16 and 0xFF) * 3 + (c shr 8 and 0xFF) * 6 + (c and 0xFF)) / 10) }
-        lums.sort()
-        val card = lums[(lums.size * 0.9).toInt().coerceAtMost(lums.size - 1)]
-        var ink = 0; var n = 0; var bl = x1; var br = x0; var bt = y1; var bb = y0
-        for (y in y0..y1) for (x in x0..x1) {
-            n++
-            val c = bmp.getPixel(x, y)
-            val r = c shr 16 and 0xFF; val g = c shr 8 and 0xFF; val b = c and 0xFF
-            val lum = (r * 3 + g * 6 + b) / 10
-            val sat = maxOf(r, g, b) - minOf(r, g, b)
-            if (lum < card - 28 || sat > 40) { ink++; if (x < bl) bl = x; if (x > br) br = x; if (y < bt) bt = y; if (y > bb) bb = y }
-        }
-        val cover = if (n > 0) ink.toDouble() / n else 0.0
-        val gw = if (ink > 0) (br - bl + 1).toDouble() / hg else 0.0
-        val gh = if (ink > 0) (bb - bt + 1).toDouble() / hg else 0.0
-        // A glyph: enough ink, roughly glyph-sized, not a smear across the whole strip (a model
-        // or background leaking in would fill it).
-        val isBadge = cover >= 0.05 && cover <= 0.55 && gw >= 0.45 && gw <= 1.8 && gh >= 0.45 && gh <= 1.35
-        return JSONObject().put("badge", isBadge).put("cover", (cover * 100).toInt()).put("gw", (gw * 100).toInt()).put("gh", (gh * 100).toInt())
-            .put("card", card).put("name", name!!.let { "${it.left},${it.top},${it.width()},${it.height()}" })
-    }
-
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false, blocked: List<String> = emptyList(), isLucky: Boolean = false, colors: JSONArray? = null, badge: JSONObject? = null) {
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false, blocked: List<String> = emptyList(), isLucky: Boolean = false, colors: JSONArray? = null) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         // AUTO reads keep the pill on screen: skip any text inside it (scaled to capture pixels).
@@ -1190,8 +1136,7 @@ class FloatingOverlayService : Service() {
                 JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines)
                     .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).put("auto", auto)
                     .put("shadow", isShadow).put("dynamax", isDynamax).put("lucky", isLucky).put("blocked", JSONArray(blocked))
-                    .put("colors", colors ?: JSONObject.NULL)
-                    .put("shinyBadge", badge?.optBoolean("badge") ?: JSONObject.NULL).put("badgeInfo", badge ?: JSONObject.NULL).toString()
+                    .put("colors", colors ?: JSONObject.NULL).toString()
             )
             return
         }
