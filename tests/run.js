@@ -247,6 +247,26 @@ test('shiny by colour: hue evidence only; night lighting cannot fake a shiny; co
   eq(run(`shinyFromColors(POKEMON_DATA.find(x => x.name === 'Turtwig'), [[81, 20, 40, 70], [52, 30, 36, 20]])`), false, 'a dark green Turtwig at night is normal');
 });
 
+test('shiny badge: the game\'s sparkle marks a look-alike shiny; a clean spot later undoes a badge mark only', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  const gc = (extra) => ({ ...card({ cp: 3000, name: 'Garchomp', kg: 95, m: 1.9, types: 'DRAGON / GROUND', ivs: [14, 13, 15] }), ...extra });
+  await t.app.scan(gc({ shinyBadge: true, colors: [[220, 60, 70, 80]] }));
+  eq(t.app.log()[0].shiny, true, 'badge marks it shiny although the colours look normal'); eq(t.app.log()[0].shinyBadge, true, 'noted as a badge mark');
+  has(slot(t.last(), 'REASON'), 'SHINY', 'verdict from the shiny branch');
+  await t.app.scan(gc({ shinyBadge: null }));
+  eq(t.app.log()[0].shiny, true, 'an unreadable badge spot changes nothing');
+  await t.app.scan(gc({ shinyBadge: false }));
+  check(!t.app.log()[0].shiny && !t.app.log()[0].shinyBadge, 'a clean badge spot undoes a badge mark');
+  const u = loadApp();
+  await u.app.scan(gc({}));
+  require('vm').runInContext(`setLogMark(pokeLog[0].id, 'shiny', true)`, u.ctx);
+  await u.app.scan(gc({ shinyBadge: false }));
+  eq(u.app.log()[0].shiny, true, 'a hand-set mark survives a clean badge spot');
+  const diag = run(`lastScanDebug`);
+  await t.app.scan(gc({ shinyBadge: true, badgeInfo: { badge: true, cover: 18, gw: 90, gh: 95 } }));
+  has(run(`lastScanDebug`), 'badge={"badge":true', 'badge measurements reach the scan details for calibration');
+});
+
 // ---------------------------------------------------------------- shinies
 test('shiny: own branch, prized best two then trade stock, never transfer, never blended', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
