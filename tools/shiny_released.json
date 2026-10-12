@@ -1,0 +1,5120 @@
+{
+"credit": "Serebii.net",
+"snapshot": "2026-10-12",
+"source": "https://www.serebii.net/pokemongo/shiny.shtml",
+"species": {
+"1": {
+"base": true,
+"forms": [
+"Halloween",
+"Party Hat",
+"Pikachu Visor"
+],
+"name": "Bulbasaur"
+},
+"10": {
+"base": true,
+"forms": [],
+"name": "Caterpie"
+},
+"100": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Voltorb"
+},
+"1000": {
+"base": true,
+"forms": [],
+"name": "Gholdengo"
+},
+"101": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Electrode"
+},
+"1011": {
+"base": true,
+"forms": [],
+"name": "Dipplin"
+},
+"1019": {
+"base": true,
+"forms": [],
+"name": "Hydrapple"
+},
+"102": {
+"base": true,
+"forms": [],
+"name": "Exeggcute"
+},
+"103": {
+"base": true,
+"forms": [
+"Alola Form"
+],
+"name": "Exeggutor"
+},
+"104": {
+"base": true,
+"forms": [
+"Cempas\u00fachil Crown"
+],
+"name": "Cubone"
+},
+"105": {
+"base": true,
+"forms": [
+"Cempas\u00fachil Crown",
+"Alola Form"
+],
+"name": "Marowak"
+},
+"106": {
+"base": true,
+"forms": [],
+"name": "Hitmonlee"
+},
+"107": {
+"base": true,
+"forms": [],
+"name": "Hitmonchan"
+},
+"108": {
+"base": true,
+"forms": [],
+"name": "Lickitung"
+},
+"109": {
+"base": true,
+"forms": [],
+"name": "Koffing"
+},
+"11": {
+"base": true,
+"forms": [],
+"name": "Metapod"
+},
+"110": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Weezing"
+},
+"111": {
+"base": true,
+"forms": [],
+"name": "Rhyhorn"
+},
+"112": {
+"base": true,
+"forms": [],
+"name": "Rhydon"
+},
+"113": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Chansey"
+},
+"114": {
+"base": true,
+"forms": [],
+"name": "Tangela"
+},
+"115": {
+"base": true,
+"forms": [],
+"name": "Kangaskhan"
+},
+"116": {
+"base": true,
+"forms": [],
+"name": "Horsea"
+},
+"117": {
+"base": true,
+"forms": [],
+"name": "Seadra"
+},
+"118": {
+"base": true,
+"forms": [],
+"name": "Goldeen"
+},
+"119": {
+"base": true,
+"forms": [],
+"name": "Seaking"
+},
+"12": {
+"base": true,
+"forms": [
+"Fashionable"
+],
+"name": "Butterfree"
+},
+"120": {
+"base": true,
+"forms": [],
+"name": "Staryu"
+},
+"121": {
+"base": true,
+"forms": [],
+"name": "Starmie"
+},
+"122": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Mr. Mime"
+},
+"123": {
+"base": true,
+"forms": [],
+"name": "Scyther"
+},
+"124": {
+"base": true,
+"forms": [],
+"name": "Jynx"
+},
+"125": {
+"base": true,
+"forms": [
+"Spark Accessory"
+],
+"name": "Electabuzz"
+},
+"126": {
+"base": true,
+"forms": [],
+"name": "Magmar"
+},
+"127": {
+"base": true,
+"forms": [],
+"name": "Pinsir"
+},
+"128": {
+"base": true,
+"forms": [
+"Paldean Form - Combat Breed",
+"Paldean Form - Blaze Breed",
+"Paldean Form - Aqua Breed"
+],
+"name": "Tauros"
+},
+"129": {
+"base": true,
+"forms": [],
+"name": "Magikarp"
+},
+"13": {
+"base": true,
+"forms": [],
+"name": "Weedle"
+},
+"130": {
+"base": true,
+"forms": [],
+"name": "Gyarados"
+},
+"131": {
+"base": true,
+"forms": [],
+"name": "Lapras"
+},
+"132": {
+"base": true,
+"forms": [
+"Pokopia Hat",
+"Pokopia Cap"
+],
+"name": "Ditto"
+},
+"133": {
+"base": true,
+"forms": [
+"Flower Crown",
+"Party Hat",
+"Holiday",
+"Cherry Blossoms",
+"Explorer Hat",
+"Sun Crown",
+"Moon Crown"
+],
+"name": "Eevee"
+},
+"134": {
+"base": true,
+"forms": [
+"Flower Crown",
+"Holiday",
+"Cherry Blossoms"
+],
+"name": "Vaporeon"
+},
+"135": {
+"base": true,
+"forms": [
+"Flower Crown",
+"Holiday",
+"Cherry Blossoms"
+],
+"name": "Jolteon"
+},
+"136": {
+"base": true,
+"forms": [
+"Flower Crown",
+"Holiday",
+"Cherry Blossoms"
+],
+"name": "Flareon"
+},
+"137": {
+"base": true,
+"forms": [],
+"name": "Porygon"
+},
+"138": {
+"base": true,
+"forms": [],
+"name": "Omanyte"
+},
+"139": {
+"base": true,
+"forms": [],
+"name": "Omastar"
+},
+"14": {
+"base": true,
+"forms": [],
+"name": "Kakuna"
+},
+"140": {
+"base": true,
+"forms": [],
+"name": "Kabuto"
+},
+"141": {
+"base": true,
+"forms": [],
+"name": "Kabutops"
+},
+"142": {
+"base": true,
+"forms": [
+"Satchel"
+],
+"name": "Aerodactyl"
+},
+"143": {
+"base": true,
+"forms": [
+"Cowboy Hat",
+"Night Cap",
+"Studded Jacket"
+],
+"name": "Snorlax"
+},
+"144": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Articuno"
+},
+"145": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Zapdos"
+},
+"146": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Moltres"
+},
+"147": {
+"base": true,
+"forms": [],
+"name": "Dratini"
+},
+"148": {
+"base": true,
+"forms": [],
+"name": "Dragonair"
+},
+"149": {
+"base": true,
+"forms": [],
+"name": "Dragonite"
+},
+"15": {
+"base": true,
+"forms": [],
+"name": "Beedrill"
+},
+"150": {
+"base": true,
+"forms": [],
+"name": "Mewtwo"
+},
+"151": {
+"base": true,
+"forms": [],
+"name": "Mew"
+},
+"152": {
+"base": true,
+"forms": [],
+"name": "Chikorita"
+},
+"153": {
+"base": true,
+"forms": [],
+"name": "Bayleef"
+},
+"154": {
+"base": true,
+"forms": [],
+"name": "Meganium"
+},
+"155": {
+"base": true,
+"forms": [],
+"name": "Cyndaquil"
+},
+"156": {
+"base": true,
+"forms": [],
+"name": "Quilava"
+},
+"157": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Typhlosion"
+},
+"158": {
+"base": true,
+"forms": [],
+"name": "Totodile"
+},
+"159": {
+"base": true,
+"forms": [],
+"name": "Croconaw"
+},
+"16": {
+"base": true,
+"forms": [],
+"name": "Pidgey"
+},
+"160": {
+"base": true,
+"forms": [],
+"name": "Feraligatr"
+},
+"161": {
+"base": true,
+"forms": [],
+"name": "Sentret"
+},
+"162": {
+"base": true,
+"forms": [],
+"name": "Furret"
+},
+"163": {
+"base": true,
+"forms": [
+"New Years"
+],
+"name": "Hoothoot"
+},
+"164": {
+"base": true,
+"forms": [],
+"name": "Noctowl"
+},
+"165": {
+"base": true,
+"forms": [],
+"name": "Ledyba"
+},
+"166": {
+"base": true,
+"forms": [],
+"name": "Ledian"
+},
+"167": {
+"base": true,
+"forms": [],
+"name": "Spinarak"
+},
+"168": {
+"base": true,
+"forms": [],
+"name": "Ariados"
+},
+"169": {
+"base": true,
+"forms": [],
+"name": "Crobat"
+},
+"17": {
+"base": true,
+"forms": [],
+"name": "Pidgeotto"
+},
+"170": {
+"base": true,
+"forms": [],
+"name": "Chinchou"
+},
+"171": {
+"base": true,
+"forms": [],
+"name": "Lanturn"
+},
+"172": {
+"base": true,
+"forms": [
+"Original Cap",
+"Party Hat",
+"Santa Hat",
+"Witch Hat",
+"Summer Style",
+"Beanie",
+"Flower Crown",
+"New Year",
+"Cherry Blossoms"
+],
+"name": "Pichu"
+},
+"173": {
+"base": true,
+"forms": [],
+"name": "Cleffa"
+},
+"174": {
+"base": true,
+"forms": [],
+"name": "Igglybuff"
+},
+"175": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Togepi"
+},
+"176": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Togetic"
+},
+"177": {
+"base": true,
+"forms": [],
+"name": "Natu"
+},
+"178": {
+"base": true,
+"forms": [],
+"name": "Xatu"
+},
+"179": {
+"base": true,
+"forms": [],
+"name": "Mareep"
+},
+"18": {
+"base": true,
+"forms": [],
+"name": "Pidgeot"
+},
+"180": {
+"base": true,
+"forms": [],
+"name": "Flaaffy"
+},
+"181": {
+"base": true,
+"forms": [],
+"name": "Ampharos"
+},
+"182": {
+"base": true,
+"forms": [],
+"name": "Bellossom"
+},
+"183": {
+"base": true,
+"forms": [],
+"name": "Marill"
+},
+"184": {
+"base": true,
+"forms": [],
+"name": "Azumarill"
+},
+"185": {
+"base": true,
+"forms": [
+"Holidays"
+],
+"name": "Sudowoodo"
+},
+"186": {
+"base": true,
+"forms": [],
+"name": "Politoed"
+},
+"187": {
+"base": true,
+"forms": [],
+"name": "Hoppip"
+},
+"188": {
+"base": true,
+"forms": [],
+"name": "Skiploom"
+},
+"189": {
+"base": true,
+"forms": [],
+"name": "Jumpluff"
+},
+"19": {
+"base": true,
+"forms": [
+"Alola Form"
+],
+"name": "Rattata"
+},
+"190": {
+"base": true,
+"forms": [],
+"name": "Aipom"
+},
+"191": {
+"base": true,
+"forms": [],
+"name": "Sunkern"
+},
+"192": {
+"base": true,
+"forms": [],
+"name": "Sunflora"
+},
+"193": {
+"base": true,
+"forms": [],
+"name": "Yanma"
+},
+"194": {
+"base": true,
+"forms": [
+"Fashionable",
+"Paldean Form"
+],
+"name": "Wooper"
+},
+"195": {
+"base": true,
+"forms": [],
+"name": "Quagsire"
+},
+"196": {
+"base": true,
+"forms": [
+"Flower Crown",
+"Holiday",
+"Cherry Blossoms",
+"Sun Scarf"
+],
+"name": "Espeon"
+},
+"197": {
+"base": true,
+"forms": [
+"Flower Crown",
+"Holiday",
+"Cherry Blossoms",
+"Moon Scarf"
+],
+"name": "Umbreon"
+},
+"198": {
+"base": true,
+"forms": [],
+"name": "Murkrow"
+},
+"199": {
+"base": true,
+"forms": [
+"2022",
+"Galarian Form"
+],
+"name": "Slowking"
+},
+"2": {
+"base": true,
+"forms": [],
+"name": "Ivysaur"
+},
+"20": {
+"base": true,
+"forms": [
+"Party Hat",
+"Alola Form"
+],
+"name": "Raticate"
+},
+"200": {
+"base": true,
+"forms": [],
+"name": "Misdreavus"
+},
+"201": {
+"base": true,
+"forms": [
+"B",
+"C",
+"D",
+"E",
+"F",
+"G",
+"H",
+"I",
+"J",
+"K",
+"L",
+"M",
+"N",
+"O",
+"P",
+"Q",
+"R",
+"S",
+"T",
+"U",
+"V",
+"X",
+"Y",
+"Z",
+"!",
+"?"
+],
+"name": "Unown"
+},
+"202": {
+"base": true,
+"forms": [
+"Party Hat"
+],
+"name": "Wobbuffet"
+},
+"203": {
+"base": true,
+"forms": [],
+"name": "Girafarig"
+},
+"204": {
+"base": true,
+"forms": [],
+"name": "Pineco"
+},
+"205": {
+"base": true,
+"forms": [],
+"name": "Forretress"
+},
+"206": {
+"base": true,
+"forms": [],
+"name": "Dunsparce"
+},
+"207": {
+"base": true,
+"forms": [],
+"name": "Gligar"
+},
+"208": {
+"base": true,
+"forms": [],
+"name": "Steelix"
+},
+"209": {
+"base": true,
+"forms": [],
+"name": "Snubbull"
+},
+"21": {
+"base": true,
+"forms": [],
+"name": "Spearow"
+},
+"210": {
+"base": true,
+"forms": [],
+"name": "Granbull"
+},
+"211": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Qwilfish"
+},
+"212": {
+"base": true,
+"forms": [],
+"name": "Scizor"
+},
+"213": {
+"base": true,
+"forms": [],
+"name": "Shuckle"
+},
+"214": {
+"base": true,
+"forms": [],
+"name": "Heracross"
+},
+"215": {
+"base": true,
+"forms": [
+"Fashionable",
+"Hisuian Form"
+],
+"name": "Sneasel"
+},
+"216": {
+"base": true,
+"forms": [
+"Witch Hat"
+],
+"name": "Teddiursa"
+},
+"217": {
+"base": true,
+"forms": [],
+"name": "Ursaring"
+},
+"218": {
+"base": true,
+"forms": [],
+"name": "Slugma"
+},
+"219": {
+"base": true,
+"forms": [],
+"name": "Magcargo"
+},
+"22": {
+"base": true,
+"forms": [],
+"name": "Fearow"
+},
+"220": {
+"base": true,
+"forms": [],
+"name": "Swinub"
+},
+"221": {
+"base": true,
+"forms": [],
+"name": "Piloswine"
+},
+"222": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Corsola"
+},
+"223": {
+"base": true,
+"forms": [],
+"name": "Remoraid"
+},
+"224": {
+"base": true,
+"forms": [],
+"name": "Octillery"
+},
+"225": {
+"base": true,
+"forms": [
+"Holidays"
+],
+"name": "Delibird"
+},
+"226": {
+"base": true,
+"forms": [],
+"name": "Mantine"
+},
+"227": {
+"base": true,
+"forms": [],
+"name": "Skarmory"
+},
+"228": {
+"base": true,
+"forms": [],
+"name": "Houndour"
+},
+"229": {
+"base": true,
+"forms": [],
+"name": "Houndoom"
+},
+"23": {
+"base": true,
+"forms": [],
+"name": "Ekans"
+},
+"230": {
+"base": true,
+"forms": [],
+"name": "Kingdra"
+},
+"231": {
+"base": true,
+"forms": [],
+"name": "Phanpy"
+},
+"232": {
+"base": true,
+"forms": [],
+"name": "Donphan"
+},
+"233": {
+"base": true,
+"forms": [],
+"name": "Porygon2"
+},
+"234": {
+"base": true,
+"forms": [
+"Holiday"
+],
+"name": "Stantler"
+},
+"235": {
+"base": true,
+"forms": [],
+"name": "Smeargle"
+},
+"236": {
+"base": true,
+"forms": [],
+"name": "Tyrogue"
+},
+"237": {
+"base": true,
+"forms": [],
+"name": "Hitmontop"
+},
+"238": {
+"base": true,
+"forms": [
+"Bow"
+],
+"name": "Smoochum"
+},
+"239": {
+"base": true,
+"forms": [
+"Spark Accessory"
+],
+"name": "Elekid"
+},
+"24": {
+"base": true,
+"forms": [],
+"name": "Arbok"
+},
+"240": {
+"base": true,
+"forms": [],
+"name": "Magby"
+},
+"241": {
+"base": true,
+"forms": [],
+"name": "Miltank"
+},
+"242": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Blissey"
+},
+"243": {
+"base": true,
+"forms": [],
+"name": "Raikou"
+},
+"244": {
+"base": true,
+"forms": [],
+"name": "Entei"
+},
+"245": {
+"base": true,
+"forms": [],
+"name": "Suicune"
+},
+"246": {
+"base": true,
+"forms": [],
+"name": "Larvitar"
+},
+"247": {
+"base": true,
+"forms": [],
+"name": "Pupitar"
+},
+"248": {
+"base": true,
+"forms": [],
+"name": "Tyranitar"
+},
+"249": {
+"base": true,
+"forms": [],
+"name": "Lugia"
+},
+"25": {
+"base": true,
+"forms": [
+"Original Cap",
+"Party Hat",
+"Santa Hat",
+"Witch Hat",
+"Summer Style",
+"Fragment Cap",
+"Flower Crown",
+"Detective",
+"Straw Hat",
+"Mimikyu Costume",
+"Beanie",
+"Party Hat 2020",
+"Safari",
+"Flower Hat",
+"Charizard Hat",
+"Umbreon Hat",
+"Rayquaza Hat",
+"Lucario Hat",
+"World Cap",
+"Explorer",
+"Winter Carnival",
+"New Year Hat",
+"GO Fest 2021",
+"Kariyushi",
+"Halloween Mischief",
+"Gracidea",
+"TCG Hat",
+"Cake Costume",
+"Berry Shirt",
+"Shaymin Scarf",
+"World Championships 2022",
+"Berry Shirt",
+"Party Top Hat",
+"Brendan Hat",
+"May Bow",
+"Cherry Blossoms",
+"Amethyst Crown",
+"Quartz Crown",
+"Pyrite Crown",
+"Malachite Crown",
+"Aquamarine Crown",
+"Blue Shirt (Citrus)",
+"World Championships Jersey",
+"Detective 2023",
+"Tricks & Treats",
+"Lucas Hat",
+"Dawn Hat",
+"Holidays",
+"Rei's Cap",
+"Akari's Kerchief",
+"Batik Shirt",
+"Captain Pikachu",
+"Sun Crown",
+"Moon Crown",
+"World Championships 2024",
+"Saree",
+"Hilbert's Hat",
+"Hilda's Hat",
+"Nate's Visor",
+"Rosa's Visor",
+"Kurta",
+"Goggles (Red)",
+"Goggles (Blue)",
+"Goggles (Yellow)",
+"Monocle (Red)",
+"Monocle (Blue)",
+"Monocle (Yellow)",
+"World Championships 2025",
+"Timnas Indonesia",
+"Calem Hat",
+"Serena Hat",
+"Red Hat",
+"Leaf Hat",
+"Ethan Hat",
+"Lyra Hat",
+"Baseball Shirt",
+"Team Instinct Cap",
+"Team Mystic Cap",
+"Team Valor Cap",
+"Marathon Visor",
+"Fossil Museum",
+"Professor Willow's Assistant",
+"Cosmog Spacesuit",
+"World Championships 2026",
+"Orange Hanbok",
+"Pok\u00e9Xciting Malaysia",
+"Pok\u00e9Xciting Taiwan",
+"Pok\u00e9Xciting Singapore",
+"Pok\u00e9Xciting Philippines",
+"Astronaut",
+"Halloween 2026",
+"Flying Pikachu",
+"Flying Pikachu",
+"Okinawa Balloon Pikachu",
+"Green Balloon Pikachu",
+"Purple Balloon Pikachu",
+"Black Balloon Pikachu",
+"Pikachu Libre",
+"Pikachu Rock Star",
+"Pikachu Pop Star"
+],
+"name": "Pikachu"
+},
+"250": {
+"base": true,
+"forms": [],
+"name": "Ho-Oh"
+},
+"251": {
+"base": true,
+"forms": [],
+"name": "Celebi"
+},
+"252": {
+"base": true,
+"forms": [],
+"name": "Treecko"
+},
+"253": {
+"base": true,
+"forms": [],
+"name": "Grovyle"
+},
+"254": {
+"base": true,
+"forms": [],
+"name": "Sceptile"
+},
+"255": {
+"base": true,
+"forms": [],
+"name": "Torchic"
+},
+"256": {
+"base": true,
+"forms": [],
+"name": "Combusken"
+},
+"257": {
+"base": true,
+"forms": [],
+"name": "Blaziken"
+},
+"258": {
+"base": true,
+"forms": [],
+"name": "Mudkip"
+},
+"259": {
+"base": true,
+"forms": [],
+"name": "Marshtomp"
+},
+"26": {
+"base": true,
+"forms": [
+"Original Cap",
+"Party Hat",
+"Santa Hat",
+"Witch Hat",
+"Summer Style",
+"Fragment Cap",
+"Flower Crown",
+"Detective",
+"Beanie",
+"World Cap",
+"New Year",
+"Cherry Blossoms",
+"Detective (2023)",
+"Alola Form"
+],
+"name": "Raichu"
+},
+"260": {
+"base": true,
+"forms": [],
+"name": "Swampert"
+},
+"261": {
+"base": true,
+"forms": [],
+"name": "Poochyena"
+},
+"262": {
+"base": true,
+"forms": [],
+"name": "Mightyena"
+},
+"263": {
+"base": true,
+"forms": [
+"Galarian Form",
+"Galarian Form - GO Fest 2021"
+],
+"name": "Zigzagoon"
+},
+"264": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Linoone"
+},
+"265": {
+"base": true,
+"forms": [
+"Party"
+],
+"name": "Wurmple"
+},
+"266": {
+"base": true,
+"forms": [],
+"name": "Silcoon"
+},
+"267": {
+"base": true,
+"forms": [],
+"name": "Beautifly"
+},
+"268": {
+"base": true,
+"forms": [],
+"name": "Cascoon"
+},
+"269": {
+"base": true,
+"forms": [],
+"name": "Dustox"
+},
+"27": {
+"base": true,
+"forms": [
+"Alola Form"
+],
+"name": "Sandshrew"
+},
+"270": {
+"base": true,
+"forms": [],
+"name": "Lotad"
+},
+"271": {
+"base": true,
+"forms": [],
+"name": "Lombre"
+},
+"272": {
+"base": true,
+"forms": [],
+"name": "Ludicolo"
+},
+"273": {
+"base": true,
+"forms": [],
+"name": "Seedot"
+},
+"274": {
+"base": true,
+"forms": [],
+"name": "Nuzleaf"
+},
+"275": {
+"base": true,
+"forms": [],
+"name": "Shiftry"
+},
+"276": {
+"base": true,
+"forms": [],
+"name": "Taillow"
+},
+"277": {
+"base": true,
+"forms": [],
+"name": "Swellow"
+},
+"278": {
+"base": true,
+"forms": [],
+"name": "Wingull"
+},
+"279": {
+"base": true,
+"forms": [],
+"name": "Pelipper"
+},
+"28": {
+"base": true,
+"forms": [
+"Alola Form"
+],
+"name": "Sandslash"
+},
+"280": {
+"base": true,
+"forms": [],
+"name": "Ralts"
+},
+"281": {
+"base": true,
+"forms": [
+"Top Hat"
+],
+"name": "Kirlia"
+},
+"282": {
+"base": true,
+"forms": [
+"GO Fest 2021"
+],
+"name": "Gardevoir"
+},
+"283": {
+"base": true,
+"forms": [],
+"name": "Surskit"
+},
+"284": {
+"base": true,
+"forms": [],
+"name": "Masquerain"
+},
+"285": {
+"base": true,
+"forms": [],
+"name": "Shroomish"
+},
+"286": {
+"base": true,
+"forms": [],
+"name": "Breloom"
+},
+"287": {
+"base": true,
+"forms": [
+"Visor"
+],
+"name": "Slakoth"
+},
+"288": {
+"base": true,
+"forms": [
+"Visor"
+],
+"name": "Vigoroth"
+},
+"289": {
+"base": true,
+"forms": [
+"Visor"
+],
+"name": "Slaking"
+},
+"29": {
+"base": true,
+"forms": [],
+"name": "Nidoran\u2640"
+},
+"290": {
+"base": true,
+"forms": [],
+"name": "Nincada"
+},
+"291": {
+"base": true,
+"forms": [],
+"name": "Ninjask"
+},
+"292": {
+"base": true,
+"forms": [],
+"name": "Shedinja"
+},
+"293": {
+"base": true,
+"forms": [],
+"name": "Whismur"
+},
+"294": {
+"base": true,
+"forms": [],
+"name": "Loudred"
+},
+"295": {
+"base": true,
+"forms": [],
+"name": "Exploud"
+},
+"296": {
+"base": true,
+"forms": [],
+"name": "Makuhita"
+},
+"297": {
+"base": true,
+"forms": [],
+"name": "Hariyama"
+},
+"298": {
+"base": true,
+"forms": [],
+"name": "Azurill"
+},
+"299": {
+"base": true,
+"forms": [],
+"name": "Nosepass"
+},
+"3": {
+"base": true,
+"forms": [],
+"name": "Venusaur"
+},
+"30": {
+"base": true,
+"forms": [],
+"name": "Nidorina"
+},
+"300": {
+"base": true,
+"forms": [],
+"name": "Skitty"
+},
+"301": {
+"base": true,
+"forms": [],
+"name": "Delcatty"
+},
+"302": {
+"base": true,
+"forms": [
+"Halloween"
+],
+"name": "Sableye"
+},
+"303": {
+"base": true,
+"forms": [],
+"name": "Mawile"
+},
+"304": {
+"base": true,
+"forms": [],
+"name": "Aron"
+},
+"305": {
+"base": true,
+"forms": [],
+"name": "Lairon"
+},
+"306": {
+"base": true,
+"forms": [],
+"name": "Aggron"
+},
+"307": {
+"base": true,
+"forms": [],
+"name": "Meditite"
+},
+"308": {
+"base": true,
+"forms": [],
+"name": "Medicham"
+},
+"309": {
+"base": true,
+"forms": [],
+"name": "Electrike"
+},
+"31": {
+"base": true,
+"forms": [
+"Crown"
+],
+"name": "Nidoqueen"
+},
+"310": {
+"base": true,
+"forms": [],
+"name": "Manectric"
+},
+"311": {
+"base": true,
+"forms": [],
+"name": "Plusle"
+},
+"312": {
+"base": true,
+"forms": [],
+"name": "Minun"
+},
+"313": {
+"base": true,
+"forms": [],
+"name": "Volbeat"
+},
+"314": {
+"base": true,
+"forms": [],
+"name": "Illumise"
+},
+"315": {
+"base": true,
+"forms": [],
+"name": "Roselia"
+},
+"316": {
+"base": true,
+"forms": [],
+"name": "Gulpin"
+},
+"317": {
+"base": true,
+"forms": [],
+"name": "Swalot"
+},
+"318": {
+"base": true,
+"forms": [],
+"name": "Carvanha"
+},
+"319": {
+"base": true,
+"forms": [],
+"name": "Sharpedo"
+},
+"32": {
+"base": true,
+"forms": [],
+"name": "Nidoran\u2642"
+},
+"320": {
+"base": true,
+"forms": [],
+"name": "Wailmer"
+},
+"321": {
+"base": true,
+"forms": [],
+"name": "Wailord"
+},
+"322": {
+"base": true,
+"forms": [],
+"name": "Numel"
+},
+"323": {
+"base": true,
+"forms": [],
+"name": "Camerupt"
+},
+"324": {
+"base": true,
+"forms": [],
+"name": "Torkoal"
+},
+"325": {
+"base": true,
+"forms": [],
+"name": "Spoink"
+},
+"326": {
+"base": true,
+"forms": [],
+"name": "Grumpig"
+},
+"327": {
+"base": true,
+"forms": [],
+"name": "Spinda"
+},
+"328": {
+"base": true,
+"forms": [],
+"name": "Trapinch"
+},
+"329": {
+"base": true,
+"forms": [],
+"name": "Vibrava"
+},
+"33": {
+"base": true,
+"forms": [
+"Party Hat"
+],
+"name": "Nidorino"
+},
+"330": {
+"base": true,
+"forms": [],
+"name": "Flygon"
+},
+"331": {
+"base": true,
+"forms": [],
+"name": "Cacnea"
+},
+"332": {
+"base": true,
+"forms": [],
+"name": "Cacturne"
+},
+"333": {
+"base": true,
+"forms": [],
+"name": "Swablu"
+},
+"334": {
+"base": true,
+"forms": [],
+"name": "Altaria"
+},
+"335": {
+"base": true,
+"forms": [],
+"name": "Zangoose"
+},
+"336": {
+"base": true,
+"forms": [],
+"name": "Seviper"
+},
+"337": {
+"base": true,
+"forms": [],
+"name": "Lunatone"
+},
+"338": {
+"base": true,
+"forms": [],
+"name": "Solrock"
+},
+"339": {
+"base": true,
+"forms": [],
+"name": "Barboach"
+},
+"34": {
+"base": true,
+"forms": [
+"Crown"
+],
+"name": "Nidoking"
+},
+"340": {
+"base": true,
+"forms": [],
+"name": "Whiscash"
+},
+"341": {
+"base": true,
+"forms": [],
+"name": "Corphish"
+},
+"342": {
+"base": true,
+"forms": [],
+"name": "Crawdaunt"
+},
+"343": {
+"base": true,
+"forms": [],
+"name": "Baltoy"
+},
+"344": {
+"base": true,
+"forms": [],
+"name": "Claydol"
+},
+"345": {
+"base": true,
+"forms": [],
+"name": "Lileep"
+},
+"346": {
+"base": true,
+"forms": [],
+"name": "Cradily"
+},
+"347": {
+"base": true,
+"forms": [],
+"name": "Anorith"
+},
+"348": {
+"base": true,
+"forms": [],
+"name": "Armaldo"
+},
+"349": {
+"base": true,
+"forms": [],
+"name": "Feebas"
+},
+"35": {
+"base": true,
+"forms": [],
+"name": "Clefairy"
+},
+"350": {
+"base": true,
+"forms": [],
+"name": "Milotic"
+},
+"351": {
+"base": true,
+"forms": [
+"Sunny Form",
+"Rainy Form",
+"Snowy Form"
+],
+"name": "Castform"
+},
+"352": {
+"base": true,
+"forms": [],
+"name": "Kecleon"
+},
+"353": {
+"base": true,
+"forms": [],
+"name": "Shuppet"
+},
+"354": {
+"base": true,
+"forms": [],
+"name": "Banette"
+},
+"355": {
+"base": true,
+"forms": [
+"Cempas\u00fachil Crown"
+],
+"name": "Duskull"
+},
+"356": {
+"base": true,
+"forms": [
+"Cempas\u00fachil Crown"
+],
+"name": "Dusclops"
+},
+"357": {
+"base": true,
+"forms": [],
+"name": "Tropius"
+},
+"358": {
+"base": true,
+"forms": [],
+"name": "Chimecho"
+},
+"359": {
+"base": true,
+"forms": [
+"Fashionable Costume"
+],
+"name": "Absol"
+},
+"36": {
+"base": true,
+"forms": [],
+"name": "Clefable"
+},
+"360": {
+"base": true,
+"forms": [],
+"name": "Wynaut"
+},
+"361": {
+"base": true,
+"forms": [],
+"name": "Snorunt"
+},
+"362": {
+"base": true,
+"forms": [],
+"name": "Glalie"
+},
+"363": {
+"base": true,
+"forms": [
+"Holiday"
+],
+"name": "Spheal"
+},
+"364": {
+"base": true,
+"forms": [],
+"name": "Sealeo"
+},
+"365": {
+"base": true,
+"forms": [],
+"name": "Walrein"
+},
+"366": {
+"base": true,
+"forms": [],
+"name": "Clamperl"
+},
+"367": {
+"base": true,
+"forms": [],
+"name": "Huntail"
+},
+"368": {
+"base": true,
+"forms": [],
+"name": "Gorebyss"
+},
+"369": {
+"base": true,
+"forms": [],
+"name": "Relicanth"
+},
+"37": {
+"base": true,
+"forms": [
+"Spooky Festival",
+"Alola Form"
+],
+"name": "Vulpix"
+},
+"370": {
+"base": true,
+"forms": [],
+"name": "Luvdisc"
+},
+"371": {
+"base": true,
+"forms": [],
+"name": "Bagon"
+},
+"372": {
+"base": true,
+"forms": [],
+"name": "Shelgon"
+},
+"373": {
+"base": true,
+"forms": [],
+"name": "Salamence"
+},
+"374": {
+"base": true,
+"forms": [],
+"name": "Beldum"
+},
+"375": {
+"base": true,
+"forms": [],
+"name": "Metang"
+},
+"376": {
+"base": true,
+"forms": [],
+"name": "Metagross"
+},
+"377": {
+"base": true,
+"forms": [],
+"name": "Regirock"
+},
+"378": {
+"base": true,
+"forms": [],
+"name": "Regice"
+},
+"379": {
+"base": true,
+"forms": [],
+"name": "Registeel"
+},
+"38": {
+"base": true,
+"forms": [
+"Spooky Festival",
+"Alola Form"
+],
+"name": "Ninetales"
+},
+"380": {
+"base": true,
+"forms": [],
+"name": "Latias"
+},
+"381": {
+"base": true,
+"forms": [],
+"name": "Latios"
+},
+"382": {
+"base": true,
+"forms": [],
+"name": "Kyogre"
+},
+"383": {
+"base": true,
+"forms": [],
+"name": "Groudon"
+},
+"384": {
+"base": true,
+"forms": [],
+"name": "Rayquaza"
+},
+"385": {
+"base": true,
+"forms": [],
+"name": "Jirachi"
+},
+"386": {
+"base": true,
+"forms": [
+"Attack Forme",
+"Defense Forme",
+"Speed Forme"
+],
+"name": "Deoxys"
+},
+"387": {
+"base": true,
+"forms": [
+"Lucas Hat",
+"Dawn Hat"
+],
+"name": "Turtwig"
+},
+"388": {
+"base": true,
+"forms": [],
+"name": "Grotle"
+},
+"389": {
+"base": true,
+"forms": [],
+"name": "Torterra"
+},
+"39": {
+"base": true,
+"forms": [
+"Ribbon"
+],
+"name": "Jigglypuff"
+},
+"390": {
+"base": true,
+"forms": [
+"Lucas Hat",
+"Dawn Hat"
+],
+"name": "Chimchar"
+},
+"391": {
+"base": true,
+"forms": [],
+"name": "Monferno"
+},
+"392": {
+"base": true,
+"forms": [],
+"name": "Infernape"
+},
+"393": {
+"base": true,
+"forms": [
+"Halloween Mischief",
+"Lucas Hat",
+"Dawn Hat"
+],
+"name": "Piplup"
+},
+"394": {
+"base": true,
+"forms": [],
+"name": "Prinplup"
+},
+"395": {
+"base": true,
+"forms": [],
+"name": "Empoleon"
+},
+"396": {
+"base": true,
+"forms": [],
+"name": "Starly"
+},
+"397": {
+"base": true,
+"forms": [],
+"name": "Staravia"
+},
+"398": {
+"base": true,
+"forms": [],
+"name": "Staraptor"
+},
+"399": {
+"base": true,
+"forms": [],
+"name": "Bidoof"
+},
+"4": {
+"base": true,
+"forms": [
+"Halloween",
+"Party Hat",
+"Pikachu Visor",
+"Friede's Goggles"
+],
+"name": "Charmander"
+},
+"40": {
+"base": true,
+"forms": [
+"Ribbon"
+],
+"name": "Wigglytuff"
+},
+"400": {
+"base": true,
+"forms": [],
+"name": "Bibarel"
+},
+"401": {
+"base": true,
+"forms": [],
+"name": "Kricketot"
+},
+"402": {
+"base": true,
+"forms": [],
+"name": "Kricketune"
+},
+"403": {
+"base": true,
+"forms": [
+"Top Hat"
+],
+"name": "Shinx"
+},
+"404": {
+"base": true,
+"forms": [],
+"name": "Luxio"
+},
+"405": {
+"base": true,
+"forms": [],
+"name": "Luxray"
+},
+"406": {
+"base": true,
+"forms": [],
+"name": "Budew"
+},
+"407": {
+"base": true,
+"forms": [],
+"name": "Roserade"
+},
+"408": {
+"base": true,
+"forms": [],
+"name": "Cranidos"
+},
+"409": {
+"base": true,
+"forms": [],
+"name": "Rampardos"
+},
+"41": {
+"base": true,
+"forms": [],
+"name": "Zubat"
+},
+"410": {
+"base": true,
+"forms": [],
+"name": "Shieldon"
+},
+"411": {
+"base": true,
+"forms": [],
+"name": "Bastiodon"
+},
+"412": {
+"base": true,
+"forms": [
+"Sandy Cloak",
+"Trash Cloak"
+],
+"name": "Burmy"
+},
+"413": {
+"base": true,
+"forms": [
+"Sandy Cloak",
+"Trash Cloak"
+],
+"name": "Wormadam"
+},
+"414": {
+"base": true,
+"forms": [],
+"name": "Mothim"
+},
+"415": {
+"base": true,
+"forms": [],
+"name": "Combee"
+},
+"416": {
+"base": true,
+"forms": [],
+"name": "Vespiquen"
+},
+"417": {
+"base": true,
+"forms": [],
+"name": "Pachirisu"
+},
+"418": {
+"base": true,
+"forms": [],
+"name": "Buizel"
+},
+"419": {
+"base": true,
+"forms": [],
+"name": "Floatzel"
+},
+"42": {
+"base": true,
+"forms": [],
+"name": "Golbat"
+},
+"420": {
+"base": true,
+"forms": [],
+"name": "Cherubi"
+},
+"421": {
+"base": true,
+"forms": [
+"Sunshine Form"
+],
+"name": "Cherrim"
+},
+"422": {
+"base": true,
+"forms": [
+"East Sea"
+],
+"name": "Shellos"
+},
+"423": {
+"base": true,
+"forms": [
+"East Sea"
+],
+"name": "Gastrodon"
+},
+"424": {
+"base": true,
+"forms": [],
+"name": "Ambipom"
+},
+"425": {
+"base": true,
+"forms": [],
+"name": "Drifloon"
+},
+"426": {
+"base": true,
+"forms": [
+"Halloween Mischief"
+],
+"name": "Drifblim"
+},
+"427": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Buneary"
+},
+"428": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Lopunny"
+},
+"429": {
+"base": true,
+"forms": [],
+"name": "Mismagius"
+},
+"43": {
+"base": true,
+"forms": [],
+"name": "Oddish"
+},
+"430": {
+"base": true,
+"forms": [],
+"name": "Honchkrow"
+},
+"431": {
+"base": true,
+"forms": [],
+"name": "Glameow"
+},
+"432": {
+"base": true,
+"forms": [],
+"name": "Purugly"
+},
+"433": {
+"base": true,
+"forms": [],
+"name": "Chingling"
+},
+"434": {
+"base": true,
+"forms": [],
+"name": "Stunky"
+},
+"435": {
+"base": true,
+"forms": [],
+"name": "Skuntank"
+},
+"436": {
+"base": true,
+"forms": [],
+"name": "Bronzor"
+},
+"437": {
+"base": true,
+"forms": [],
+"name": "Bronzong"
+},
+"438": {
+"base": true,
+"forms": [],
+"name": "Bonsly"
+},
+"439": {
+"base": true,
+"forms": [],
+"name": "Mime Jr."
+},
+"44": {
+"base": true,
+"forms": [],
+"name": "Gloom"
+},
+"440": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Happiny"
+},
+"441": {
+"base": true,
+"forms": [],
+"name": "Chatot"
+},
+"442": {
+"base": true,
+"forms": [],
+"name": "Spiritomb"
+},
+"443": {
+"base": true,
+"forms": [],
+"name": "Gible"
+},
+"444": {
+"base": true,
+"forms": [],
+"name": "Gabite"
+},
+"445": {
+"base": true,
+"forms": [],
+"name": "Garchomp"
+},
+"446": {
+"base": true,
+"forms": [],
+"name": "Munchlax"
+},
+"447": {
+"base": true,
+"forms": [],
+"name": "Riolu"
+},
+"448": {
+"base": true,
+"forms": [],
+"name": "Lucario"
+},
+"449": {
+"base": true,
+"forms": [],
+"name": "Hippopotas"
+},
+"45": {
+"base": true,
+"forms": [],
+"name": "Vileplume"
+},
+"450": {
+"base": true,
+"forms": [],
+"name": "Hippowdon"
+},
+"451": {
+"base": true,
+"forms": [],
+"name": "Skorupi"
+},
+"452": {
+"base": true,
+"forms": [],
+"name": "Drapion"
+},
+"453": {
+"base": true,
+"forms": [
+"Backwards Cap"
+],
+"name": "Croagunk"
+},
+"454": {
+"base": true,
+"forms": [],
+"name": "Toxicroak"
+},
+"455": {
+"base": true,
+"forms": [],
+"name": "Carnivine"
+},
+"456": {
+"base": true,
+"forms": [],
+"name": "Finneon"
+},
+"457": {
+"base": true,
+"forms": [],
+"name": "Lumineon"
+},
+"458": {
+"base": true,
+"forms": [],
+"name": "Mantyke"
+},
+"459": {
+"base": true,
+"forms": [],
+"name": "Snover"
+},
+"46": {
+"base": true,
+"forms": [],
+"name": "Paras"
+},
+"460": {
+"base": true,
+"forms": [],
+"name": "Abomasnow"
+},
+"461": {
+"base": true,
+"forms": [],
+"name": "Weavile"
+},
+"462": {
+"base": true,
+"forms": [],
+"name": "Magnezone"
+},
+"463": {
+"base": true,
+"forms": [],
+"name": "Lickilicky"
+},
+"464": {
+"base": true,
+"forms": [],
+"name": "Rhyperior"
+},
+"465": {
+"base": true,
+"forms": [],
+"name": "Tangrowth"
+},
+"466": {
+"base": true,
+"forms": [
+"Spark Accessory"
+],
+"name": "Electivire"
+},
+"467": {
+"base": true,
+"forms": [],
+"name": "Magmortar"
+},
+"468": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Togekiss"
+},
+"469": {
+"base": true,
+"forms": [],
+"name": "Yanmega"
+},
+"47": {
+"base": true,
+"forms": [],
+"name": "Parasect"
+},
+"470": {
+"base": true,
+"forms": [
+"Flower Crown",
+"Holiday",
+"Cherry Blossoms"
+],
+"name": "Leafeon"
+},
+"471": {
+"base": true,
+"forms": [
+"Flower Crown",
+"Holiday",
+"Holiday",
+"Cherry Blossoms"
+],
+"name": "Glaceon"
+},
+"472": {
+"base": true,
+"forms": [],
+"name": "Gliscor"
+},
+"473": {
+"base": true,
+"forms": [],
+"name": "Mamoswine"
+},
+"474": {
+"base": true,
+"forms": [],
+"name": "Porygon-Z"
+},
+"475": {
+"base": true,
+"forms": [],
+"name": "Gallade"
+},
+"476": {
+"base": true,
+"forms": [],
+"name": "Probopass"
+},
+"477": {
+"base": true,
+"forms": [
+"Cempas\u00fachil Crown"
+],
+"name": "Dusknoir"
+},
+"478": {
+"base": true,
+"forms": [],
+"name": "Froslass"
+},
+"479": {
+"base": true,
+"forms": [
+"Wash Rotom"
+],
+"name": "Rotom"
+},
+"48": {
+"base": true,
+"forms": [],
+"name": "Venonat"
+},
+"480": {
+"base": true,
+"forms": [],
+"name": "Uxie"
+},
+"481": {
+"base": true,
+"forms": [],
+"name": "Mesprit"
+},
+"482": {
+"base": true,
+"forms": [],
+"name": "Azelf"
+},
+"483": {
+"base": true,
+"forms": [
+"Origin Forme"
+],
+"name": "Dialga"
+},
+"484": {
+"base": true,
+"forms": [
+"Origin Forme"
+],
+"name": "Palkia"
+},
+"485": {
+"base": true,
+"forms": [],
+"name": "Heatran"
+},
+"486": {
+"base": true,
+"forms": [],
+"name": "Regigigas"
+},
+"487": {
+"base": true,
+"forms": [
+"Origin Forme"
+],
+"name": "Giratina"
+},
+"488": {
+"base": true,
+"forms": [],
+"name": "Cresselia"
+},
+"49": {
+"base": true,
+"forms": [],
+"name": "Venomoth"
+},
+"491": {
+"base": true,
+"forms": [],
+"name": "Darkrai"
+},
+"492": {
+"base": true,
+"forms": [],
+"name": "Shaymin"
+},
+"495": {
+"base": true,
+"forms": [],
+"name": "Snivy"
+},
+"496": {
+"base": true,
+"forms": [],
+"name": "Servine"
+},
+"497": {
+"base": true,
+"forms": [],
+"name": "Serperior"
+},
+"498": {
+"base": true,
+"forms": [],
+"name": "Tepig"
+},
+"499": {
+"base": true,
+"forms": [],
+"name": "Pignite"
+},
+"5": {
+"base": true,
+"forms": [
+"Party Hat"
+],
+"name": "Charmeleon"
+},
+"50": {
+"base": true,
+"forms": [
+"Fashionable Hat",
+"Alola Form"
+],
+"name": "Diglett"
+},
+"500": {
+"base": true,
+"forms": [],
+"name": "Emboar"
+},
+"501": {
+"base": true,
+"forms": [],
+"name": "Oshawott"
+},
+"502": {
+"base": true,
+"forms": [],
+"name": "Dewott"
+},
+"503": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Samurott"
+},
+"504": {
+"base": true,
+"forms": [],
+"name": "Patrat"
+},
+"505": {
+"base": true,
+"forms": [],
+"name": "Watchog"
+},
+"506": {
+"base": true,
+"forms": [],
+"name": "Lillipup"
+},
+"507": {
+"base": true,
+"forms": [],
+"name": "Herdier"
+},
+"508": {
+"base": true,
+"forms": [],
+"name": "Stoutland"
+},
+"509": {
+"base": true,
+"forms": [],
+"name": "Purrloin"
+},
+"51": {
+"base": true,
+"forms": [
+"Fashionable Hat",
+"Alola Form"
+],
+"name": "Dugtrio"
+},
+"510": {
+"base": true,
+"forms": [],
+"name": "Liepard"
+},
+"511": {
+"base": true,
+"forms": [],
+"name": "Pansage"
+},
+"512": {
+"base": true,
+"forms": [],
+"name": "Simisage"
+},
+"513": {
+"base": true,
+"forms": [],
+"name": "Pansear"
+},
+"514": {
+"base": true,
+"forms": [],
+"name": "Simisear"
+},
+"515": {
+"base": true,
+"forms": [],
+"name": "Panpour"
+},
+"516": {
+"base": true,
+"forms": [],
+"name": "Simipour"
+},
+"517": {
+"base": true,
+"forms": [],
+"name": "Munna"
+},
+"518": {
+"base": true,
+"forms": [],
+"name": "Musharna"
+},
+"519": {
+"base": true,
+"forms": [],
+"name": "Pidove"
+},
+"52": {
+"base": true,
+"forms": [
+"Alola Form",
+"Galarian Form"
+],
+"name": "Meowth"
+},
+"520": {
+"base": true,
+"forms": [],
+"name": "Tranquill"
+},
+"521": {
+"base": true,
+"forms": [],
+"name": "Unfezant"
+},
+"522": {
+"base": true,
+"forms": [
+"Fashionable"
+],
+"name": "Blitzle"
+},
+"523": {
+"base": true,
+"forms": [],
+"name": "Zebstrika"
+},
+"524": {
+"base": true,
+"forms": [],
+"name": "Roggenrola"
+},
+"525": {
+"base": true,
+"forms": [],
+"name": "Boldore"
+},
+"526": {
+"base": true,
+"forms": [],
+"name": "Gigalith"
+},
+"527": {
+"base": true,
+"forms": [],
+"name": "Woobat"
+},
+"528": {
+"base": true,
+"forms": [],
+"name": "Swoobat"
+},
+"529": {
+"base": true,
+"forms": [],
+"name": "Drilbur"
+},
+"53": {
+"base": true,
+"forms": [
+"Alola Form"
+],
+"name": "Persian"
+},
+"530": {
+"base": true,
+"forms": [],
+"name": "Excadrill"
+},
+"531": {
+"base": true,
+"forms": [],
+"name": "Audino"
+},
+"532": {
+"base": true,
+"forms": [],
+"name": "Timburr"
+},
+"533": {
+"base": true,
+"forms": [],
+"name": "Gurdurr"
+},
+"534": {
+"base": true,
+"forms": [],
+"name": "Conkeldurr"
+},
+"535": {
+"base": true,
+"forms": [],
+"name": "Tympole"
+},
+"536": {
+"base": true,
+"forms": [],
+"name": "Palpitoad"
+},
+"537": {
+"base": true,
+"forms": [],
+"name": "Seismitoad"
+},
+"538": {
+"base": true,
+"forms": [],
+"name": "Throh"
+},
+"539": {
+"base": true,
+"forms": [],
+"name": "Sawk"
+},
+"54": {
+"base": true,
+"forms": [
+"Holiday",
+"Swim Ring"
+],
+"name": "Psyduck"
+},
+"540": {
+"base": true,
+"forms": [],
+"name": "Sewaddle"
+},
+"541": {
+"base": true,
+"forms": [],
+"name": "Swadloon"
+},
+"542": {
+"base": true,
+"forms": [],
+"name": "Leavanny"
+},
+"543": {
+"base": true,
+"forms": [],
+"name": "Venipede"
+},
+"544": {
+"base": true,
+"forms": [],
+"name": "Whirlipede"
+},
+"545": {
+"base": true,
+"forms": [],
+"name": "Scolipede"
+},
+"546": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Cottonee"
+},
+"547": {
+"base": true,
+"forms": [
+"Flower Crown"
+],
+"name": "Whimsicott"
+},
+"548": {
+"base": true,
+"forms": [],
+"name": "Petilil"
+},
+"549": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Lilligant"
+},
+"55": {
+"base": true,
+"forms": [],
+"name": "Golduck"
+},
+"550": {
+"base": true,
+"forms": [
+"Blue-Striped Form",
+"White-Striped Form"
+],
+"name": "Basculin"
+},
+"551": {
+"base": true,
+"forms": [],
+"name": "Sandile"
+},
+"552": {
+"base": true,
+"forms": [],
+"name": "Krokorok"
+},
+"553": {
+"base": true,
+"forms": [],
+"name": "Krookodile"
+},
+"554": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Darumaka"
+},
+"555": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Darmanitan"
+},
+"556": {
+"base": true,
+"forms": [],
+"name": "Maractus"
+},
+"557": {
+"base": true,
+"forms": [],
+"name": "Dwebble"
+},
+"558": {
+"base": true,
+"forms": [],
+"name": "Crustle"
+},
+"559": {
+"base": true,
+"forms": [],
+"name": "Scraggy"
+},
+"56": {
+"base": true,
+"forms": [],
+"name": "Mankey"
+},
+"560": {
+"base": true,
+"forms": [],
+"name": "Scrafty"
+},
+"561": {
+"base": true,
+"forms": [],
+"name": "Sigilyph"
+},
+"562": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Yamask"
+},
+"563": {
+"base": true,
+"forms": [],
+"name": "Cofagrigus"
+},
+"564": {
+"base": true,
+"forms": [],
+"name": "Tirtouga"
+},
+"565": {
+"base": true,
+"forms": [],
+"name": "Carracosta"
+},
+"566": {
+"base": true,
+"forms": [],
+"name": "Archen"
+},
+"567": {
+"base": true,
+"forms": [],
+"name": "Archeops"
+},
+"568": {
+"base": true,
+"forms": [],
+"name": "Trubbish"
+},
+"569": {
+"base": true,
+"forms": [],
+"name": "Garbodor"
+},
+"57": {
+"base": true,
+"forms": [],
+"name": "Primeape"
+},
+"570": {
+"base": true,
+"forms": [],
+"name": "Zorua"
+},
+"571": {
+"base": true,
+"forms": [],
+"name": "Zoroark"
+},
+"572": {
+"base": true,
+"forms": [],
+"name": "Minccino"
+},
+"573": {
+"base": true,
+"forms": [],
+"name": "Cinccino"
+},
+"574": {
+"base": true,
+"forms": [],
+"name": "Gothita"
+},
+"575": {
+"base": true,
+"forms": [],
+"name": "Gothorita"
+},
+"576": {
+"base": true,
+"forms": [],
+"name": "Gothitelle"
+},
+"577": {
+"base": true,
+"forms": [],
+"name": "Solosis"
+},
+"578": {
+"base": true,
+"forms": [],
+"name": "Duosion"
+},
+"579": {
+"base": true,
+"forms": [],
+"name": "Reuniclus"
+},
+"58": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Growlithe"
+},
+"580": {
+"base": true,
+"forms": [],
+"name": "Ducklett"
+},
+"581": {
+"base": true,
+"forms": [],
+"name": "Swanna"
+},
+"582": {
+"base": true,
+"forms": [],
+"name": "Vanillite"
+},
+"583": {
+"base": true,
+"forms": [],
+"name": "Vanillish"
+},
+"584": {
+"base": true,
+"forms": [],
+"name": "Vanilluxe"
+},
+"585": {
+"base": true,
+"forms": [
+"Summer Form",
+"Autumn Form",
+"Winter Form"
+],
+"name": "Deerling"
+},
+"586": {
+"base": true,
+"forms": [
+"Summer Form",
+"Autumn Form",
+"Winter Form"
+],
+"name": "Sawsbuck"
+},
+"587": {
+"base": true,
+"forms": [],
+"name": "Emolga"
+},
+"588": {
+"base": true,
+"forms": [],
+"name": "Karrablast"
+},
+"589": {
+"base": true,
+"forms": [],
+"name": "Escavalier"
+},
+"59": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Arcanine"
+},
+"590": {
+"base": true,
+"forms": [],
+"name": "Foongus"
+},
+"591": {
+"base": true,
+"forms": [],
+"name": "Amoonguss"
+},
+"592": {
+"base": true,
+"forms": [
+"Female"
+],
+"name": "Frillish"
+},
+"593": {
+"base": true,
+"forms": [
+"Female"
+],
+"name": "Jellicent"
+},
+"594": {
+"base": true,
+"forms": [],
+"name": "Alomomola"
+},
+"595": {
+"base": true,
+"forms": [],
+"name": "Joltik"
+},
+"596": {
+"base": true,
+"forms": [],
+"name": "Galvantula"
+},
+"597": {
+"base": true,
+"forms": [],
+"name": "Ferroseed"
+},
+"598": {
+"base": true,
+"forms": [],
+"name": "Ferrothorn"
+},
+"599": {
+"base": true,
+"forms": [],
+"name": "Klink"
+},
+"6": {
+"base": true,
+"forms": [
+"Party Hat"
+],
+"name": "Charizard"
+},
+"60": {
+"base": true,
+"forms": [],
+"name": "Poliwag"
+},
+"600": {
+"base": true,
+"forms": [],
+"name": "Klang"
+},
+"601": {
+"base": true,
+"forms": [],
+"name": "Klinklang"
+},
+"602": {
+"base": true,
+"forms": [],
+"name": "Tynamo"
+},
+"603": {
+"base": true,
+"forms": [],
+"name": "Eelektrik"
+},
+"604": {
+"base": true,
+"forms": [],
+"name": "Eelektross"
+},
+"605": {
+"base": true,
+"forms": [],
+"name": "Elgyem"
+},
+"606": {
+"base": true,
+"forms": [],
+"name": "Beheeyem"
+},
+"607": {
+"base": true,
+"forms": [],
+"name": "Litwick"
+},
+"608": {
+"base": true,
+"forms": [],
+"name": "Lampent"
+},
+"609": {
+"base": true,
+"forms": [],
+"name": "Chandelure"
+},
+"61": {
+"base": true,
+"forms": [],
+"name": "Poliwhirl"
+},
+"610": {
+"base": true,
+"forms": [],
+"name": "Axew"
+},
+"611": {
+"base": true,
+"forms": [],
+"name": "Fraxure"
+},
+"612": {
+"base": true,
+"forms": [],
+"name": "Haxorus"
+},
+"613": {
+"base": true,
+"forms": [
+"Holidays"
+],
+"name": "Cubchoo"
+},
+"614": {
+"base": true,
+"forms": [],
+"name": "Beartic"
+},
+"615": {
+"base": true,
+"forms": [],
+"name": "Cryogonal"
+},
+"616": {
+"base": true,
+"forms": [],
+"name": "Shelmet"
+},
+"617": {
+"base": true,
+"forms": [],
+"name": "Accelgor"
+},
+"618": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Stunfisk"
+},
+"619": {
+"base": true,
+"forms": [],
+"name": "Mienfoo"
+},
+"62": {
+"base": true,
+"forms": [],
+"name": "Poliwrath"
+},
+"620": {
+"base": true,
+"forms": [],
+"name": "Mienshao"
+},
+"621": {
+"base": true,
+"forms": [],
+"name": "Druddigon"
+},
+"622": {
+"base": true,
+"forms": [],
+"name": "Golett"
+},
+"623": {
+"base": true,
+"forms": [],
+"name": "Golurk"
+},
+"624": {
+"base": true,
+"forms": [],
+"name": "Pawniard"
+},
+"625": {
+"base": true,
+"forms": [],
+"name": "Bisharp"
+},
+"626": {
+"base": true,
+"forms": [],
+"name": "Bouffalant"
+},
+"627": {
+"base": true,
+"forms": [],
+"name": "Rufflet"
+},
+"628": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Braviary"
+},
+"629": {
+"base": true,
+"forms": [],
+"name": "Vullaby"
+},
+"63": {
+"base": true,
+"forms": [],
+"name": "Abra"
+},
+"630": {
+"base": true,
+"forms": [],
+"name": "Mandibuzz"
+},
+"631": {
+"base": true,
+"forms": [],
+"name": "Heatmor"
+},
+"632": {
+"base": true,
+"forms": [],
+"name": "Durant"
+},
+"633": {
+"base": true,
+"forms": [],
+"name": "Deino"
+},
+"634": {
+"base": true,
+"forms": [],
+"name": "Zweilous"
+},
+"635": {
+"base": true,
+"forms": [],
+"name": "Hydreigon"
+},
+"636": {
+"base": true,
+"forms": [],
+"name": "Larvesta"
+},
+"637": {
+"base": true,
+"forms": [],
+"name": "Volcarona"
+},
+"638": {
+"base": true,
+"forms": [],
+"name": "Cobalion"
+},
+"639": {
+"base": true,
+"forms": [],
+"name": "Terrakion"
+},
+"64": {
+"base": true,
+"forms": [],
+"name": "Kadabra"
+},
+"640": {
+"base": true,
+"forms": [],
+"name": "Virizion"
+},
+"641": {
+"base": true,
+"forms": [
+"Therian Forme"
+],
+"name": "Tornadus"
+},
+"642": {
+"base": true,
+"forms": [
+"Therian Forme"
+],
+"name": "Thundurus"
+},
+"643": {
+"base": true,
+"forms": [],
+"name": "Reshiram"
+},
+"644": {
+"base": true,
+"forms": [],
+"name": "Zekrom"
+},
+"645": {
+"base": true,
+"forms": [
+"Therian Forme"
+],
+"name": "Landorus"
+},
+"646": {
+"base": true,
+"forms": [],
+"name": "Kyurem"
+},
+"647": {
+"base": true,
+"forms": [],
+"name": "Keldeo"
+},
+"648": {
+"base": true,
+"forms": [],
+"name": "Meloetta"
+},
+"649": {
+"base": true,
+"forms": [
+"Shock Drive",
+"Burn Drive",
+"Chill Drive",
+"Douse Drive"
+],
+"name": "Genesect"
+},
+"65": {
+"base": true,
+"forms": [],
+"name": "Alakazam"
+},
+"650": {
+"base": true,
+"forms": [],
+"name": "Chespin"
+},
+"651": {
+"base": true,
+"forms": [],
+"name": "Quilladin"
+},
+"652": {
+"base": true,
+"forms": [],
+"name": "Chesnaught"
+},
+"653": {
+"base": true,
+"forms": [],
+"name": "Fennekin"
+},
+"654": {
+"base": true,
+"forms": [],
+"name": "Braixen"
+},
+"655": {
+"base": true,
+"forms": [],
+"name": "Delphox"
+},
+"656": {
+"base": true,
+"forms": [
+"Halloween Costume"
+],
+"name": "Froakie"
+},
+"657": {
+"base": true,
+"forms": [
+"Halloween Costume"
+],
+"name": "Frogadier"
+},
+"658": {
+"base": true,
+"forms": [
+"Halloween Costume"
+],
+"name": "Greninja"
+},
+"659": {
+"base": true,
+"forms": [],
+"name": "Bunnelby"
+},
+"66": {
+"base": true,
+"forms": [],
+"name": "Machop"
+},
+"660": {
+"base": true,
+"forms": [],
+"name": "Diggersby"
+},
+"661": {
+"base": true,
+"forms": [],
+"name": "Fletchling"
+},
+"662": {
+"base": true,
+"forms": [],
+"name": "Fletchinder"
+},
+"663": {
+"base": true,
+"forms": [],
+"name": "Talonflame"
+},
+"664": {
+"base": true,
+"forms": [],
+"name": "Scatterbug"
+},
+"665": {
+"base": true,
+"forms": [],
+"name": "Spewpa"
+},
+"666": {
+"base": true,
+"forms": [
+"Polar Pattern",
+"Tundra Pattern",
+"Continental Pattern",
+"Garden Pattern",
+"Elegant Pattern",
+"Icy Snow Pattern",
+"Modern Pattern",
+"Marine Pattern",
+"Archipelago Pattern",
+"High Plains Pattern",
+"Sandstorm Pattern",
+"River Pattern",
+"Monsoon Pattern",
+"Savanna Pattern",
+"Sun Pattern",
+"Ocean Pattern",
+"Jungle Pattern"
+],
+"name": "Vivillon"
+},
+"667": {
+"base": true,
+"forms": [],
+"name": "Litleo"
+},
+"668": {
+"base": true,
+"forms": [],
+"name": "Pyroar"
+},
+"669": {
+"base": true,
+"forms": [
+"Yellow Flower",
+"Orange Flower",
+"Blue Flower",
+"White Flower"
+],
+"name": "Flab\u00e9b\u00e9"
+},
+"67": {
+"base": true,
+"forms": [],
+"name": "Machoke"
+},
+"670": {
+"base": true,
+"forms": [
+"Yellow Flower",
+"Orange Flower",
+"Blue Flower",
+"White Flower"
+],
+"name": "Floette"
+},
+"671": {
+"base": true,
+"forms": [
+"Yellow Flower",
+"Orange Flower",
+"Blue Flower",
+"White Flower"
+],
+"name": "Florges"
+},
+"672": {
+"base": true,
+"forms": [],
+"name": "Skiddo"
+},
+"673": {
+"base": true,
+"forms": [],
+"name": "Gogoat"
+},
+"674": {
+"base": true,
+"forms": [],
+"name": "Pancham"
+},
+"675": {
+"base": true,
+"forms": [],
+"name": "Pangoro"
+},
+"676": {
+"base": true,
+"forms": [
+"Heart Trim",
+"Star Trim",
+"Diamond Trim",
+"Deputante Trim",
+"Matron Trim",
+"Dandy Trim",
+"La Reine Trim",
+"Kabuki Trim",
+"Pharaoh Trim"
+],
+"name": "Furfrou"
+},
+"677": {
+"base": true,
+"forms": [],
+"name": "Espurr"
+},
+"678": {
+"base": true,
+"forms": [
+"Female"
+],
+"name": "Meowstic"
+},
+"679": {
+"base": true,
+"forms": [],
+"name": "Honedge"
+},
+"68": {
+"base": true,
+"forms": [],
+"name": "Machamp"
+},
+"680": {
+"base": true,
+"forms": [],
+"name": "Doublade"
+},
+"681": {
+"base": true,
+"forms": [],
+"name": "Aegislash"
+},
+"682": {
+"base": true,
+"forms": [],
+"name": "Spritzee"
+},
+"683": {
+"base": true,
+"forms": [],
+"name": "Aromatisse"
+},
+"684": {
+"base": true,
+"forms": [],
+"name": "Swirlix"
+},
+"685": {
+"base": true,
+"forms": [],
+"name": "Slurpuff"
+},
+"686": {
+"base": true,
+"forms": [],
+"name": "Inkay"
+},
+"687": {
+"base": true,
+"forms": [],
+"name": "Malamar"
+},
+"688": {
+"base": true,
+"forms": [],
+"name": "Binacle"
+},
+"689": {
+"base": true,
+"forms": [],
+"name": "Barbaracle"
+},
+"69": {
+"base": true,
+"forms": [],
+"name": "Bellsprout"
+},
+"690": {
+"base": true,
+"forms": [],
+"name": "Skrelp"
+},
+"691": {
+"base": true,
+"forms": [],
+"name": "Dragalge"
+},
+"692": {
+"base": true,
+"forms": [],
+"name": "Clauncher"
+},
+"693": {
+"base": true,
+"forms": [],
+"name": "Clawitzer"
+},
+"694": {
+"base": true,
+"forms": [],
+"name": "Helioptile"
+},
+"695": {
+"base": true,
+"forms": [],
+"name": "Heliolisk"
+},
+"696": {
+"base": true,
+"forms": [],
+"name": "Tyrunt"
+},
+"697": {
+"base": true,
+"forms": [],
+"name": "Tyrantrum"
+},
+"698": {
+"base": true,
+"forms": [],
+"name": "Amaura"
+},
+"699": {
+"base": true,
+"forms": [],
+"name": "Aurorus"
+},
+"7": {
+"base": true,
+"forms": [
+"Sunglasses",
+"Halloween",
+"Party Hat",
+"Pikachu Visor"
+],
+"name": "Squirtle"
+},
+"70": {
+"base": true,
+"forms": [],
+"name": "Weepinbell"
+},
+"700": {
+"base": true,
+"forms": [
+"Flower Crown",
+"Holiday",
+"Cherry Blossoms"
+],
+"name": "Sylveon"
+},
+"701": {
+"base": true,
+"forms": [],
+"name": "Hawlucha"
+},
+"702": {
+"base": true,
+"forms": [
+"Holiday Attire"
+],
+"name": "Dedenne"
+},
+"703": {
+"base": true,
+"forms": [],
+"name": "Carbink"
+},
+"704": {
+"base": true,
+"forms": [],
+"name": "Goomy"
+},
+"705": {
+"base": true,
+"forms": [],
+"name": "Sliggoo"
+},
+"706": {
+"base": true,
+"forms": [],
+"name": "Goodra"
+},
+"707": {
+"base": true,
+"forms": [],
+"name": "Klefki"
+},
+"708": {
+"base": true,
+"forms": [],
+"name": "Phantump"
+},
+"709": {
+"base": true,
+"forms": [],
+"name": "Trevenant"
+},
+"71": {
+"base": true,
+"forms": [],
+"name": "Victreebel"
+},
+"710": {
+"base": true,
+"forms": [
+"Average Size",
+"Large Size",
+"Super Size",
+"Small Size",
+"Average Size",
+"Large Size",
+"Super Size"
+],
+"name": "Pumpkaboo"
+},
+"711": {
+"base": true,
+"forms": [
+"Average Size",
+"Large Size",
+"Super Size",
+"Small Size",
+"Average Size",
+"Large Size",
+"Super Size"
+],
+"name": "Gourgeist"
+},
+"712": {
+"base": true,
+"forms": [],
+"name": "Bergmite"
+},
+"713": {
+"base": true,
+"forms": [
+"Hisuian Form"
+],
+"name": "Avalugg"
+},
+"714": {
+"base": true,
+"forms": [
+"Halloween Headband"
+],
+"name": "Noibat"
+},
+"715": {
+"base": true,
+"forms": [],
+"name": "Noivern"
+},
+"716": {
+"base": true,
+"forms": [],
+"name": "Xerneas"
+},
+"717": {
+"base": true,
+"forms": [],
+"name": "Yveltal"
+},
+"719": {
+"base": true,
+"forms": [],
+"name": "Diancie"
+},
+"72": {
+"base": true,
+"forms": [],
+"name": "Tentacool"
+},
+"722": {
+"base": true,
+"forms": [
+"Halloween Costume"
+],
+"name": "Rowlet"
+},
+"723": {
+"base": true,
+"forms": [
+"Halloween Costume"
+],
+"name": "Dartrix"
+},
+"724": {
+"base": true,
+"forms": [
+"Hisuian Form",
+"Halloween Costume"
+],
+"name": "Decidueye"
+},
+"725": {
+"base": true,
+"forms": [],
+"name": "Litten"
+},
+"726": {
+"base": true,
+"forms": [],
+"name": "Torracat"
+},
+"727": {
+"base": true,
+"forms": [],
+"name": "Incineroar"
+},
+"728": {
+"base": true,
+"forms": [],
+"name": "Popplio"
+},
+"729": {
+"base": true,
+"forms": [],
+"name": "Brionne"
+},
+"73": {
+"base": true,
+"forms": [],
+"name": "Tentacruel"
+},
+"730": {
+"base": true,
+"forms": [],
+"name": "Primarina"
+},
+"731": {
+"base": true,
+"forms": [],
+"name": "Pikipek"
+},
+"732": {
+"base": true,
+"forms": [],
+"name": "Trumbeak"
+},
+"733": {
+"base": true,
+"forms": [],
+"name": "Toucannon"
+},
+"734": {
+"base": true,
+"forms": [],
+"name": "Yungoos"
+},
+"735": {
+"base": true,
+"forms": [],
+"name": "Gumshoos"
+},
+"736": {
+"base": true,
+"forms": [],
+"name": "Grubbin"
+},
+"737": {
+"base": true,
+"forms": [
+"Holidays"
+],
+"name": "Charjabug"
+},
+"738": {
+"base": true,
+"forms": [
+"Holidays"
+],
+"name": "Vikavolt"
+},
+"739": {
+"base": true,
+"forms": [],
+"name": "Crabrawler"
+},
+"74": {
+"base": true,
+"forms": [
+"Alola Form"
+],
+"name": "Geodude"
+},
+"740": {
+"base": true,
+"forms": [],
+"name": "Crabominable"
+},
+"741": {
+"base": true,
+"forms": [
+"Pom-Pom Style",
+"Pa'u Style",
+"Sensu Style"
+],
+"name": "Oricorio"
+},
+"742": {
+"base": true,
+"forms": [],
+"name": "Cutiefly"
+},
+"743": {
+"base": true,
+"forms": [],
+"name": "Ribombee"
+},
+"744": {
+"base": true,
+"forms": [],
+"name": "Rockruff"
+},
+"745": {
+"base": true,
+"forms": [
+"Midnight Form",
+"Dusk Form"
+],
+"name": "Lycanroc"
+},
+"747": {
+"base": true,
+"forms": [],
+"name": "Mareanie"
+},
+"748": {
+"base": true,
+"forms": [],
+"name": "Toxapex"
+},
+"749": {
+"base": true,
+"forms": [],
+"name": "Mudbray"
+},
+"75": {
+"base": true,
+"forms": [
+"Alola Form"
+],
+"name": "Graveler"
+},
+"750": {
+"base": true,
+"forms": [],
+"name": "Mudsdale"
+},
+"751": {
+"base": true,
+"forms": [],
+"name": "Dewpider"
+},
+"752": {
+"base": true,
+"forms": [],
+"name": "Araquanid"
+},
+"753": {
+"base": true,
+"forms": [],
+"name": "Fomantis"
+},
+"754": {
+"base": true,
+"forms": [],
+"name": "Lurantis"
+},
+"755": {
+"base": true,
+"forms": [],
+"name": "Morelull"
+},
+"756": {
+"base": true,
+"forms": [],
+"name": "Shiinotic"
+},
+"757": {
+"base": true,
+"forms": [],
+"name": "Salandit"
+},
+"758": {
+"base": true,
+"forms": [],
+"name": "Salazzle"
+},
+"759": {
+"base": true,
+"forms": [],
+"name": "Stufful"
+},
+"76": {
+"base": true,
+"forms": [
+"Alola Form"
+],
+"name": "Golem"
+},
+"760": {
+"base": true,
+"forms": [],
+"name": "Bewear"
+},
+"761": {
+"base": true,
+"forms": [],
+"name": "Bounsweet"
+},
+"762": {
+"base": true,
+"forms": [],
+"name": "Steenee"
+},
+"763": {
+"base": true,
+"forms": [],
+"name": "Tsareena"
+},
+"765": {
+"base": true,
+"forms": [],
+"name": "Oranguru"
+},
+"766": {
+"base": true,
+"forms": [],
+"name": "Passimian"
+},
+"767": {
+"base": true,
+"forms": [],
+"name": "Wimpod"
+},
+"768": {
+"base": true,
+"forms": [],
+"name": "Golisopod"
+},
+"769": {
+"base": true,
+"forms": [],
+"name": "Sandygast"
+},
+"77": {
+"base": true,
+"forms": [
+"Candela Accessory",
+"Galarian Form",
+"Galarian Form GO Fest 2021"
+],
+"name": "Ponyta"
+},
+"770": {
+"base": true,
+"forms": [],
+"name": "Palossand"
+},
+"775": {
+"base": true,
+"forms": [],
+"name": "Komala"
+},
+"776": {
+"base": true,
+"forms": [],
+"name": "Turtonator"
+},
+"777": {
+"base": true,
+"forms": [],
+"name": "Togedemaru"
+},
+"779": {
+"base": true,
+"forms": [],
+"name": "Bruxish"
+},
+"78": {
+"base": true,
+"forms": [
+"Candela Accessory",
+"Galarian Form"
+],
+"name": "Rapidash"
+},
+"780": {
+"base": true,
+"forms": [],
+"name": "Drampa"
+},
+"781": {
+"base": true,
+"forms": [],
+"name": "Dhelmise"
+},
+"782": {
+"base": true,
+"forms": [],
+"name": "Jangmo-o"
+},
+"783": {
+"base": true,
+"forms": [],
+"name": "Hakamo-o"
+},
+"784": {
+"base": true,
+"forms": [],
+"name": "Kommo-o"
+},
+"785": {
+"base": true,
+"forms": [],
+"name": "Tapu Koko"
+},
+"786": {
+"base": true,
+"forms": [],
+"name": "Tapu Lele"
+},
+"787": {
+"base": true,
+"forms": [],
+"name": "Tapu Bulu"
+},
+"788": {
+"base": true,
+"forms": [],
+"name": "Tapu Fini"
+},
+"79": {
+"base": true,
+"forms": [
+"2020",
+"Cowboy",
+"Galarian Form"
+],
+"name": "Slowpoke"
+},
+"791": {
+"base": true,
+"forms": [],
+"name": "Solgaleo"
+},
+"792": {
+"base": true,
+"forms": [],
+"name": "Lunala"
+},
+"793": {
+"base": true,
+"forms": [],
+"name": "Nihilego"
+},
+"794": {
+"base": true,
+"forms": [],
+"name": "Buzzwole"
+},
+"795": {
+"base": true,
+"forms": [],
+"name": "Pheromosa"
+},
+"796": {
+"base": true,
+"forms": [],
+"name": "Xurkitree"
+},
+"797": {
+"base": true,
+"forms": [],
+"name": "Celesteela"
+},
+"798": {
+"base": true,
+"forms": [],
+"name": "Kartana"
+},
+"799": {
+"base": true,
+"forms": [],
+"name": "Guzzlord"
+},
+"8": {
+"base": true,
+"forms": [
+"Sunglasses"
+],
+"name": "Wartortle"
+},
+"80": {
+"base": true,
+"forms": [
+"2021",
+"Galarian Form"
+],
+"name": "Slowbro"
+},
+"800": {
+"base": true,
+"forms": [
+"Dusk Mane",
+"Dawn Wings"
+],
+"name": "Necrozma"
+},
+"805": {
+"base": true,
+"forms": [],
+"name": "Stakataka"
+},
+"806": {
+"base": true,
+"forms": [],
+"name": "Blacephalon"
+},
+"808": {
+"base": true,
+"forms": [],
+"name": "Meltan"
+},
+"809": {
+"base": true,
+"forms": [],
+"name": "Melmetal"
+},
+"81": {
+"base": true,
+"forms": [],
+"name": "Magnemite"
+},
+"810": {
+"base": true,
+"forms": [],
+"name": "Grookey"
+},
+"811": {
+"base": true,
+"forms": [],
+"name": "Thwackey"
+},
+"812": {
+"base": true,
+"forms": [],
+"name": "Rillaboom"
+},
+"813": {
+"base": true,
+"forms": [],
+"name": "Scorbunny"
+},
+"814": {
+"base": true,
+"forms": [],
+"name": "Raboot"
+},
+"815": {
+"base": true,
+"forms": [],
+"name": "Cinderace"
+},
+"816": {
+"base": true,
+"forms": [],
+"name": "Sobble"
+},
+"817": {
+"base": true,
+"forms": [],
+"name": "Drizzile"
+},
+"818": {
+"base": true,
+"forms": [],
+"name": "Inteleon"
+},
+"819": {
+"base": true,
+"forms": [],
+"name": "Skwovet"
+},
+"82": {
+"base": true,
+"forms": [],
+"name": "Magneton"
+},
+"820": {
+"base": true,
+"forms": [],
+"name": "Greedent"
+},
+"821": {
+"base": true,
+"forms": [],
+"name": "Rookidee"
+},
+"822": {
+"base": true,
+"forms": [],
+"name": "Corvisquire"
+},
+"823": {
+"base": true,
+"forms": [],
+"name": "Corviknight"
+},
+"827": {
+"base": true,
+"forms": [],
+"name": "Nickit"
+},
+"828": {
+"base": true,
+"forms": [],
+"name": "Thievul"
+},
+"83": {
+"base": true,
+"forms": [
+"Galarian Form"
+],
+"name": "Farfetch'd"
+},
+"831": {
+"base": true,
+"forms": [
+"Holiday"
+],
+"name": "Wooloo"
+},
+"832": {
+"base": true,
+"forms": [
+"Holiday"
+],
+"name": "Dubwool"
+},
+"84": {
+"base": true,
+"forms": [],
+"name": "Doduo"
+},
+"840": {
+"base": true,
+"forms": [],
+"name": "Applin"
+},
+"841": {
+"base": true,
+"forms": [],
+"name": "Flapple"
+},
+"842": {
+"base": true,
+"forms": [],
+"name": "Appletun"
+},
+"848": {
+"base": true,
+"forms": [],
+"name": "Toxel"
+},
+"849": {
+"base": true,
+"forms": [
+"Low Key Form"
+],
+"name": "Toxtricity"
+},
+"85": {
+"base": true,
+"forms": [],
+"name": "Dodrio"
+},
+"850": {
+"base": true,
+"forms": [],
+"name": "Sizzlipede"
+},
+"854": {
+"base": true,
+"forms": [
+"Antique Form",
+"Halloween Bow - Phony Form",
+"Halloween Bow - Antique Form"
+],
+"name": "Sinistea"
+},
+"855": {
+"base": true,
+"forms": [
+"Antique Form",
+"Halloween Bow - Phony Form",
+"Halloween Bow - Antique Form"
+],
+"name": "Polteageist"
+},
+"856": {
+"base": true,
+"forms": [],
+"name": "Hatenna"
+},
+"857": {
+"base": true,
+"forms": [],
+"name": "Hattrem"
+},
+"858": {
+"base": true,
+"forms": [],
+"name": "Hatterene"
+},
+"859": {
+"base": true,
+"forms": [],
+"name": "Impidimp"
+},
+"86": {
+"base": true,
+"forms": [],
+"name": "Seel"
+},
+"860": {
+"base": true,
+"forms": [],
+"name": "Morgrem"
+},
+"861": {
+"base": true,
+"forms": [],
+"name": "Grimmsnarl"
+},
+"862": {
+"base": true,
+"forms": [],
+"name": "Obstagoon"
+},
+"863": {
+"base": true,
+"forms": [],
+"name": "Perrserker"
+},
+"864": {
+"base": true,
+"forms": [],
+"name": "Cursola"
+},
+"865": {
+"base": true,
+"forms": [],
+"name": "Sirfetch'd"
+},
+"866": {
+"base": true,
+"forms": [],
+"name": "Mr. Rime"
+},
+"867": {
+"base": true,
+"forms": [],
+"name": "Runerigus"
+},
+"87": {
+"base": true,
+"forms": [],
+"name": "Dewgong"
+},
+"870": {
+"base": true,
+"forms": [
+"Train Conductor"
+],
+"name": "Falinks"
+},
+"872": {
+"base": true,
+"forms": [],
+"name": "Snom"
+},
+"873": {
+"base": true,
+"forms": [],
+"name": "Frosmoth"
+},
+"876": {
+"base": true,
+"forms": [
+"Female"
+],
+"name": "Indeedee"
+},
+"877": {
+"base": true,
+"forms": [
+"Hangry Mode"
+],
+"name": "Morpeko"
+},
+"88": {
+"base": true,
+"forms": [
+"Party Hat",
+"Alola Form"
+],
+"name": "Grimer"
+},
+"884": {
+"base": true,
+"forms": [],
+"name": "Duraludon"
+},
+"888": {
+"base": true,
+"forms": [
+"Crowned Sword"
+],
+"name": "Zacian"
+},
+"889": {
+"base": true,
+"forms": [
+"Crowned Shield"
+],
+"name": "Zamazenta"
+},
+"89": {
+"base": true,
+"forms": [
+"Party Hat",
+"Alola Form"
+],
+"name": "Muk"
+},
+"894": {
+"base": true,
+"forms": [],
+"name": "Regieleki"
+},
+"895": {
+"base": true,
+"forms": [],
+"name": "Regidrago"
+},
+"899": {
+"base": true,
+"forms": [],
+"name": "Wyrdeer"
+},
+"9": {
+"base": true,
+"forms": [
+"Sunglasses"
+],
+"name": "Blastoise"
+},
+"90": {
+"base": true,
+"forms": [],
+"name": "Shellder"
+},
+"900": {
+"base": true,
+"forms": [],
+"name": "Kleavor"
+},
+"901": {
+"base": true,
+"forms": [],
+"name": "Ursaluna"
+},
+"903": {
+"base": true,
+"forms": [],
+"name": "Sneasler"
+},
+"904": {
+"base": true,
+"forms": [],
+"name": "Overqwil"
+},
+"906": {
+"base": true,
+"forms": [],
+"name": "Sprigatito"
+},
+"907": {
+"base": true,
+"forms": [
+"Liko's Pin"
+],
+"name": "Floragato"
+},
+"908": {
+"base": true,
+"forms": [],
+"name": "Meowscarada"
+},
+"909": {
+"base": true,
+"forms": [],
+"name": "Fuecoco"
+},
+"91": {
+"base": true,
+"forms": [],
+"name": "Cloyster"
+},
+"910": {
+"base": true,
+"forms": [],
+"name": "Crocalor"
+},
+"911": {
+"base": true,
+"forms": [],
+"name": "Skeledirge"
+},
+"912": {
+"base": true,
+"forms": [],
+"name": "Quaxly"
+},
+"913": {
+"base": true,
+"forms": [],
+"name": "Quaxwell"
+},
+"914": {
+"base": true,
+"forms": [],
+"name": "Quaquaval"
+},
+"915": {
+"base": true,
+"forms": [],
+"name": "Lechonk"
+},
+"916": {
+"base": true,
+"forms": [
+"Female"
+],
+"name": "Oinkologne"
+},
+"919": {
+"base": true,
+"forms": [],
+"name": "Nymble"
+},
+"92": {
+"base": true,
+"forms": [],
+"name": "Gastly"
+},
+"920": {
+"base": true,
+"forms": [],
+"name": "Lokix"
+},
+"921": {
+"base": true,
+"forms": [],
+"name": "Pawmi"
+},
+"922": {
+"base": true,
+"forms": [],
+"name": "Pawmo"
+},
+"923": {
+"base": true,
+"forms": [],
+"name": "Pawmot"
+},
+"924": {
+"base": true,
+"forms": [],
+"name": "Tandemaus"
+},
+"925": {
+"base": true,
+"forms": [
+"Family of Four"
+],
+"name": "Maushold"
+},
+"926": {
+"base": true,
+"forms": [],
+"name": "Fidough"
+},
+"927": {
+"base": true,
+"forms": [],
+"name": "Dachsbun"
+},
+"928": {
+"base": true,
+"forms": [],
+"name": "Smoliv"
+},
+"929": {
+"base": true,
+"forms": [],
+"name": "Dolliv"
+},
+"93": {
+"base": true,
+"forms": [],
+"name": "Haunter"
+},
+"930": {
+"base": true,
+"forms": [],
+"name": "Arboliva"
+},
+"935": {
+"base": true,
+"forms": [],
+"name": "Charcadet"
+},
+"936": {
+"base": true,
+"forms": [],
+"name": "Armarouge"
+},
+"937": {
+"base": true,
+"forms": [],
+"name": "Ceruledge"
+},
+"938": {
+"base": true,
+"forms": [],
+"name": "Tadbulb"
+},
+"939": {
+"base": true,
+"forms": [],
+"name": "Bellibolt"
+},
+"94": {
+"base": true,
+"forms": [
+"Party Hat",
+"Halloween",
+"Spooky Festival",
+"Tricks & Treats"
+],
+"name": "Gengar"
+},
+"944": {
+"base": true,
+"forms": [],
+"name": "Shroodle"
+},
+"945": {
+"base": true,
+"forms": [],
+"name": "Grafaiai"
+},
+"948": {
+"base": true,
+"forms": [],
+"name": "Toedscool"
+},
+"949": {
+"base": true,
+"forms": [],
+"name": "Toedscruel"
+},
+"95": {
+"base": true,
+"forms": [],
+"name": "Onix"
+},
+"957": {
+"base": true,
+"forms": [],
+"name": "Tinkatink"
+},
+"958": {
+"base": true,
+"forms": [],
+"name": "Tinkatuff"
+},
+"959": {
+"base": true,
+"forms": [],
+"name": "Tinkaton"
+},
+"96": {
+"base": true,
+"forms": [],
+"name": "Drowzee"
+},
+"960": {
+"base": true,
+"forms": [],
+"name": "Wiglett"
+},
+"961": {
+"base": true,
+"forms": [],
+"name": "Wugtrio"
+},
+"962": {
+"base": true,
+"forms": [],
+"name": "Bombirdier"
+},
+"965": {
+"base": true,
+"forms": [],
+"name": "Varoom"
+},
+"966": {
+"base": true,
+"forms": [],
+"name": "Revavroom"
+},
+"968": {
+"base": true,
+"forms": [],
+"name": "Orthworm"
+},
+"97": {
+"base": true,
+"forms": [],
+"name": "Hypno"
+},
+"973": {
+"base": true,
+"forms": [],
+"name": "Flamigo"
+},
+"974": {
+"base": true,
+"forms": [],
+"name": "Cetoddle"
+},
+"975": {
+"base": true,
+"forms": [],
+"name": "Cetitan"
+},
+"977": {
+"base": true,
+"forms": [],
+"name": "Dondozo"
+},
+"979": {
+"base": true,
+"forms": [],
+"name": "Annihilape"
+},
+"98": {
+"base": true,
+"forms": [],
+"name": "Krabby"
+},
+"980": {
+"base": true,
+"forms": [],
+"name": "Clodsire"
+},
+"982": {
+"base": true,
+"forms": [
+"Three-Segment Form"
+],
+"name": "Dudunsparce"
+},
+"983": {
+"base": true,
+"forms": [],
+"name": "Kingambit"
+},
+"99": {
+"base": true,
+"forms": [],
+"name": "Kingler"
+},
+"996": {
+"base": true,
+"forms": [],
+"name": "Frigibax"
+},
+"997": {
+"base": true,
+"forms": [],
+"name": "Arctibax"
+},
+"998": {
+"base": true,
+"forms": [],
+"name": "Baxcalibur"
+},
+"999": {
+"base": true,
+"forms": [],
+"name": "Gimmighoul"
+}
+}
+}

@@ -267,6 +267,19 @@ test('shiny badge: the game\'s sparkle marks a look-alike shiny; a clean spot la
   has(run(`lastScanDebug`), 'badge={"badge":true', 'badge measurements reach the scan details for calibration');
 });
 
+test('shiny released list: unreleased species are never marked; tell = hue, badge or none', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  eq(run(`shinyTell(POKEMON_DATA.find(x => x.name === 'Charizard'))`), 'hue', 'Charizard: by hue');
+  eq(run(`shinyTell(POKEMON_DATA.find(x => x.name === 'Garchomp'))`), 'badge', 'Garchomp: badge only');
+  eq(run(`shinyTell(POKEMON_DATA.find(x => x.name === 'Slowpoke'))`), 'badge', 'Slowpoke: badge only');
+  const unreleased = run(`POKEMON_DATA.find(p => !p.sh && p.types.length === 1 && p.name.indexOf('(') < 0 && p.finals.length === 0).name`);
+  eq(run(`shinyTell(POKEMON_DATA.find(x => x.name === ${JSON.stringify(unreleased)}))`), 'none', `${unreleased}: no shiny released`);
+  const types = run(`POKEMON_DATA.find(p => p.name === ${JSON.stringify(unreleased)}).types.join(' / ').toUpperCase()`);
+  await t.app.scan({ ...card({ cp: 1500, name: unreleased, kg: 30, m: 1, types, ivs: [12, 12, 12] }), shinyBadge: true, colors: [[1, 90, 90, 90]] });
+  check(!t.app.log()[0].shiny, 'badge and colour cannot mark a species with no shiny released');
+  eq(run(`POKEMON_DATA.filter(p => p.sh).length`), 1193, 'released count matches the snapshot');
+});
+
 // ---------------------------------------------------------------- shinies
 test('shiny: own branch, prized best two then trade stock, never transfer, never blended', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
