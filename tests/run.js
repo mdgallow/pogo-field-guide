@@ -267,6 +267,33 @@ test('shiny pass: with the game\'s shiny search on screen every read is shiny; c
   has(run(`buildSearch({ shiny: 1 })`), 'shiny', 'the search builder knows the shiny flag');
 });
 
+test('shiny ladder: pass > list > sparkle > hue; disagreement asks instead of guessing', async t => {
+  const run = code => require('vm').runInContext(code, t.ctx);
+  const d = args => JSON.parse(run(`JSON.stringify(shinyDecision(${JSON.stringify(args)}))`));
+  eq(d({ pass: true, released: false, sparkle: false, hue: false }).source, 'pass', 'a pass beats everything');
+  eq(d({ released: false, sparkle: true, hue: true }).shiny, null, 'no shiny released: never marked');
+  eq(d({ sparkle: true, hue: null }).source, 'sparkle', 'sparkle marks on its own');
+  eq(d({ sparkle: true, hue: true }).source, 'sparkle', 'sparkle outranks hue when both agree');
+  check(d({ sparkle: true, hue: false }).maybe && d({ sparkle: true, hue: false }).shiny === null, 'sparkle vs plainly normal hue: ask');
+  eq(d({ sparkle: null, hue: true }).source, 'hue', 'hue is the fallback when nothing else spoke');
+  check(d({ sparkle: false, hue: true }).maybe, 'hue says shiny but the watch was quiet: ask');
+  eq(d({ sparkle: false, hue: false }).shiny, false, 'quiet and normal colours: normal');
+  eq(run(`sparkleSeen({ base: 10, peak: 200, burst: 190, spikes: 1, n: 20 })`), true, 'one tall spike is a burst');
+  eq(run(`sparkleSeen({ base: 10, peak: 200, burst: 190, spikes: 6, n: 20 })`), null, 'snow flickers all the time: says nothing');
+  eq(run(`sparkleSeen({ base: 300, peak: 320, burst: 20, spikes: 0, n: 20 })`), false, 'a white Pokémon holding still: quiet');
+  const gc = (extra) => ({ ...card({ cp: 3000, name: 'Garchomp', kg: 95, m: 1.9, types: 'DRAGON / GROUND', ivs: [14, 13, 15] }), ...extra });
+  await t.app.scan(gc({ sparkle: { base: 8, peak: 180, burst: 172, spikes: 1, n: 18 } }));
+  eq(t.app.log()[0].shiny, true, 'a look-alike shiny is caught by its sparkles'); eq(t.app.log()[0].shinySource, 'sparkle', 'source recorded');
+  await t.app.scan(gc({ colors: [[220, 60, 70, 80]], sparkle: { base: 8, peak: 20, burst: 12, spikes: 0, n: 18 } }));
+  eq(t.app.log()[0].shiny, true, 'a later quiet read never undoes a sparkle mark');
+  const u = loadApp();
+  await u.app.scan({ ...card({ cp: 2200, name: 'Charizard', kg: 90, m: 1.7, types: 'FIRE / FLYING', ivs: [10, 10, 10] }), colors: [[31, 71, 91, 70], [186, 86, 48, 30]], sparkle: { base: 5, peak: 150, burst: 145, spikes: 1, n: 18 } });
+  check(!u.app.log()[0].shiny && u.app.log()[0].shinyMaybe === 'sparkle', 'sparkles over a plainly orange-and-teal Charizard: not marked, flagged to confirm');
+  has(slot(u.last(), 'SHINY?'), 'SPARKLES SEEN', 'the pill asks');
+  require('vm').runInContext(`setLogMark(pokeLog[0].id, 'shiny', true)`, u.ctx);
+  eq(u.app.log()[0].shinySource, 'user', 'the tick settles it');
+});
+
 test('shiny released list: unreleased species are never marked; tell = hue, badge or none', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
   eq(run(`shinyTell(POKEMON_DATA.find(x => x.name === 'Charizard'))`), 'hue', 'Charizard: by hue');
@@ -275,8 +302,8 @@ test('shiny released list: unreleased species are never marked; tell = hue, badg
   const unreleased = run(`POKEMON_DATA.find(p => !p.sh && p.types.length === 1 && p.name.indexOf('(') < 0 && p.finals.length === 0).name`);
   eq(run(`shinyTell(POKEMON_DATA.find(x => x.name === ${JSON.stringify(unreleased)}))`), 'none', `${unreleased}: no shiny released`);
   const types = run(`POKEMON_DATA.find(p => p.name === ${JSON.stringify(unreleased)}).types.join(' / ').toUpperCase()`);
-  await t.app.scan({ ...card({ cp: 1500, name: unreleased, kg: 30, m: 1, types, ivs: [12, 12, 12] }), shinyBadge: true, colors: [[1, 90, 90, 90]] });
-  check(!t.app.log()[0].shiny, 'badge and colour cannot mark a species with no shiny released');
+  await t.app.scan({ ...card({ cp: 1500, name: unreleased, kg: 30, m: 1, types, ivs: [12, 12, 12] }), sparkle: { base: 5, peak: 200, burst: 195, spikes: 1, n: 18 }, colors: [[1, 90, 90, 90]] });
+  check(!t.app.log()[0].shiny, 'sparkle and colour cannot mark a species with no shiny released');
   eq(run(`POKEMON_DATA.filter(p => p.sh).length`), 1193, 'released count matches the snapshot');
 });
 

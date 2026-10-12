@@ -668,7 +668,7 @@
       <button onclick="exportPokeLog()" style="flex:1; background:#1e293b; color:#38bdf8; border:1px solid #38bdf8; border-radius:8px; padding:8px; font-weight:800; font-size:12px; cursor:pointer;">Backup (copy text)</button>
       <button onclick="importPokeLog()" style="flex:1; background:#1e293b; color:#34d399; border:1px solid #34d399; border-radius:8px; padding:8px; font-weight:800; font-size:12px; cursor:pointer;">Import</button>
       <button onclick="clearPokeLog()" style="background:#1e293b; color:#f87171; border:1px solid #f87171; border-radius:8px; padding:8px 12px; font-weight:800; font-size:12px; cursor:pointer;">Clear all</button>
-      <button id="clearColourShinyBtn" onclick="clearColourShinyMarks()" style="display:none; background:#1e293b; color:#34d399; border:1px solid #34d399; border-radius:8px; padding:8px 12px; font-weight:800; font-size:12px; cursor:pointer;">Undo “(by colour)” shiny marks</button>
+      <button id="clearColourShinyBtn" onclick="clearColourShinyMarks()" style="display:none; background:#1e293b; color:#34d399; border:1px solid #34d399; border-radius:8px; padding:8px 12px; font-weight:800; font-size:12px; cursor:pointer;">Undo automatic shiny marks</button>
     </div>
   </div>
 </div>
@@ -751,7 +751,7 @@
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #7dd3fc;">
           <b>Role and moves.</b> On a keeper the pill adds <b>ROLE</b>: RAID, PVP with its best league, RAID + PVP, with a strength and a percentage (<b>TOP 92%</b>, <b>SOLID</b>, <b>FRINGE 43%</b>, <b>MINOR</b>) from its raid rank overall, its rank among attackers of its type and its best league rank, or COLLECTION. The percentage is the species’ utility, and it scales the keeper slots (a top pick keeps all 6, a 43% fringe pick keeps 3, a collection species keeps 1) and the trade value (25% for collection up to 100% for a top pick), so there is no cliff between tiers. Then the moves to aim your TMs at, one line per role: <b>RAID MOVES</b> and/or <b>&lt;LEAGUE&gt; LEAGUE MOVES</b> (two charged moves for PvP: unlock the second). Each line says <b>FAST</b> and <b>CHARGED</b> separately and names what an ordinary Fast TM / Charged TM can reach; when the very best move needs an Elite TM or its Community Day it is added as <b>BEST: … (ELITE TM)</b>, and <b>(NO TM)</b> marks a move no TM teaches. A Pokémon that still has to evolve gets its final form’s moves (<b>RAID MOVES AS METAGROSS</b>): evolve first, evolving re-rolls the moves. Nothing is shown on trades or transfers, so no TM is wasted.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #f59e0b;">
-          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by family, height and weight, CP, HP, catch date and IVs together, so renaming or powering up never confuses it, and a re-scan with the appraisal closed still shows the saved IVs as <b>15/14/15 (SAVED)</b>. <b>Appraise once, remembered forever:</b> open the in-game appraisal and SCAN (or let AUTO do it). Each row in My Log shows its <b>current standing</b> (keeper #2 of 6, trade ~66k, transfer, gone), recomputed from the whole log, so an older pill verdict can never contradict a newer scan. Lucky and shadow are read from the page (the purple haze, confirmed by the PURIFY button); shiny is read two ways: a <b>shiny pass</b> (My Log: search <b>shiny</b> in the game, start the pass, read through the results; every read is marked shiny by the game’s own word, which is the only way for shinies that look like their normal form: Garchomp, Slowpoke, Gengar, Pikachu), and from the model’s <b>hues</b> alone, never from how bright or dull it looks (night scenes and phone screens change that): a shiny must show a colour its normal form never has (the red wings of a shiny Charizard, a red Gyarados). A species whose shiny has not been released in GO (Serebii’s list, 1,193 of 1,401 forms have one) is never marked by either. A colour mark shows as <b>(by colour)</b> in My Log, is undone by a later clearly normal read, and “Undo (by colour) shiny marks” clears them all; a shiny you tick yourself is never changed by colour. <b>Shinies are their own branch</b>: the best 2 of each species are SHINY PRIZED (collection and high IVs), every other shiny is SHINY STOCK, held for shiny-for-shiny trades rather than transferred; shiny shadows and shiny legendaries follow the same rule. <b>Shadows are judged among shadows</b> (attack IV counts double, 30+ floor): for a raid species the best few stay shadows (KEEP · SHADOW RAID FORM: the +20% attack beats any IV gap), a shadow whose +2 purified IVs make a 44/45 says <b>PURIFY</b> with the dust and candy it costs, a surplus shadow worth more traded than transferred says <b>PURIFY · THEN TRADE</b> (a shadow can’t be traded), and the rest transfer. Shadow legendaries from shadow raids are the exception: keep up to your raid slots as shadows, transfer the rest for candy (purifying costs rare candy and trading burns the one special trade a day). Dynamax Pokémon are their own pool (keep the best 3 per species). A favorited Pokémon that the numbers would transfer says <b>FAVORITE?</b> instead.</div>
+          <b>5. My Log remembers your Pokémon.</b> Every storage scan is saved on this phone, recognised by family, height and weight, CP, HP, catch date and IVs together, so renaming or powering up never confuses it, and a re-scan with the appraisal closed still shows the saved IVs as <b>15/14/15 (SAVED)</b>. <b>Appraise once, remembered forever:</b> open the in-game appraisal and SCAN (or let AUTO do it). Each row in My Log shows its <b>current standing</b> (keeper #2 of 6, trade ~66k, transfer, gone), recomputed from the whole log, so an older pill verdict can never contradict a newer scan. Lucky and shadow are read from the page (the purple haze, confirmed by the PURIFY button); shiny is decided by a ladder of signs, strongest first: (1) a <b>shiny pass</b> (My Log: search <b>shiny</b> in the game, start the pass, read through the results; every read is marked shiny by the game’s own word, the only sure way for shinies that look like their normal form: Garchomp, Slowpoke, Gengar, Pikachu), (2) the released list (a species with no shiny in GO is never marked automatically), (3) the game’s <b>sparkle burst</b> over the model, which the shell watches across frames, and (4) only as a fallback the model’s <b>hues</b> alone, never from how bright or dull it looks (night scenes and phone screens change that): a shiny must show a colour its normal form never has (the red wings of a shiny Charizard, a red Gyarados). Every automatic mark shows its source in My Log ((shiny pass), (sparkle), (by colour)); when two signs disagree the pill asks <b>SHINY?</b> and My Log shows “confirm” instead of guessing. A species whose shiny has not been released in GO (Serebii’s list, 1,193 of 1,401 forms have one) is never marked automatically. A colour mark shows as <b>(by colour)</b> in My Log, is undone by a later clearly normal read, and “Undo (by colour) shiny marks” clears them all; a shiny you tick yourself is never changed by colour. <b>Shinies are their own branch</b>: the best 2 of each species are SHINY PRIZED (collection and high IVs), every other shiny is SHINY STOCK, held for shiny-for-shiny trades rather than transferred; shiny shadows and shiny legendaries follow the same rule. <b>Shadows are judged among shadows</b> (attack IV counts double, 30+ floor): for a raid species the best few stay shadows (KEEP · SHADOW RAID FORM: the +20% attack beats any IV gap), a shadow whose +2 purified IVs make a 44/45 says <b>PURIFY</b> with the dust and candy it costs, a surplus shadow worth more traded than transferred says <b>PURIFY · THEN TRADE</b> (a shadow can’t be traded), and the rest transfer. Shadow legendaries from shadow raids are the exception: keep up to your raid slots as shadows, transfer the rest for candy (purifying costs rare candy and trading burns the one special trade a day). Dynamax Pokémon are their own pool (keep the best 3 per species). A favorited Pokémon that the numbers would transfer says <b>FAVORITE?</b> instead.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #14b8a6;">
           <b>6. Search builder.</b> The <b>Search</b> button writes text for Pokémon GO’s own storage search: tap what you want (stars, attack/defense/HP ratings, kind, type, region, CP, age, family), COPY, paste into the game. Ready-made searches cover logging a big collection fast: only <b>3★,4★</b>, legendaries from 2★, luckies at 1–2★ and PvP-shaped stats can be keepers, so only those need the appraisal sweep with AUTO; everything else is a trade or a transfer. The app never types into the game.</div>
       </div>
@@ -1216,15 +1216,27 @@ function recordStorageScan(pokemon, cp, details, favorite, matchInfo, ivs) {
   // A lucky stays lucky for life: set it when the label (or the gold background) is seen, and
   // never clear it just because one read missed the label.
   if (details && details.lucky) entry.lucky = true;
-  // Colour evidence: a shiny hue marks the entry (and says so in My Log); a later clearly normal
-  // read undoes a colour-based mark. A mark the player ticked by hand is never changed by colour.
-  if (details && details.shinyByColor === true && !entry.shiny && !entry.shinyUser) { entry.shiny = true; entry.shinyAuto = true; }
-  if (details && details.shinyByColor === false && entry.shinyAuto) { entry.shiny = false; entry.shinyAuto = false; }
+  // Shiny: the ladder's verdict (shinyDecision). Every automatic mark carries its source
+  // (shinySource: pass > sparkle > hue); a stronger source replaces a weaker one, a weaker one
+  // never overrides a stronger. A hand tick (shinyUser) is never changed. Only a hue mark is
+  // undone by a later clearly normal hue read; sparkle and pass marks stay. A "maybe" (the
+  // layers disagree) is kept on the entry for the pill and My Log to ask about.
   if (details && details.colorEvidence) entry.colorEvidence = details.colorEvidence;
-  // A shiny pass: the player filtered the game's storage by "shiny" and is reading through the
-  // result, so every Pokémon read is a shiny by the game's own word. The surest mark there is,
-  // and the only one for shinies that look like their normal form; colour never undoes it.
-  if (details && details.shinyPass) { entry.shiny = true; entry.shinyPass = true; entry.shinyAuto = false; }
+  if (details && details.sparkle) entry.sparkle = details.sparkle;
+  const sd = details && details.shinyDecision;
+  if (sd && !entry.shinyUser) {
+    const rank = { pass: 3, sparkle: 2, hue: 1 };
+    const have = entry.shiny ? (rank[entry.shinySource] || 0) : 0;
+    if (sd.shiny === true && (rank[sd.source] || 0) >= have) {
+      entry.shiny = true; entry.shinySource = sd.source; entry.shinyMaybe = false;
+      entry.shinyPass = sd.source === 'pass'; entry.shinyAuto = sd.source === 'hue';
+    } else if (sd.shiny === false && entry.shiny && entry.shinySource === 'hue') {
+      entry.shiny = false; entry.shinySource = null; entry.shinyAuto = false;
+    } else if (sd.maybe && !entry.shiny) {
+      entry.shinyMaybe = sd.source;
+    }
+    if (sd.shiny === true || sd.shiny === false) entry.shinyMaybe = false;
+  }
   if (details && details.purifiedLabel) entry.shadow = false;
   if (details && details.where) entry.where = details.where;
   if (details && 'dynamax' in details) entry.dynamax = !!details.dynamax; // badge is always visible when set
@@ -1597,6 +1609,30 @@ function shinyTell(p) {
   if (!p || !p.sh) return 'none';
   return p.pal && shinyColorEvidence(p, p.pal.s) ? 'hue' : 'badge';
 }
+// The game's own sparkle burst over the model (watched across frames by the shell): one tall
+// spike over a quiet baseline. Snow, rain and a turning white model move the count all the time
+// (many spikes) and never count. true = burst seen, false = watched and quiet, null = no data.
+const SPARKLE_MIN_BURST = 60, SPARKLE_MAX_SPIKES = 2;
+function sparkleSeen(sp) {
+  if (!sp || typeof sp.burst !== 'number' || sp.n < 4) return null;
+  if (sp.spikes > SPARKLE_MAX_SPIKES) return null;          // flickering scene: says nothing either way
+  return sp.burst >= SPARKLE_MIN_BURST;
+}
+// The evidence ladder, strongest first. Returns { shiny: true | false | null, source, maybe }.
+//  1. pass   the game's own shiny search is on screen (My Log shiny pass): definitive
+//  2. list   no shiny released for this species: never marked automatically
+//  3. sparkle the game's sparkle burst over the model
+//  4. hue    a colour of the shiny's own, only when nothing above spoke, never against a sparkle
+// A sparkle with the hue saying plainly normal (or a hue with the watch plainly quiet) is a
+// "maybe": the mark is suggested on the pill and in My Log, not applied.
+function shinyDecision({ pass = false, released = true, sparkle = null, hue = null } = {}) {
+  if (pass) return { shiny: true, source: 'pass', maybe: false };
+  if (!released) return { shiny: null, source: 'list', maybe: false };
+  if (sparkle === true) return hue === false ? { shiny: null, source: 'sparkle', maybe: true } : { shiny: true, source: 'sparkle', maybe: false };
+  if (hue === true) return sparkle === false ? { shiny: null, source: 'hue', maybe: true } : { shiny: true, source: 'hue', maybe: false };
+  if (hue === false) return { shiny: false, source: 'hue', maybe: false };
+  return { shiny: null, source: '', maybe: false };
+}
 // true = shiny, false = normal, null = cannot tell
 function shinyFromColors(p, colors) {
   if (p && !p.sh) return null;   // no shiny released: colour cannot say shiny, and need not say normal
@@ -1654,6 +1690,7 @@ function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs, auto =
   const dynamax = !!(details && details.dynamax) || !!(entry && entry.dynamax);
   const shadow = !!(details && details.shadow) || !!(entry && entry.shadow && !(details && details.notShadow));
   const shiny = !!(entry && entry.shiny);
+  const shinyMaybe = entry && !entry.shiny ? entry.shinyMaybe || null : null;
   const ranked = speciesRanking(pokemon.name, dynamax, shadow && !shiny ? 'shadow' : 'raid', shadow, shiny);
   const pool = poolOf(pokemon.name, dynamax, shadow, shiny);
   const pvpLane = !dynamax && !shadow && !shiny && pvpRelevant(pokemon);
@@ -1662,7 +1699,7 @@ function buildScanContext(pokemon, cp, details, favorite, matchInfo, ivs, auto =
     logged: relatives.length, bestCp, isStrongest: !!entry && !!cp && cp >= bestCp,
     ivs: known, ivsFromLog: !ivs && !!(entry && entry.ivs),
     rank: entry ? ranked.indexOf(entry) + 1 : 0, ofSpecies: ranked.length, appraised: !!(entry && entry.ivs),
-    luckySibling: ranked.some(e => e !== entry && e.lucky), dynamax, shadow, shiny,
+    luckySibling: ranked.some(e => e !== entry && e.lucky), dynamax, shadow, shiny, shinyMaybe,
     poolLabel: pool.perSpecies ? pokemon.name.toUpperCase() : `${pool.key.toUpperCase()} FAMILY`,
     pvpLane, rankPvp: entry && pvpLane ? rankedPvp.indexOf(entry) + 1 : 0,
     poolIsFamily: !pool.perSpecies,
@@ -2009,7 +2046,7 @@ function renderLogModal() {
     <tr style="border-top:1px solid var(--border);">
       <td style="padding:6px 4px;"><span style="color:#94a3b8;">#${rankOf.get(e.id)}${rankPvpOf.has(e.id) ? ' · P#' + rankPvpOf.get(e.id) : ''}</span> <b>${esc(e.species)}</b>${e.favorite ? ' <span style="color:#fbbf24;">favorite</span>' : ''}${e.lucky ? ' <span style="color:#fbbf24;">lucky</span>' : ''}${e.hasMega ? ' <span style="color:#c084fc;">mega</span>' : ''}${e.dynamax ? ' <span style="color:#ec4899;">dynamax</span>' : ''}${e.gone ? ' <span style="color:#f87171;">gone</span>' : ''}${e.missing ? ' <span style="color:#f59e0b;">not seen in last sweep</span>' : ''}${e.wasSpecies ? ' <span style="color:#94a3b8;">was ' + esc(e.wasSpecies) + '</span>' : ''}${e.formUnsure ? ' <span style="color:#94a3b8;">form unsure</span>' : ''}<br>
         <span style="color:var(--text-muted);">${e.weight ? e.weight + 'kg · ' + e.height + 'm' : 'size not read'}${e.date ? ' · caught ' + esc(e.date) : ''}${e.where ? ' · ' + esc(e.where) : ''}</span><br>
-        <label style="color:var(--text-muted); cursor:pointer;"><input type="checkbox" ${e.shiny ? 'checked' : ''} onchange="setLogMark('${e.id}','shiny',this.checked)"> shiny${e.shinyPass ? ' <span style="color:#34d399;" title="read during a shiny pass (the game’s own shiny search)">(shiny pass)</span>' : e.shinyAuto ? ` <span style="color:#34d399;" title="marked from the model's colours${e.colorEvidence ? `: shiny hues ${e.colorEvidence.s}%, normal hues ${e.colorEvidence.n}%` : ''}">(by colour)</span>` : ''}${shinyTell(POKEMON_DATA.find(x => x.name === e.species)) === 'none' ? ' <span style="color:#94a3b8;" title="no shiny of this species has been released in Pokémon GO (Serebii list)">(no shiny released yet)</span>' : ''}</label>
+        <label style="color:var(--text-muted); cursor:pointer;"><input type="checkbox" ${e.shiny ? 'checked' : ''} onchange="setLogMark('${e.id}','shiny',this.checked)"> shiny${e.shiny && e.shinySource === 'pass' ? ' <span style="color:#34d399;" title="read during a shiny pass (the game’s own shiny search)">(shiny pass)</span>' : e.shiny && e.shinySource === 'sparkle' ? ` <span style="color:#34d399;" title="the game’s sparkle burst over the model${e.sparkle ? ` (burst ${e.sparkle.burst})` : ''}">(sparkle)</span>` : e.shiny && (e.shinySource === 'hue' || e.shinyAuto) ? ` <span style="color:#34d399;" title="marked from the model's colours${e.colorEvidence ? `: shiny hues ${e.colorEvidence.s}%, normal hues ${e.colorEvidence.n}%` : ''}">(by colour)</span>` : ''}${!e.shiny && e.shinyMaybe ? ` <span style="color:#fbbf24;" title="one sign said shiny, another said normal: tick it if it is">(shiny? ${e.shinyMaybe === 'sparkle' ? 'sparkles seen' : 'colour'}, confirm)</span>` : ''}${shinyTell(POKEMON_DATA.find(x => x.name === e.species)) === 'none' ? ' <span style="color:#94a3b8;" title="no shiny of this species has been released in Pokémon GO (Serebii list)">(no shiny released yet)</span>' : ''}</label>
         <label style="color:var(--text-muted); cursor:pointer; margin-left:8px;"><input type="checkbox" ${e.shadow ? 'checked' : ''} onchange="setLogMark('${e.id}','shadow',this.checked)"> shadow</label></td>
       <td style="padding:6px 4px; text-align:right;">${e.cp || '-'} CP<br><span style="color:${entryStanding(e).color}; font-weight:800; white-space:nowrap;">${esc(entryStanding(e).text)}</span></td>
       <td style="padding:6px 4px; text-align:right;">${e.ivs ? `<b style="color:${ivPercent(e.ivs) === 100 ? '#34d399' : '#e2e8f0'};">${e.ivs.join('/')}</b><br>${ivPercent(e.ivs)}%` : esc(e.ivGuess || 'not appraised')}</td>
@@ -2020,7 +2057,7 @@ function renderLogModal() {
     : '<div style="color:var(--text-muted); font-size:12px;">Nothing logged yet. Scan a Pokémon in your storage and it appears here.</div>';
   document.getElementById('logCount').innerText = `${pokeLog.length} logged`;
   const undo = document.getElementById('clearColourShinyBtn');
-  if (undo) undo.style.display = pokeLog.some(e => e.shinyAuto) ? 'inline-block' : 'none';
+  if (undo) undo.style.display = pokeLog.some(e => e.shiny && (e.shinySource === 'hue' || e.shinySource === 'sparkle' || e.shinyAuto)) ? 'inline-block' : 'none';
   const on = shinyPassOn();
   const st = document.getElementById('shinyPassStart'), en = document.getElementById('shinyPassEnd'), ps = document.getElementById('shinyPassStatus');
   if (st) st.style.display = on ? 'none' : 'block';
@@ -2032,15 +2069,15 @@ function setLogMark(id, mark, on) {
   const e = pokeLog.find(x => x.id === id);
   if (!e) return;
   e[mark] = !!on;
-  if (mark === 'shiny') { e.shinyUser = true; e.shinyAuto = false; }   // the player's word is final; colour never changes it again
+  if (mark === 'shiny') { e.shinyUser = true; e.shinyAuto = false; e.shinyMaybe = false; e.shinySource = on ? 'user' : null; }   // the player's word is final
   savePokeLog();
 }
-// Undo every shiny mark that came from colour alone (a phone whose screen fooled the detector).
+// Undo every automatic shiny mark (hue or sparkle); pass marks and hand ticks stay.
 function clearColourShinyMarks() {
   let n = 0;
-  for (const e of pokeLog) if (e.shinyAuto) { e.shiny = false; e.shinyAuto = false; n++; }
+  for (const e of pokeLog) if (e.shiny && (e.shinySource === 'hue' || e.shinySource === 'sparkle' || (e.shinyAuto && !e.shinySource))) { e.shiny = false; e.shinyAuto = false; e.shinySource = null; n++; }
   savePokeLog(); renderLogModal();
-  alert(n ? `${n} colour-based shiny mark${n === 1 ? '' : 's'} cleared. Shinies you tick by hand stay.` : 'No colour-based shiny marks to clear.');
+  alert(n ? `${n} automatic shiny mark${n === 1 ? '' : 's'} cleared. Shiny-pass reads and shinies you tick by hand stay.` : 'No automatic shiny marks to clear.');
 }
 
 function markLogEntryGone(id) {
@@ -2231,7 +2268,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.47';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.48';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -3122,6 +3159,7 @@ function pushNativePill() {
   const slot = (caption, id) => [caption, txt(id), document.getElementById(id)?.style.color || ''];
   const slots = [slot(captions[0], 'hudBerryLabel')];
   if (shinyPassOn() && evaluationMode === 'storage') slots.push(['PASS', 'SHINY PASS ON · EVERY READ = SHINY', '#34d399']);
+  else if (evaluationMode === 'storage' && scanContext && scanContext.shinyMaybe) slots.push(['SHINY?', `${scanContext.shinyMaybe === 'sparkle' ? 'SPARKLES SEEN' : 'SHINY COLOURS'} · TICK SHINY IN MY LOG IF SO`, '#fbbf24']);
   if (hudBall) slots.push(['BALL', hudBall.text, hudBall.color]);
   slots.push(slot(captions[1], 'hudCatchLabel'));
   const reasonSlot = slot(captions[2], 'hudActionLabel');
@@ -3483,8 +3521,12 @@ function applyScanResult(result, isSilent = false) {
       if (result.details) result.details.formUnsure = ambiguous === 'form';
       if (result.details && result.shadowHaze && !result.details.notShadow) result.details.shadow = true;
       if (result.details && result.luckyHaze && !result.details.purifiedLabel) result.details.lucky = true;
-      if (result.details && result.colors) { result.details.shinyByColor = shinyFromColors(pokemon, result.colors); result.details.colorEvidence = shinyColorEvidence(pokemon, result.colors); }
-      if (result.details && shinyPassOn()) result.details.shinyPass = true;   // the game's own "shiny" search is on screen: every read is a shiny
+      if (result.details) {
+        const hue = result.colors ? shinyFromColors(pokemon, result.colors) : null;
+        result.details.colorEvidence = result.colors ? shinyColorEvidence(pokemon, result.colors) : null;
+        result.details.sparkle = result.sparkle || null;
+        result.details.shinyDecision = shinyDecision({ pass: shinyPassOn(), released: !!pokemon.sh, sparkle: sparkleSeen(result.sparkle), hue });
+      }
       if (result.details) result.details.dynamax = !!result.dynamax;
       scanContext = buildScanContext(pokemon, cp, result.details, result.favorite, cp ? evaluateCpMatch(pokemon, cp) : null, result.ivs, !!result.auto);
     }
@@ -3592,7 +3634,8 @@ window.assessNativeOcr = async function (payload) {
     if (payload && payload.storage) noteScanOutcome(res.mode === 'storage' && !!res.pokemon && !!res.cp);
     const out = applyScanResult({ ...res, favorite: !!payload.favorite, ivs: Array.isArray(payload.ivs) ? payload.ivs : null,
       auto: !!payload.auto, shadowHaze: !!payload.shadow, luckyHaze: !!payload.lucky, dynamax: !!payload.dynamax,
-      colors: Array.isArray(payload.colors) ? payload.colors : null }, true);
+      colors: Array.isArray(payload.colors) ? payload.colors : null,
+      sparkle: payload.sparkle && typeof payload.sparkle === 'object' ? payload.sparkle : null }, true);
     lastScanDebug += `\n=> ${out.mode} ${out.pokemon ? out.pokemon.name : '(no species)'} cp=${out.cp}`;
   } catch (err) {
     console.error('Native scan assessment error:', err);
