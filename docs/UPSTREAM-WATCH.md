@@ -76,6 +76,7 @@ These are not in any feed; when the game changes them, edit the constant and run
 | Ball thresholds (`POKE_BALL_MIN`, `GREAT_BALL_MIN`), ring colour bands | `index.html` | catch-ring colour research |
 | Shadow bonus (+20% / x1.2 cost), purified +2 IV, floors | `index.html` | game rules |
 | Elite / event move markers | generator output | game master `eliteQuickMove` / `eliteCinematicMove` / `nonTmCinematicMoves` |
+| Shinies released (`sh`) | `tools/shiny_released.json` → `tools/build_shiny.py` | Serebii's shiny list, snapshot by hand when a shiny debuts (Community Day / Raid Day notices are the cue) |
 
 ## 4. Screen layout (on the phone, automatic)
 
