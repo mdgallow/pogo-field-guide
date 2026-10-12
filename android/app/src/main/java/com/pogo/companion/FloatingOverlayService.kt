@@ -214,6 +214,9 @@ class FloatingOverlayService : Service() {
         private const val AUTO_MAX_MS = 10 * 60_000L
         private const val AUTO_CHANGED_MIN = 5 // fingerprint points that must flip to count as a change (white panels: no noise)
         private const val AUTO_BIG_CHANGE = 60 // a real swipe flips far more than any stray animation
+        private const val SPARKLE_GAP_MS = 150L
+        private const val SPARKLE_WINDOW_MS = 3500L
+        private const val SPARKLE_SPIKE = 40        // grid points (of ~10k) that must light up over the baseline
         private const val SIG_SIZE_NAME = 4 * 24
         private const val SIG_SIZE = SIG_SIZE_NAME + 3 * 24 + 4 * 30 + 31 * 24 + 8 * 40
 
@@ -522,6 +525,7 @@ class FloatingOverlayService : Service() {
         var image: Image? = null
         try {
             image = reader.acquireLatestImage() ?: return
+            watchSparkle(image)
             if (scanRequested.compareAndSet(true, false)) {
                 mainHandler.removeCallbacks(scanTimeout)
                 val frame = imageToBitmap(image)
@@ -536,6 +540,60 @@ class FloatingOverlayService : Service() {
         } finally {
             image?.close()
         }
+    }
+
+    // ---------------------------------------------------------------- shiny sparkle watch
+    /**
+     * The game's own shiny tell on the detail page: a burst of bright white star sparkles over
+     * the model when the Pokémon appears (and now and then after). One frame cannot catch it,
+     * so every mirrored frame (at most one per SPARKLE_GAP_MS) counts the near-white pixels on a
+     * coarse grid over the model area, and a read reports the last few seconds: the quiet
+     * baseline (a white Pokémon, snow) against the peak. A short, single spike well above the
+     * baseline is a sparkle burst; snow or a rotating white model moves the count all the time
+     * and shows as many small spikes, which the page discounts.
+     */
+    private val sparkleHistory = ArrayDeque<LongArray>()   // [time, count]
+    @Volatile private var sparkleLastAt = 0L
+
+    private fun watchSparkle(image: Image) {
+        val now = System.currentTimeMillis()
+        if (now - sparkleLastAt < SPARKLE_GAP_MS) return
+        sparkleLastAt = now
+        val plane = image.planes[0]
+        val buf = plane.buffer
+        val ps = plane.pixelStride; val rs = plane.rowStride
+        val w = image.width; val h = image.height
+        var n = 0
+        var y = (h * 0.09).toInt()
+        val y1 = (h * 0.37).toInt(); val x0 = (w * 0.22).toInt(); val x1 = (w * 0.78).toInt()
+        while (y < y1) {
+            var x = x0
+            while (x < x1) {
+                if (!underPill(x, y, w)) {
+                    val o = y * rs + x * ps
+                    if ((buf.get(o).toInt() and 0xFF) >= 232 && (buf.get(o + 1).toInt() and 0xFF) >= 232 && (buf.get(o + 2).toInt() and 0xFF) >= 232) n++
+                }
+                x += 6
+            }
+            y += 6
+        }
+        synchronized(sparkleHistory) {
+            sparkleHistory.addLast(longArrayOf(now, n.toLong()))
+            while (sparkleHistory.isNotEmpty() && now - sparkleHistory.first()[0] > SPARKLE_WINDOW_MS) sparkleHistory.removeFirst()
+        }
+    }
+
+    /** The last SPARKLE_WINDOW_MS of the sparkle watch, summarised for the page. */
+    private fun sparkleSummary(): JSONObject? {
+        val pts = synchronized(sparkleHistory) { sparkleHistory.map { it[1].toInt() } }
+        if (pts.size < 4) return null
+        val sorted = pts.sorted()
+        val base = sorted[(sorted.size * 0.2).toInt()]
+        val peak = sorted.last()
+        var spikes = 0
+        for (i in 1 until pts.size - 1) if (pts[i] > base + SPARKLE_SPIKE && pts[i] >= pts[i - 1] && pts[i] > pts[i + 1]) spikes++
+        if (pts.last() > base + SPARKLE_SPIKE && pts.last() > pts[pts.size - 2]) spikes++
+        return JSONObject().put("base", base).put("peak", peak).put("burst", peak - base).put("spikes", spikes).put("n", pts.size)
     }
 
     // ---------------------------------------------------------------- AUTO mode
@@ -815,10 +873,11 @@ class FloatingOverlayService : Service() {
         val isShadow = isStorage && shadowClear && looksShadow(bitmap)
         val isLucky = isStorage && looksLucky(bitmap)
         val colors = if (isStorage) modelColors(bitmap) else null
+        val sparkle = if (isStorage) sparkleSummary() else null
         val isDynamax = isStorage && dynamaxClear && looksDynamax(bitmap)
         val ivs = if (isStorage && appraisalClear) readIvBars(bitmap) else null
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked, isLucky, colors) }
+            .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked, isLucky, colors, sparkle) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
                 showStandby()
@@ -1102,7 +1161,7 @@ class FloatingOverlayService : Service() {
         return n > 0 && m.toFloat() / n >= 0.30f
     }
 
-    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false, blocked: List<String> = emptyList(), isLucky: Boolean = false, colors: JSONArray? = null) {
+    private fun evaluate(text: Text, width: Int, height: Int, isStorage: Boolean, isFavorite: Boolean, ivs: IntArray?, auto: Boolean = false, isShadow: Boolean = false, isDynamax: Boolean = false, blocked: List<String> = emptyList(), isLucky: Boolean = false, colors: JSONArray? = null, sparkle: JSONObject? = null) {
         val lines = JSONArray()
         val plainText = StringBuilder()
         // AUTO reads keep the pill on screen: skip any text inside it (scaled to capture pixels).
@@ -1136,7 +1195,7 @@ class FloatingOverlayService : Service() {
                 JSONObject().put("storage", isStorage).put("favorite", isFavorite).put("lines", lines)
                     .put("ivs", ivs?.let { JSONArray(it.toList()) } ?: JSONObject.NULL).put("auto", auto)
                     .put("shadow", isShadow).put("dynamax", isDynamax).put("lucky", isLucky).put("blocked", JSONArray(blocked))
-                    .put("colors", colors ?: JSONObject.NULL).toString()
+                    .put("colors", colors ?: JSONObject.NULL).put("sparkle", sparkle ?: JSONObject.NULL).toString()
             )
             return
         }
