@@ -218,18 +218,33 @@ test('shadow: no raid use -> purify when the +2 makes a 44, otherwise keep one',
 });
 
 // ---------------------------------------------------------------- shiny by colour
-test('shiny by colour: a black Charizard is marked shiny, an orange one is not, Gengar cannot be told', async t => {
+test('shiny by colour: hue evidence only; night lighting cannot fake a shiny; colour marks are reversible', async t => {
   const run = code => require('vm').runInContext(code, t.ctx);
-  const pal = JSON.parse(run(`JSON.stringify(POKEMON_DATA.find(x => x.name === 'Charizard').pal)`));
-  check(pal && pal.d >= 22, `Charizard palettes differ (${pal && pal.d})`);
-  const shinyColors = pal.s.map(c => [c[0], c[1], c[2], c[3]]);
-  const normalColors = pal.n.map(c => [c[0], c[1], c[2], c[3]]);
-  await t.app.scan({ ...card({ cp: 2200, name: 'Charizard', kg: 90, m: 1.7, types: 'FIRE / FLYING', ivs: [10, 10, 10] }), colors: shinyColors });
-  eq(t.app.log()[0].shiny, true, 'marked shiny from colour'); has(slot(t.last(), 'REASON'), 'SHINY', 'verdict from the shiny branch');
+  const cz = (extra) => ({ ...card({ cp: 2200, name: 'Charizard', kg: 90, m: 1.7, types: 'FIRE / FLYING', ivs: [10, 10, 10] }), ...extra });
+  // What the phone sees of a shiny Charizard: the black body is too dull to count, so cream and red wings.
+  await t.app.scan(cz({ colors: [[40, 53, 91, 70], [1, 75, 37, 30]] }));
+  eq(t.app.log()[0].shiny, true, 'red wings mark it shiny'); has(slot(t.last(), 'REASON'), 'SHINY', 'verdict from the shiny branch');
+  eq(t.app.log()[0].shinyAuto, true, 'noted as a colour mark');
+  // The same Pokémon read again in plain daylight orange: the colour mark is undone.
+  await t.app.scan(cz({ colors: [[31, 71, 91, 80], [186, 86, 48, 10]] }));
+  check(!t.app.log()[0].shiny && !t.app.log()[0].shinyAuto, 'a clearly normal read undoes a colour mark');
   const u = loadApp();
-  await u.app.scan({ ...card({ cp: 2200, name: 'Charizard', kg: 90, m: 1.7, types: 'FIRE / FLYING', ivs: [10, 10, 10] }), colors: normalColors });
-  check(!u.app.log()[0].shiny, 'normal colours do not mark shiny');
-  eq(run(`shinyFromColors(POKEMON_DATA.find(x => x.name === 'Gengar'), POKEMON_DATA.find(x => x.name === 'Gengar').pal.s)`), null, 'Gengar: palettes too close to tell');
+  await u.app.scan(cz({ colors: [[31, 71, 91, 74], [40, 39, 87, 18]] }));
+  check(!u.app.log()[0].shiny, 'orange daylight Charizard is not shiny');
+  // The tester's case: a normal Charizard rendered dark and dull (night scene / dim screen).
+  await u.app.scan(cz({ colors: [[35, 25, 45, 80], [30, 40, 60, 15]] }));
+  check(!u.app.log()[0].shiny, 'a dark, dull orange is never a shiny (brightness is not evidence)');
+  eq(run(`shinyFromColors(POKEMON_DATA.find(x => x.name === 'Charizard'), [[35, 25, 45, 80]])`), null, 'without a shiny-only hue the colour says nothing');
+  // A hand-set mark is never changed by colour.
+  const v = loadApp();
+  await v.app.scan(cz({}));
+  require('vm').runInContext(`setLogMark(pokeLog[0].id, 'shiny', true)`, v.ctx);
+  await v.app.scan(cz({ colors: [[31, 71, 91, 80]] }));
+  eq(v.app.log()[0].shiny, true, 'the player ticked shiny: colour leaves it alone');
+  eq(run(`shinyFromColors(POKEMON_DATA.find(x => x.name === 'Gengar'), POKEMON_DATA.find(x => x.name === 'Gengar').pal.s)`), null, 'Gengar: shiny differs only in shade, cannot be told');
+  eq(run(`shinyFromColors(POKEMON_DATA.find(x => x.name === 'Pikachu'), POKEMON_DATA.find(x => x.name === 'Pikachu').pal.s)`), null, 'Pikachu: shiny is a slightly deeper yellow, cannot be told');
+  eq(run(`shinyFromColors(POKEMON_DATA.find(x => x.name === 'Turtwig'), [[159, 44, 76, 60], [67, 70, 69, 20]])`), true, 'teal Turtwig is shiny');
+  eq(run(`shinyFromColors(POKEMON_DATA.find(x => x.name === 'Turtwig'), [[81, 20, 40, 70], [52, 30, 36, 20]])`), false, 'a dark green Turtwig at night is normal');
 });
 
 // ---------------------------------------------------------------- shinies

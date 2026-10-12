@@ -109,6 +109,7 @@ class FloatingOverlayService : Service() {
     private var autoBlinkAt = 0L
     private var autoNudge = false
     private var autoStillCount = 0
+    private var autoFaintAt = 0L
     /** An AUTO read is being evaluated; its result gets the "logged" buzz. */
     @Volatile private var autoAwaitingResult = false
     private var autoReads = 0
@@ -117,13 +118,13 @@ class FloatingOverlayService : Service() {
     private var autoStartedAt = 0L
     /** A manual SCAN interrupted AUTO; AUTO restarts fresh when that scan has rendered. */
     private var autoResumeAfterScan = false
-    private val autoTrail = ArrayDeque<String>()   // last ~40 AUTO events, shown in My Log
+    private val autoTrail = ArrayDeque<String>()   // last ~80 AUTO events, shown in My Log
     private val autoTick = object : Runnable {
         override fun run() {
             if (!autoMode) return
             val now = System.currentTimeMillis()
             if (now - autoStartedAt > AUTO_MAX_MS) { stopAuto("10 min: off", "AUTO OFF: 10 MIN LIMIT", "TAP AUTO TO CONTINUE"); return }
-            if (now - autoLastActiveAt > AUTO_IDLE_STOP_MS) { stopAuto("idle 30s: off", "AUTO OFF: NOTHING NEW FOR 30 S", "TAP AUTO TO CONTINUE"); return }
+            if (now - autoLastActiveAt > AUTO_IDLE_STOP_MS) { stopAuto("idle 30s: off (${autoReads} read)", "AUTO OFF: NOTHING NEW FOR 30 S", if (autoReads > 0) "SWIPED BUT NOT SEEN? SHARE DIAGNOSTICS" else "TAP AUTO TO CONTINUE"); return }
             if (autoOffPageSince != 0L && now - autoOffPageSince > AUTO_OFF_PAGE_MS) { stopAuto("left storage page: off", "AUTO OFF: LEFT THE STORAGE PAGE", "TAP AUTO TO CONTINUE"); return }
             if (autoReadPending && now - autoBlinkAt > AUTO_READ_TIMEOUT_MS) {
                 // The clean frame never came (a completely still screen sends none): retry.
@@ -213,7 +214,8 @@ class FloatingOverlayService : Service() {
         private const val AUTO_MAX_MS = 10 * 60_000L
         private const val AUTO_CHANGED_MIN = 5 // fingerprint points that must flip to count as a change (white panels: no noise)
         private const val AUTO_BIG_CHANGE = 60 // a real swipe flips far more than any stray animation
-        private const val SIG_SIZE = 3 * 24 + 4 * 30 + 31 * 24 + 8 * 40
+        private const val SIG_SIZE_NAME = 4 * 24
+        private const val SIG_SIZE = SIG_SIZE_NAME + 3 * 24 + 4 * 30 + 31 * 24 + 8 * 40
 
         @Volatile var isRunning = false
             private set
@@ -580,7 +582,7 @@ class FloatingOverlayService : Service() {
     private fun trail(msg: String) {
         synchronized(autoTrail) {
             autoTrail.addLast("${java.text.SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.US).format(java.util.Date())} $msg")
-            while (autoTrail.size > 40) autoTrail.removeFirst()
+            while (autoTrail.size > 80) autoTrail.removeFirst()
         }
         OverlayBus.autoTrail = synchronized(autoTrail) { autoTrail.joinToString("\n") }
     }
@@ -621,7 +623,8 @@ class FloatingOverlayService : Service() {
             val b = buf.get(o + 2).toInt() and 0xFF
             sig[i++] = (r * 3 + g * 6 + b) / 10
         }
-        // HP line ("113 / 113 HP"), centred under the name.
+        // Name, centred at the top of the card, and the HP line ("113 / 113 HP") under it.
+        for (fy in doubleArrayOf(0.436, 0.441, 0.446, 0.451)) for (gx in 0 until 24) sample(0.32 + 0.015 * gx, fy)
         for (fy in doubleArrayOf(0.468, 0.4725, 0.477)) for (gx in 0 until 24) sample(0.38 + 0.01 * gx, fy)
         // Weight number, left of the type icons.
         for (fy in doubleArrayOf(0.538, 0.545, 0.552, 0.559)) for (gx in 0 until 30) sample(0.085 + 0.007 * gx, fy)
@@ -690,6 +693,7 @@ class FloatingOverlayService : Service() {
         if (diff < AUTO_CHANGED_MIN) {              // still (or back on) the card already read
             autoUnsettledSince = 0L
             autoForced = false
+            if (diff > 0 && now - autoFaintAt > 3000) { autoFaintAt = now; trail("faint ($diff of ${sig.size})") }
             return
         }
 
