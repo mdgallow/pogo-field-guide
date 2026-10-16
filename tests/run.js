@@ -558,6 +558,20 @@ test('diagnostics file: log without catch places, plus trail and last scan; off 
   eq(require('vm').runInContext('Native.testSharing', t.ctx), false, 'the stub shell does not offer sharing');
 });
 
+test('report: the pill\'s ! files a replayable report (version, scan text, verdict, entry without place); misreads file themselves', async t => {
+  await t.app.scan(card({ cp: 3000, name: 'Charizard', kg: 90.5, m: 1.7, types: 'FIRE / FLYING', ivs: [15, 15, 15], place: 'Rosemount' }));
+  t.app.action('report');
+  eq(t.reports.length, 1, 'one report filed'); eq(t.reports[0].kind, 'report', 'kind');
+  const text = t.reports[0].text;
+  for (const must of ['app: ', 'species: Charizard', 'cp: 3000', 'verdict: KEEP', 'CP3000', '--- payload ---', '"ivs":[15,15,15]']) has(text, must, `report carries ${must}`);
+  check(text.indexOf('Rosemount') < 0, 'no catch place in the report');
+  check(t.net.length === 0, 'nothing on the network');
+  // A storage card with no readable Pokémon files a misread on its own (throttled).
+  await t.app.scan({ storage: true, lines: [line('Attack', 0.12, 0.74, 0.1, 0.02)] });
+  await new Promise(r => setImmediate(r));
+  check(t.reports.some(r => r.kind === 'misread'), 'misread filed on its own');
+});
+
 // ---------------------------------------------------------------- search builder
 test('search builder: OR inside a group, AND between groups, ! to exclude', async t => {
   const build = (state, extra) => require('vm').runInContext(`buildSearch(${JSON.stringify(state)}, ${JSON.stringify(extra || {})})`, t.ctx);

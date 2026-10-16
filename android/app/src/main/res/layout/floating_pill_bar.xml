@@ -140,6 +140,42 @@
             android:layout_marginStart="4dp"
             android:clickable="true"
             android:focusable="true" />
+        <TextView
+            android:id="@+id/pillReportBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="!"
+            android:textColor="@color/amber_gold"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/expand_btn_bg"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/pillStyleBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⇅"
+            android:textColor="@color/slate_text"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/expand_btn_bg"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:paddingStart="7dp"
+            android:paddingEnd="7dp"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:focusable="true" />
+
     </LinearLayout>
 
     <!-- Answers side by side (caption over value), added from pill_slot.xml at runtime -->

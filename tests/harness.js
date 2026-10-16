@@ -45,6 +45,7 @@ function loadApp({ storage = {} } = {}) {
   const byId = id => { if (!els.has(id)) els.set(id, element(id)); return els.get(id); };
   const pill = [];   // every state the page hands to the native pill, newest last
   const net = [];    // every network request the page attempts
+  const reports = []; // every report the page files with the shell
   const store = { ...storage };
   const localStorage = {
     getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); },
@@ -62,6 +63,7 @@ function loadApp({ storage = {} } = {}) {
   const window = {
     AndroidBridge: {
       minimizeToPill() {}, autoTrail: () => '', checkForUpdate() {},
+      saveReport: (kind, text) => { reports.push({ kind, text }); return 'r' + reports.length; }, listReports: () => '[]', shareReport() {}, deleteReport() {},
       updatePill: (m, t, s) => record(m, t, s), updatePillEx: (m, t, s, a) => record(m, t, s, a),
     },
     addEventListener() {}, scrollTo() {}, scrollY: 0, innerWidth: 400, innerHeight: 800,
@@ -79,7 +81,7 @@ function loadApp({ storage = {} } = {}) {
   // Expose top-level let/const state the tests need to reach.
   vm.runInContext(script + '\n;globalThis.__app = { scan: p => window.assessNativeOcr(p), action: a => window.pillAction(a),' +
     ' foreground: () => window.appForegrounded(), log: () => pokeLog, mode: () => evaluationMode };', ctx, { filename: 'index.html' });
-  return { app: ctx.__app, pill, net, last: () => pill[pill.length - 1], store, ctx };
+  return { app: ctx.__app, pill, net, reports, last: () => pill[pill.length - 1], store, ctx };
 }
 
 module.exports = { loadApp };

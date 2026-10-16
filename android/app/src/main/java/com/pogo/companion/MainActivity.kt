@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, getString(if (bar) R.string.pill_style_side_hint else R.string.pill_style_bar_hint), Toast.LENGTH_SHORT).show()
         }
 
+        if (BuildConfig.TEST_SHARING) OverlayBus.saveReport = { kind, text -> saveReportFiles(kind, text) }
         setupWebView()
         OverlayBus.ocrEvaluator = { payloadJson ->
             webView.evaluateJavascript("window.assessNativeOcr && window.assessNativeOcr($payloadJson);", null)
@@ -251,6 +252,54 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // ---- Test builds only: the reports folder (app-private files/reports). Each report is a text
+        // file (what the page knew: version, scan text, verdict, note) plus the JPEG frame the scanner
+        // saw. Nothing leaves the phone unless the tester shares one from My Log.
+        private fun reportsDir() = java.io.File(filesDir, "reports").apply { mkdirs() }
+
+        @JavascriptInterface
+        fun saveReport(kind: String, text: String): String = saveReportFiles(kind, text)
+
+        @JavascriptInterface
+        fun listReports(): String {
+            if (!BuildConfig.TEST_SHARING) return "[]"
+            val arr = JSONArray()
+            reportsDir().listFiles { f -> f.name.endsWith(".txt") }?.sortedByDescending { it.name }?.forEach { f ->
+                val id = f.name.removeSuffix(".txt")
+                val head = try { f.readText().lineSequence().take(3).joinToString(" · ") } catch (_: Exception) { "" }
+                arr.put(JSONObject().put("id", id).put("kind", id.substringAfter('-', "")).put("at", id.substringBefore('-').toLongOrNull() ?: 0L)
+                    .put("hasImage", java.io.File(reportsDir(), "$id.jpg").exists()).put("head", head.take(160)))
+            }
+            return arr.toString()
+        }
+
+        @JavascriptInterface
+        fun shareReport(id: String) {
+            if (!BuildConfig.TEST_SHARING) return
+            try {
+                val txt = java.io.File(reportsDir(), "$id.txt")
+                val jpg = java.io.File(reportsDir(), "$id.jpg")
+                val uris = arrayListOf(androidx.core.content.FileProvider.getUriForFile(this@MainActivity, "$packageName.fileprovider", txt))
+                if (jpg.exists()) uris.add(androidx.core.content.FileProvider.getUriForFile(this@MainActivity, "$packageName.fileprovider", jpg))
+                val send = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                    type = "*/*"
+                    putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+                    putExtra(Intent.EXTRA_SUBJECT, "PoGo Companion report $id (${BuildConfig.VERSION_NAME})")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                runOnUiThread { startActivity(Intent.createChooser(send, "Share report")) }
+            } catch (e: Exception) {
+                runOnUiThread { Toast.makeText(this@MainActivity, "Could not share: ${e.message}", Toast.LENGTH_LONG).show() }
+            }
+        }
+
+        @JavascriptInterface
+        fun deleteReport(id: String) {
+            if (!BuildConfig.TEST_SHARING) return
+            if (id == "*") reportsDir().listFiles()?.forEach { it.delete() }
+            else { java.io.File(reportsDir(), "$id.txt").delete(); java.io.File(reportsDir(), "$id.jpg").delete() }
+        }
+
         /** Search builder: puts a search string on the clipboard for the player to paste into the game. */
         @JavascriptInterface
         fun copyText(text: String) {
@@ -290,6 +339,24 @@ class MainActivity : AppCompatActivity() {
             val acts = JSONArray(actionsJson)
             val actions = (0 until acts.length()).map { acts.optString(it) }
             runOnUiThread { OverlayBus.pillUpdater?.invoke(PillState(mode, target, slots, actions)) }
+        }
+    }
+
+    /** Writes one report (text + the last frame) into files/reports; keeps the newest 80. Test builds only. */
+    private fun saveReportFiles(kind: String, text: String): String {
+        if (!BuildConfig.TEST_SHARING) return ""
+        return try {
+            val dir = java.io.File(filesDir, "reports").apply { mkdirs() }
+            val id = "${System.currentTimeMillis()}-${kind.replace(Regex("[^a-z]"), "")}"
+            java.io.File(dir, "$id.txt").writeText("PoGo Companion ${BuildConfig.VERSION_NAME} · $kind · ${java.util.Date()}\n$text")
+            val jpg = OverlayBus.lastFrameJpeg
+            if (jpg != null && System.currentTimeMillis() - OverlayBus.lastFrameAt < 10 * 60_000L) java.io.File(dir, "$id.jpg").writeBytes(jpg)
+            val txts = dir.listFiles { f -> f.name.endsWith(".txt") }?.sortedBy { it.name } ?: emptyList()
+            for (old in txts.dropLast(80)) { old.delete(); java.io.File(dir, old.name.removeSuffix(".txt") + ".jpg").delete() }
+            runOnUiThread { Toast.makeText(this, if (kind == "report") "Report saved · share it from My Log" else "Logged: $kind (My Log → Reports)", Toast.LENGTH_SHORT).show() }
+            id
+        } catch (e: Exception) {
+            ""
         }
     }
 

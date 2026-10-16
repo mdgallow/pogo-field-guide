@@ -659,6 +659,18 @@
       </div>
       <div id="testShareStatus" style="font-size:11px; color:#94a3b8; min-height:14px; margin-top:4px;"></div>
     </div>
+    <!-- TEST BUILDS ONLY: the reports folder. -->
+    <div id="reportsBox" style="display:none; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.4); border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:800; color:#fbbf24;">Reports (kept on this phone)</div>
+        <div style="display:flex; gap:6px;">
+          <button onclick="reportLastResult()" style="background:#fbbf24; color:#0f172a; border:none; border-radius:8px; padding:5px 9px; font-weight:800; font-size:11px; cursor:pointer;">Report last result</button>
+          <button onclick="if (confirm('Delete every report on this phone?')) { Native.deleteReport('*'); renderReports(); }" style="background:none; border:1px solid #f87171; color:#f87171; border-radius:8px; padding:5px 9px; font-weight:800; font-size:11px; cursor:pointer;">Delete all</button>
+        </div>
+      </div>
+      <div style="color:var(--text-muted); font-size:11px; margin:4px 0 6px;">Tap <b style="color:#e2e8f0;">!</b> on the pill the moment a result looks wrong: the app files what it read, the verdict and the screen it saw into a private folder inside the app. Errors and misreads are filed on their own. Share one when you can; nothing is sent otherwise. Removed before the public release.</div>
+      <div id="reportsList"></div>
+    </div>
     <div id="logSpecies"></div>
     <div id="logBody" style="max-height:40vh; overflow-y:auto;"></div>
     <div id="scanHealthNotice" style="display:none; background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.5); border-radius:8px; padding:8px 10px; margin:8px 0; font-size:12px; color:#fbbf24;"></div>
@@ -743,7 +755,7 @@
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #ec4899;">
           <b>2. Tap SCAN, or turn on AUTO.</b> SCAN reads the screen once, on your phone (nothing is sent anywhere), and says what it saw: <b>CATCH</b>, <b>STORAGE</b> or <b>STANDBY</b>, then the Pokémon and its CP. <b>AUTO</b> watches while you swipe through your storage with the appraisal open: it reads each new card once it has settled, buzzes briefly to say “logged, swipe on”, and switches itself off after 30 seconds without a change, when you leave the storage page, or after 10 minutes. A manual SCAN always wins and restarts AUTO afresh.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #fbbf24;">
-          <b>3. On a wild or raid Pokémon</b> it answers four things. <b>BERRY</b>: Pinap only when the catch can afford it. <b>BALL</b>: by the colour the catch ring should be, Poké Ball while it is green to yellow, Great Ball on orange, Ultra Ball on deep orange or red (it names the ring it expects, so a mismatch is easy to spot; with no CP read it says to follow the ring). <b>IV CHECK</b>: counted from every IV combination that gives this CP, so it says <b>100% POSSIBLE · 1 IN 149</b> rather than “maybe”, <b>PERFECT 100%</b> only when nothing else fits (raid bosses), otherwise <b>NOT PERFECT</b>. <b>AFTER CATCH</b>: keep, trade, evolve or transfer. A raid boss gets exactly two Master Ball answers: <b>PERFECT! USE MASTER BALL</b> or <b>SAVE MASTER BALL</b>.</div>
+          <b>3. On a wild or raid Pokémon</b> it answers four things. <b>BERRY</b>: Pinap only when the catch can afford it. <b>BALL</b>: by the colour the catch ring should be, Poké Ball while it is green to yellow, Great Ball on orange, Ultra Ball on deep orange or red (it names the ring it expects, so a mismatch is easy to spot; with no CP read it says to follow the ring). <b>IV CHECK</b>: counted from every IV combination that gives this CP, so it says <b>100% POSSIBLE · 1 IN 149</b> rather than “maybe”, <b>PERFECT 100%</b> only when nothing else fits (raid bosses), otherwise <b>NOT PERFECT</b>. <b>AFTER CATCH</b>: keep, trade, evolve or transfer. A raid boss gets exactly two Master Ball answers: <b>PERFECT! USE MASTER BALL</b> or <b>SAVE MASTER BALL</b>. On the pill, <b>⇅</b> switches between the side pill and the top bar in place, and <b>!</b> files a report when a result looks wrong (test builds: My Log → Reports).</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #34d399;">
           <b>4. On a Pokémon in your storage</b> it answers <b>VERDICT</b>, <b>IV CHECK</b> (total out of 45 and percentage first, then the three stats) and <b>REASON</b>. Nicknames do not matter: with the appraisal open it reads the “This Sandslash was caught…” banner (real species, catch date and place); otherwise the candy name, the CP and the EVOLVE button. Regional forms are told apart by the type row; if that row was not read it says <b>FORM?</b> and withholds move advice rather than guessing. The order of verdicts inside a family is: <b>45</b> and <b>44</b> always KEEP · <b>lucky</b> KEEP (it plays about 8 IV points higher, power it up first) · the <b>keeper slots</b> (your top 6 by IVs above the 37-IV floor, 3 for the league lane, 1 for low-use species) · then <b>TRADE</b> in order of what a receiver saves · then <b>SURPLUS</b> (transfer for room). <b>GONE</b> on the pill marks one you transferred.</div>
         <div style="background:#0f172a; padding:8px 10px; border-radius:6px; border-left:3px solid #c084fc;">
@@ -1687,6 +1699,7 @@ function noteSweep(entry, auto) {
 
 // Pill action: the player transferred (or is about to transfer) the Pokémon on screen.
 window.pillAction = function (action) {
+  if (action === 'report') { fileReport('report', 'Reported from the pill: this result looked wrong.'); return; }
   if (action !== 'gone' || !scanContext || !scanContext.entryId) return;
   const e = pokeLog.find(x => x.id === scanContext.entryId);
   if (!e) return;
@@ -2024,6 +2037,64 @@ function diagnosticsBundle() {
     log: entries,
   });
 }
+// --- Reports (test builds) ------------------------------------------------------------------
+// One report = everything needed to replay the case as a test: version, mode, the OCR lines and
+// the scan flags as received, the species / CP / IVs read, the verdict and its reason, the pill as
+// shown, the log entry involved (no catch place), scan health and the AUTO trail tail. The shell
+// files it in the app-private reports folder together with the frame it read; nothing leaves the
+// phone unless the tester shares a report from My Log.
+let lastScanPayload = null;
+// The catch banner names where it was caught: that stays off every report.
+const noPlaces = text => String(text).replace(/around [^.\n"\\]+/g, 'around …');
+function buildReport(kind, note) {
+  const e = scanContext && scanContext.entryId ? pokeLog.find(x => x.id === scanContext.entryId) : null;
+  const { where, ...entry } = e || {};
+  const lines = [
+    `kind: ${kind}`, `app: ${APP_VERSION}`, `at: ${new Date().toISOString()}`, `mode: ${evaluationMode}`,
+    `species: ${activeHudPokemon ? activeHudPokemon.name : '-'}${scanMatchAmbiguous ? ' (ambiguous: ' + scanMatchAmbiguous + ')' : ''}`,
+    `cp: ${document.getElementById('catchCpInput')?.value || '-'}`,
+    `verdict: ${lastGuidance ? lastGuidance.verdict : '-'}`, `reason: ${lastGuidance ? lastGuidance.reason || '' : '-'}`,
+    `pill: ${lastPillPush ? JSON.stringify(lastPillPush) : '-'}`,
+    `note: ${note || ''}`,
+    `correct answer (fill in): `,
+    '', '--- last scan (as received) ---', noPlaces(lastScanDebug || '(none)'),
+    '', '--- payload ---', lastScanPayload ? noPlaces(JSON.stringify(lastScanPayload)) : '(none)',
+    '', '--- log entry ---', e ? JSON.stringify(entry) : '(none)',
+    '', `--- scan health --- ${JSON.stringify(scanHealth())}`,
+    '', '--- AUTO trail (tail) ---', (Native.autoTrail() || '').split('\n').slice(-25).join('\n'),
+  ];
+  return lines.join('\n');
+}
+let lastAutoReportAt = 0;
+function fileReport(kind, note, throttleMs = 0) {
+  const now = Date.now();
+  if (throttleMs && now - lastAutoReportAt < throttleMs) return '';
+  if (throttleMs) lastAutoReportAt = now;
+  return Native.saveReport(kind, buildReport(kind, note));
+}
+// Things that happen on their own get logged too: page errors, and storage reads that found the
+// card but no Pokémon or CP (the misread the tester would otherwise have to notice).
+window.addEventListener('error', ev => { try { fileReport('error', `${ev.message} @ ${ev.filename}:${ev.lineno}`, 30000); } catch (e) {} });
+window.addEventListener('unhandledrejection', ev => { try { fileReport('error', `unhandled: ${ev.reason && ev.reason.message || ev.reason}`, 30000); } catch (e) {} });
+function renderReports() {
+  const box = document.getElementById('reportsBox');
+  if (!box) return;
+  box.style.display = Native.testSharing ? 'block' : 'none';
+  if (!Native.testSharing) return;
+  const list = Native.listReports();
+  const fmt = ms => (ms ? new Date(ms).toLocaleString() : '');
+  document.getElementById('reportsList').innerHTML = list.length ? list.map(r => `
+    <div style="display:flex; gap:6px; align-items:center; border-top:1px solid var(--border); padding:4px 0; font-size:11px;">
+      <div style="flex:1; min-width:0;"><b style="color:${r.kind === 'report' ? '#fbbf24' : r.kind === 'error' ? '#f87171' : '#94a3b8'};">${esc(r.kind)}</b> · ${esc(fmt(r.at))}${r.hasImage ? ' · 📷' : ''}<br><span style="color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${esc(r.head)}</span></div>
+      <button onclick="Native.shareReport('${esc(r.id)}')" style="background:none; border:1px solid #38bdf8; color:#38bdf8; border-radius:6px; padding:3px 7px; font-weight:800; font-size:11px; cursor:pointer;">Share</button>
+      <button onclick="Native.deleteReport('${esc(r.id)}'); renderReports()" style="background:none; border:none; color:#f87171; font-weight:800; font-size:11px; cursor:pointer;">✕</button>
+    </div>`).join('') : '<div style="color:var(--text-muted); font-size:11px;">No reports yet. Tap <b>!</b> on the pill when a result looks wrong; errors and misreads are logged here on their own.</div>';
+}
+function reportLastResult() {
+  const note = prompt('What was wrong? (what the correct answer should have been)') || '';
+  fileReport('report', note);
+  renderReports();
+}
 function sendDiagnostics() {
   const status = document.getElementById('testShareStatus');
   if (!Native.testSharing) { if (status) status.innerText = 'Not available in this build.'; return; }
@@ -2035,6 +2106,7 @@ function sendDiagnostics() {
 function renderLogModal() {
   const box = document.getElementById('testShareBox');
   if (box) box.style.display = Native.testSharing ? 'block' : 'none';
+  renderReports();
   const health = scanHealth();
   const notice = document.getElementById('scanHealthNotice');
   if (notice) {
@@ -2285,7 +2357,7 @@ function getBerryBadge(b) {
   return '<span class="badge-berry berry-none">🚫 No Berry</span>';
 }
 
-const APP_VERSION = 'v2.3.49';   // stamped from version.json by tools/release.py
+const APP_VERSION = 'v2.3.50';   // stamped from version.json by tools/release.py
 // The one door between this page and whichever native shell hosts it (contract: docs/NATIVE-BRIDGE.md).
 // Android injects window.AndroidBridge; another shell only has to provide the same four calls here.
 // Nothing else in the page talks to a platform object.
@@ -2307,12 +2379,19 @@ const Native = (() => {
       // Test builds only: diagnostics sharing (removed before the public release).
       testSharing: !!(a.testSharing && a.testSharing()),
       shareDiagnostics: (json, viaSheet) => { if (a.shareDiagnostics) a.shareDiagnostics(json, !!viaSheet); },
+      // Test builds: the reports folder (text + the frame the scanner saw), app-private, shared only by hand.
+      saveReport: (kind, text) => (a.saveReport ? a.saveReport(kind, text) : ''),
+      listReports: () => { try { return a.listReports ? JSON.parse(a.listReports()) : []; } catch (e) { return []; } },
+      shareReport: id => { if (a.shareReport) a.shareReport(id); },
+      deleteReport: id => { if (a.deleteReport) a.deleteReport(id); },
     };
   }
-  return { present: false, updatePill() {}, autoTrail: () => '', canSelfUpdate: false, checkForUpdate() {}, copyText: () => false, testSharing: false, shareDiagnostics() {} };
+  return { present: false, updatePill() {}, autoTrail: () => '', canSelfUpdate: false, checkForUpdate() {}, copyText: () => false, testSharing: false, shareDiagnostics() {},
+    saveReport: () => '', listReports: () => [], shareReport() {}, deleteReport() {} };
 })();
 // True inside a native shell: minimizing and scanning are handled by the native overlay pill.
 const isNativeApp = Native.present;
+let lastPillPush = null;   // { mode, target, slots } of the last pill update, for reports
 let activeHudPokemon = null;
 let activeHudMatch = null;
 let scanRoamingUnclearFor = null; // species name when the last catch scan could be a raid bird or a roaming Galarian one
@@ -3191,6 +3270,7 @@ function pushNativePill() {
   if (evaluationMode === 'storage' && !activeHudPokemon && layoutSuspect()) slots.push(['', LAYOUT_SUSPECT_LINE, '#fbbf24']);
   if (scanContext && scanContext.rank) slots.push(['LOGGED', `${pokeLog.length} TOTAL · ${scanContext.ofSpecies} ${scanContext.species.toUpperCase()}`, '#94a3b8']);
   const verdict = lastGuidance ? lastGuidance.verdict : '';
+  lastPillPush = { mode: evaluationMode, target, slots: slots.map(x => [x[0], x[1]]) };
   const actions = evaluationMode === 'storage' && scanContext && scanContext.entryId &&
     ['DELETE', 'SURPLUS', 'TRADE', 'FAVORITE?', 'CHECK FIRST', 'PURIFY', 'SHINY STOCK'].includes(verdict) ? ['gone'] : [];
   const modeText = evaluationMode + (scanLane && evaluationMode === 'storage' ? ' · ' + scanLane : '');
@@ -3648,7 +3728,12 @@ window.assessNativeOcr = async function (payload) {
       .map(l => l.t)
       .join('\n');
     const res = await classifyScan(!!payload.storage, readRegion);
-    if (payload && payload.storage) noteScanOutcome(res.mode === 'storage' && !!res.pokemon && !!res.cp);
+    lastScanPayload = payload;
+    if (payload && payload.storage) {
+      const ok = res.mode === 'storage' && !!res.pokemon && !!res.cp;
+      noteScanOutcome(ok);
+      if (!ok) { try { fileReport('misread', 'Storage card found but no Pokémon or CP read.', 60000); } catch (e) {} }
+    }
     const out = applyScanResult({ ...res, favorite: !!payload.favorite, ivs: Array.isArray(payload.ivs) ? payload.ivs : null,
       auto: !!payload.auto, shadowHaze: !!payload.shadow, luckyHaze: !!payload.lucky, dynamax: !!payload.dynamax,
       colors: Array.isArray(payload.colors) ? payload.colors : null,
