@@ -21,6 +21,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Full Pokédex dashboard (WebView). Minimizing hands the screen over to
