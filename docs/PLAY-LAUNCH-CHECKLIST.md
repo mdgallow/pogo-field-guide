@@ -4,7 +4,7 @@ Owner decisions recorded 2026-09-27. Nothing leaves the phone in the sideload bu
 are deferred until the Play launch and are blocking for it.
 
 ## Data & consent
-- [ ] **Remove tester diagnostics sharing**: set `TEST_SHARING` to `false` in `android/app/build.gradle.kts`
+- [ ] **Remove tester diagnostics sharing and the reports folder**: set `TEST_SHARING` to `false` in `android/app/build.gradle.kts` (this also hides the pill's `!` button, stops frames being kept, and empties My Log → Reports)
       (or drop the `buildConfigField` and the `shareDiagnostics` bridge) and confirm My Log no longer shows the
       "share diagnostics" box. The promise is that nothing leaves the phone.
 - [ ] **Cloud save for My Log** — wire Google Play Games Services Saved Games (Snapshots API); keep the

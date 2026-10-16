@@ -36,4 +36,11 @@ object OverlayBus {
 
     /** Set by the service: the player picked the other pill style (side pill / top bar). */
     @Volatile var pillStyleChanged: (() -> Unit)? = null
+
+    /** Test builds: the last captured frame as JPEG, kept for the next report (null in release). */
+    @Volatile var lastFrameJpeg: ByteArray? = null
+    @Volatile var lastFrameAt: Long = 0L
+
+    /** Set by MainActivity (test builds): saves a report (kind, text) with the last frame into the reports folder. */
+    @Volatile var saveReport: ((String, String) -> Unit)? = null
 }

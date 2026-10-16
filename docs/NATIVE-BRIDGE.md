@@ -44,6 +44,13 @@ Lines under the shell's own overlay must be left out. The overlay is never hidde
 
 ## Page → shell
 
+Test builds also expose a reports folder (app-private `files/reports`): `saveReport(kind, text)` files
+the text with the last captured frame as JPEG, `listReports()` returns `[{id, kind, at, hasImage,
+head}]`, `shareReport(id)` opens the share sheet with both files, `deleteReport(id | "*")`. The pill
+action `"report"` asks the page to build and file a report; the shell files its own failures (OCR,
+evaluation timeout, frame errors) the same way. All of it is compiled out with `TEST_SHARING`.
+
+
 All calls go through the `Native` object in `index.html`; nothing else touches a platform object.
 
 | `Native` call | Android implementation | Meaning |

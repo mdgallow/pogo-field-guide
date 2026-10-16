@@ -167,6 +167,7 @@ class FloatingOverlayService : Service() {
     /** Guards against the backgrounded WebView never answering an evaluation request. */
     private val evalTimeout = Runnable {
         Log.w(TAG, "WebView did not answer the evaluation request")
+        OverlayBus.saveReport?.invoke("error", "The page did not answer the evaluation request within ${EVAL_TIMEOUT_MS} ms")
         showStandby()
     }
 
@@ -359,6 +360,15 @@ class FloatingOverlayService : Service() {
         attachDragOrTap(view.findViewById(R.id.pillExpandBtn)) { expandToApp() }
         attachDragOrTap(view.findViewById(R.id.pillCloseBtn)) { stopSelf() }
         attachDragOrTap(view.findViewById(R.id.pillGoneBtn)) { OverlayBus.pillAction?.invoke("gone") }
+        // "!" = report this result (the page builds the report; the shell files it with the frame).
+        attachDragOrTap(view.findViewById(R.id.pillReportBtn)) { OverlayBus.pillAction?.invoke("report") }
+        // ⇅ = switch between the side pill and the top bar without opening the app.
+        attachDragOrTap(view.findViewById(R.id.pillStyleBtn)) {
+            val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+            prefs.edit().putString(PREF_PILL_STYLE, if (barStyle) "side" else "bar").apply()
+            rebuildPill()
+        }
+        view.findViewById<View>(R.id.pillReportBtn)?.visibility = if (BuildConfig.TEST_SHARING) View.VISIBLE else View.GONE
 
         try {
             windowManager.addView(view, params)
@@ -423,6 +433,8 @@ class FloatingOverlayService : Service() {
                 R.id.pillExpandBtn -> "Open the full app"
                 R.id.pillCloseBtn -> "Close the pill"
                 R.id.pillGoneBtn -> "I transferred this Pokémon"
+                R.id.pillReportBtn -> "Report this result"
+                R.id.pillStyleBtn -> "Switch between side pill and top bar"
                 else -> null
             }
         }
@@ -537,6 +549,7 @@ class FloatingOverlayService : Service() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Frame processing failed", e)
+            OverlayBus.saveReport?.invoke("error", "Frame processing failed: $e")
             mainHandler.post { showStandby() }
         } finally {
             image?.close()
@@ -862,6 +875,15 @@ class FloatingOverlayService : Service() {
     }
 
     private fun runOcr(bitmap: Bitmap, auto: Boolean = false) {
+        if (BuildConfig.TEST_SHARING) {
+            // The frame behind the next report: what the scanner actually saw.
+            try {
+                val out = java.io.ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 55, out)
+                OverlayBus.lastFrameJpeg = out.toByteArray()
+                OverlayBus.lastFrameAt = System.currentTimeMillis()
+            } catch (_: Exception) {}
+        }
         val isStorage = looksLikeStorageCard(bitmap)
         // A detector whose region sits under the pill is skipped (never fed pill pixels); the page
         // learns which, so it can ask the player to move the pill if that loses something.
@@ -882,6 +904,7 @@ class FloatingOverlayService : Service() {
             .addOnSuccessListener { text -> evaluate(text, bitmap.width, bitmap.height, isStorage, isFavorite, ivs, auto, isShadow, isDynamax, blocked, isLucky, colors, sparkle) }
             .addOnFailureListener { e ->
                 Log.e(TAG, "OCR failed", e)
+                OverlayBus.saveReport?.invoke("error", "OCR failed: ${e.message}\nauto=$auto storage=$isStorage")
                 showStandby()
             }
             .addOnCompleteListener { bitmap.recycle() }
